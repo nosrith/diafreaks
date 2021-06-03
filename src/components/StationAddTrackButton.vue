@@ -1,0 +1,43 @@
+<template>
+  <b-icon icon="plus" size="is-small" v-show="viewState.editMode && station.expanded" :style="style" @click.native="onClick"></b-icon>
+</template>
+
+<script lang="ts">
+import { Component, InjectReactive, Prop, Vue } from "vue-property-decorator";
+import Diagram from "@/data/Diagram";
+import Station from "@/data/Station";
+import Track from "@/data/Track";
+import ViewState from "@/data/ViewState";
+
+@Component
+export default class StationAddTrackButton extends Vue {
+  @InjectReactive() viewState!: ViewState;
+  @InjectReactive() diagram!: Diagram;
+  @Prop() station!: Station;
+
+  get style(): unknown {
+    return {
+      left: `${this.diagram.config.leftPaneWidth - this.diagram.config.stationLabelRightMargin}px`,
+      top: `${this.diagram.getYByRelY(this.station.bottomRelY) - this.diagram.config.trackLineSpan}px`,
+      height: `${this.diagram.config.trackLineSpan}px`,
+    };
+  }
+
+  onClick(): void {
+    if (!this.viewState.isInputEnabled) {
+      const newTrack = Track.fromJSON({
+        id: this.diagram.genId(),
+        name: ""
+      });
+      this.station.tracks.push(newTrack);
+      this.$emit("updateY");
+
+      this.viewState.trackNameInputTarget = { stationId: this.station.id, trackId: newTrack.id };
+      this.$emit("trackNameInputStart");
+    }
+  }
+}
+</script>
+
+<style scoped lang="scss">
+</style>
