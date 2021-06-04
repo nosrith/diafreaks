@@ -25,15 +25,21 @@
         </template>
       </div>
     </div>
-    <b-navbar id="nav-pane">
+    <b-navbar id="nav-pane" transparent>
       <template #brand>
         <b-navbar-item>Diafreaks</b-navbar-item>
       </template>
       <template #start>
-        <b-navbar-item tag="div">
-          <div class="buttons">
-            <b-button size="is-medium" icon-left="pencil-outline" :class="{ 'is-primary': viewState.editMode }" @click="onEditButtonClick"></b-button>
-          </div>
+        <b-navbar-item>
+          <b-button icon-left="pencil-outline" size="medium" :class="viewState.editMode ? 'is-selected': ''" @click="onEditButtonClick"></b-button>
+        </b-navbar-item>
+      </template>
+      <template #end>
+        <b-navbar-item>
+          <b-button icon-left="upload" size="medium" @click="onUploadButtonClick"></b-button>
+        </b-navbar-item>
+        <b-navbar-item>
+          <b-button icon-left="download" size="medium" @click="onDownloadButtonClick"></b-button>
         </b-navbar-item>
       </template>
     </b-navbar>
@@ -66,6 +72,8 @@ export default class App extends Vue {
   @ProvideReactive() viewState = new ViewState();
   @ProvideReactive() diagram: Diagram = Diagram.fromJSON({ stations: [], trains: [] });
 
+  file: File | null = null;
+
   get stationsInMileageOrder(): Station[] {
     return this.diagram.getStationsInMileageOrder();
   }
@@ -92,6 +100,47 @@ export default class App extends Vue {
 
   onEditButtonClick(): void {
     this.viewState.editMode = !this.viewState.editMode;    
+  }
+
+  onUploadButtonClick(): void {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json, application/json";
+    input.onchange = () => {
+      const reader = new FileReader();
+      if (input.files && input.files.length > 0) {
+        const file = input.files[0];
+        reader.readAsText(file);
+        reader.onload = () => {
+          if (typeof(reader.result) == "string") {
+            const data = JSON.parse(reader.result);
+            try {
+              this.diagram = Diagram.fromJSON(data);
+            } catch (e) {
+              this.$buefy.notification.open({
+                type: "is-danger",
+                message: `${this.$t("message.failedToLoadJSON").toString()}<br>${file.name}`,
+              });
+            }
+            this.viewState = new ViewState();
+            this.updateAppSize();
+            this.viewState.diagramFileName = file.name;
+            this.updateY();
+          }
+        };
+      }
+    };
+    input.click();
+  }
+
+  onDownloadButtonClick(): void {
+    const json = JSON.stringify(this.diagram);
+    const blob = new Blob([ json ], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = this.viewState.diagramFileName;
+    a.click();
   }
 
   updateAppSize(): void {
@@ -139,6 +188,10 @@ export default class App extends Vue {
 </script>
 
 <style lang="scss">
+@import "~bulma/sass/utilities/_all";
+$selected: #8c67ef;
+$selected-invert: findColorInvert($selected);
+
 html, body, #app {
   margin: 0;
   padding: 0;
@@ -177,8 +230,21 @@ html, body, #app {
 #nav-pane {
   flex: 0 0 auto;
 }
+#nav-pane a.navbar-item:not(:focus), #nav-pane a.navbar-item:not(:hover) {
+  background-color: initial !important;
+}
+#nav-pane .button {
+  border: none;
+} 
 #nav-pane .button:focus, #nav-pane .button.is-focused {
-  border-color: inherit;
-  box-shadow: inherit;
+  border: none;
+  box-shadow: none;
+}
+#nav-pane .button.is-selected {
+  background-color: $selected;
+  color: $selected-invert;
+}
+#nav-pane .button:not(.is-selected):hover {
+  color: $selected;
 }
 </style>

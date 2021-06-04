@@ -7,7 +7,10 @@ import App from "./App.vue";
 import messages from "./messages";
 
 Vue.config.productionTip = false
-Vue.use(Buefy);
+Vue.use(Buefy, {
+  defaultNotificationDuration: 5000,
+  defaultNotificationPosition: "is-bottom-right",
+});
 Vue.use(VueI18n);
 Vue.use(VueKonva);
 

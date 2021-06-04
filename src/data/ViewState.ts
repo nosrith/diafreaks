@@ -26,6 +26,7 @@ export default class ViewState {
     stationNameInputTarget: { stationId: number } | null = null;
     trackNameInputTarget: { stationId: number, trackId: number } | null = null;
     controlKeyPressed = false;
+    diagramFileName = "diafreaks-diagram.json";
 
     get isInputEnabled(): boolean {
         return this.stationNameInputTarget != null || this.trackNameInputTarget != null;

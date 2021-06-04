@@ -13,15 +13,28 @@ export default class Diagram {
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
     static fromJSON(o: any): Diagram {
         /* eslint-disable @typescript-eslint/no-explicit-any */
-        if (!(o && typeof o == "object" && Array.isArray(o.stations) && Array.isArray(o.trains))) {
+        if (!(o && typeof o == "object" && typeof o.stations == "object" && typeof o.trains == "object")) {
             throw "Invalid JSON";
         }
-        return new Diagram(
-            DiagramConfig.fromJSON(o.config || {}),
-            Object.fromEntries(o.stations.map((s: any) => [ s.id, Station.fromJSON(s) ])),
-            Object.fromEntries(o.trains.map((t: any) => [ t.id, Train.fromJSON(t) ])),
-            o.maxId || 0,
-        );
+        const config = DiagramConfig.fromJSON(o.config || {});
+        const stations: { [id: number]: Station } = Object.fromEntries(Object.values(o.stations).map((s: any) => [ s.id, Station.fromJSON(s) ]));
+        const trains: { [id: number]: Train } = Object.fromEntries(Object.values(o.trains).map((t: any) => [ t.id, Train.fromJSON(t) ]));
+
+        let maxId = o.maxId ? Math.max(o.maxId, 0) : 0;
+        for (const s of Object.values(stations)) {
+            maxId = Math.max(s.id, maxId);
+            for (const t of s.tracks) {
+                maxId = Math.max(t.id, maxId);
+            }
+        }
+        for (const t of Object.values(trains)) {
+            maxId = Math.max(t.id, maxId);
+            for (const s of t.stops) {
+                maxId = Math.max(s.id, maxId);
+            }
+        }
+
+        return new Diagram(config, stations, trains, maxId);
     }
 
     getYByRelY(relY: number) {
