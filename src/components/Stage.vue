@@ -1,6 +1,9 @@
 <template>
   <v-stage v-if="diagram" :config="stageConfig" 
-    @mousedown="onStageMouseDown" @mousemove="onStageMouseMove" @click="onStageClick" @dblclick="onStageDoubleClick" @contextmenu="onContextMenu">
+    @mousedown="onStageMouseDown" @mousemove="onStageMouseMove" 
+    @click="onStageClick" @dblclick="onStageDoubleClick" 
+    @wheel="onStageMouseWheel"
+    @contextmenu="onContextMenu">
     <back-layer v-on="$listeners"></back-layer>
     <train-path-layer></train-path-layer>
     <v-layer>
@@ -222,11 +225,8 @@ export default class Stage extends Vue {
       this.stageDragState.dragged = true;
       this.diagram.config.scrollX = this.stageDragState.scrollX0 - (event.screenX - this.stageDragState.screenX0);
       this.diagram.config.scrollY = 
-        Math.max(
-          0, 
-          Math.min(
-            this.viewState.maxRelY + this.diagram.config.topPaneHeight - this.viewState.viewHeight, 
-            this.stageDragState.scrollY0 - (event.screenY - this.stageDragState.screenY0)));
+        Math.max(0, Math.min(this.viewState.maxRelY + this.diagram.config.topPaneHeight - this.viewState.viewHeight, 
+          this.stageDragState.scrollY0 - (event.screenY - this.stageDragState.screenY0)));
     }
   }
 
@@ -235,6 +235,17 @@ export default class Stage extends Vue {
       this.onWindowMouseMove(event);
       this.stageDragState = null;
     }
+  }
+
+  onStageMouseWheel(konvaEvent: KonvaEventObject<WheelEvent>): void {
+    const f = Math.pow(2, -konvaEvent.evt.deltaY * this.viewConfig.wheelScale * 0.001);
+    this.diagram.config.scrollX += (f - 1) * (konvaEvent.evt.clientX - this.diagram.config.leftPaneWidth + this.diagram.config.scrollX);
+    this.diagram.config.scrollY = 
+      Math.max(0, Math.min(this.viewState.maxRelY + this.diagram.config.topPaneHeight - this.viewState.viewHeight,
+      this.diagram.config.scrollY + (f - 1) * (konvaEvent.evt.clientY - this.diagram.config.topPaneHeight + this.diagram.config.scrollY)));
+    this.diagram.config.xScale *= f;
+    this.diagram.config.yScale *= f;
+    this.$emit("updateY");
   }
 
   onKeyDown(event: KeyboardEvent): void {

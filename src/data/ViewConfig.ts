@@ -16,4 +16,5 @@ export default class ViewConfig {
     markerLabelColor = "rgb(255, 0, 0)";
     markerLabelFontSize = 12;
     markerLabelLineHeight = 16;
+    wheelScale = 1;
 }
