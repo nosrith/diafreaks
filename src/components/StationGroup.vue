@@ -3,7 +3,7 @@
     <v-group v-if="isTopLineIntersectingTrainPathArea">
       <v-line :config="topLineConfig"></v-line>
       <v-text v-for="c in labelCharacters" :key="c.key" :config="c"></v-text>
-      <v-rect :config="labelRectConfig" @click="onStationLabelClick"></v-rect>
+      <v-rect :config="labelRectConfig" @click="onStationLabelClick" @mousedown="onStationLabelMouseDown"></v-rect>
     </v-group>
     <v-line v-if="station.expanded && isTopLineIntersectingTrainPathArea" :config="bottomLineConfig"></v-line>
     <template v-if="station.expanded">
@@ -19,6 +19,7 @@ import Station from "@/data/Station";
 import ViewConfig from "@/data/ViewConfig";
 import ViewState from "@/data/ViewState";
 import TrackGroup from "./TrackGroup.vue";
+import { KonvaEventObject } from "konva/types/Node";
 
 @Component({
   components: {
@@ -30,6 +31,8 @@ export default class StationGroup extends Vue {
   @InjectReactive() viewState!: ViewState;
   @InjectReactive() diagram!: Diagram;
   @Prop() station!: Station;
+
+  dragState: { sy0: number, mileage0: number, dragging: boolean } | null = null;
 
   get topLineConfig(): unknown {
     return {
@@ -101,9 +104,36 @@ export default class StationGroup extends Vue {
   }
 
   onStationLabelClick(): void {
-    if (this.viewState.editMode && !this.viewState.isInputEnabled) {
+    if (this.viewState.editMode && !this.viewState.isInputEnabled && !this.dragState?.dragging) {
       this.viewState.stationNameInputTarget = { stationId: this.station.id };
       this.$emit("stationNameInputStart");
+    }
+  }
+
+  onStationLabelMouseDown(konvaEvent: KonvaEventObject<MouseEvent>): void {
+    this.dragState = {
+      sy0: konvaEvent.evt.screenY,
+      mileage0: this.station.mileage,
+      dragging: false,
+    };
+    window.addEventListener("mousemove", this.onWindowMouseMove);
+    window.addEventListener("mouseup", this.onWindowMouseUp);
+  }
+
+  onWindowMouseMove(event: MouseEvent): void {
+    if (this.dragState) {
+      this.dragState.dragging = true;
+      this.station.mileage = this.dragState.mileage0 + (event.screenY - this.dragState.sy0) / this.diagram.config.yScale;
+      this.$emit("updateY");
+    }
+  }
+
+  onWindowMouseUp(event: MouseEvent): void {
+    if (this.dragState) {
+      window.removeEventListener("mousemove", this.onWindowMouseMove);
+      window.removeEventListener("mouseup", this.onWindowMouseUp);
+      this.onWindowMouseMove(event);
+      this.dragState = null;
     }
   }
 }
