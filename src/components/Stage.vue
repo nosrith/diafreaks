@@ -246,6 +246,7 @@ export default class Stage extends Vue {
     this.diagram.config.xScale *= f;
     this.diagram.config.yScale *= f;
     this.$emit("updateY");
+    konvaEvent.evt.preventDefault();
   }
 
   onKeyDown(event: KeyboardEvent): void {
