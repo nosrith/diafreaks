@@ -53,7 +53,7 @@ export default class TrainPathGroup extends Vue {
   get regularTrainPathNodes(): TrainPathNode[] {
     const result: TrainPathNode[] = [];
     for (const n of this.trainPathNodes) {
-      const time = n.time + (this.selectedTrainPathEnabled && this.viewState.trainPathDragState && !this.viewState.controlKeyPressed ? this.viewState.trainPathDragState.timeShift : 0);
+      const time = n.time + (this.selectedTrainPathEnabled && n.selected && this.viewState.trainPathDragState && !this.viewState.controlKeyPressed ? this.viewState.trainPathDragState.timeShift : 0);
       result.push({
         train: n.train, stop: n.stop, side: n.side, vSide: n.vSide,
         time, x: this.diagram.getXByTime(time),
@@ -186,9 +186,7 @@ export default class TrainPathGroup extends Vue {
         if (!selectedStopRange) {
           sel.stopRange = clickedStopRange;
         } else if (!konvaEvent.evt.ctrlKey) {
-          if (!clickSelected) {
-            sel.stopRange = null;
-          }
+          sel.stopRange = clickSelected ? clickedStopRange : null;
         } else {
           const selectedFromStopIndex = this.train.stops.findIndex(s => s.id == selectedStopRange.fromStopId);
           const selectedToStopIndex = this.train.stops.findIndex(s => s.id == selectedStopRange.toStopId);
