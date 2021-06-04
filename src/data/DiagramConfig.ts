@@ -20,6 +20,7 @@ export default class DiagramConfig {
     stationLabelColor = "rgb(128, 192, 128)";
     stationLineWidth = 1;
     stationLineColor = "rgb(128, 192, 128)";
+    plotPaneVerticalPadding = 4;
     trackLabelLeftMargin = 10;
     trackLabelFontSize = 12;
     trackLabelColor = "rgb(128, 192, 128)";

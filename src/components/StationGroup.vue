@@ -1,11 +1,11 @@
 <template>
   <v-group>
-    <v-group v-if="isTopLineIntersectingTrainPathArea">
+    <v-group v-if="isTopLineIntersectingPlotPane">
       <v-line :config="topLineConfig"></v-line>
       <v-text v-for="c in labelCharacters" :key="c.key" :config="c"></v-text>
       <v-rect :config="labelRectConfig" @click="onStationLabelClick" @mousedown="onStationLabelMouseDown"></v-rect>
     </v-group>
-    <v-line v-if="station.expanded && isTopLineIntersectingTrainPathArea" :config="bottomLineConfig"></v-line>
+    <v-line v-if="station.expanded && isBottomLineIntersectingPlotPane" :config="bottomLineConfig"></v-line>
     <template v-if="station.expanded">
       <track-group v-for="t in station.tracks" :key="`track-${station.id}-${t.id}`" :station="station" :track="t" v-on="$listeners"></track-group>
     </template>
@@ -93,12 +93,12 @@ export default class StationGroup extends Vue {
     });
   }
 
-  get isTopLineIntersectingTrainPathArea(): boolean {
+  get isTopLineIntersectingPlotPane(): boolean {
     return this.diagram.getYByRelY(this.station.topRelY) >= this.diagram.config.topPaneHeight && 
       this.diagram.getYByRelY(this.station.topRelY) < this.viewState.viewHeight;
   }
 
-  get isBottomLineIntersectingTrainPathArea(): boolean {
+  get isBottomLineIntersectingPlotPane(): boolean {
     return this.diagram.getYByRelY(this.station.bottomRelY) >= this.diagram.config.topPaneHeight && 
       this.diagram.getYByRelY(this.station.bottomRelY) < this.viewState.viewHeight;
   }

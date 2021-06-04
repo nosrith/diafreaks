@@ -1,5 +1,5 @@
 <template>
-  <b-icon icon="close" size="is-small" v-show="viewState.editMode && station.expanded && Object.values(station.tracks).length > 1" :style="style" @click.native="onClick"></b-icon>
+  <b-icon v-if="isLineIntersectingPlotPane" icon="close" size="is-small" v-show="viewState.editMode && station.expanded && Object.values(station.tracks).length > 1" :style="style" @click.native="onClick"></b-icon>
 </template>
 
 <script lang="ts">
@@ -22,6 +22,11 @@ export default class StationRemoveTrackButton extends Vue {
       top: `${this.diagram.getYByRelY(this.track.relY) - this.diagram.config.trackLineSpan}px`,
       height: `${this.diagram.config.trackLineSpan}px`,
     };
+  }
+
+  get isLineIntersectingPlotPane(): boolean {
+    return this.diagram.getYByRelY(this.track.relY) >= this.diagram.config.topPaneHeight && 
+      this.diagram.getYByRelY(this.track.relY) < this.viewState.viewHeight;
   }
 
   onClick(): void {

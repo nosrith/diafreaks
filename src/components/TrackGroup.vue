@@ -1,5 +1,5 @@
 <template>
-  <v-group v-if="isLineIntersectingTrainPathArea">
+  <v-group v-if="isLineIntersectingPlotPane">
     <v-line :config="lineConfig"></v-line>
     <v-text :config="labelConfig" @click="onLabelClick"></v-text>
   </v-group>
@@ -51,7 +51,7 @@ export default class TrackGroup extends Vue {
     }
   }
 
-  get isLineIntersectingTrainPathArea(): boolean {
+  get isLineIntersectingPlotPane(): boolean {
     return this.diagram.getYByRelY(this.track.relY) >= this.diagram.config.topPaneHeight && 
       this.diagram.getYByRelY(this.track.relY) < this.viewState.viewHeight;
   }

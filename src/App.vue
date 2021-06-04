@@ -163,7 +163,7 @@ export default class App extends Vue {
       s.mileage = s.mileage - initialMileage;
     }
 
-    let y = 0;
+    let y = this.diagram.config.plotPaneVerticalPadding;
     let lastMileage = 0;
     for (const s of stations) {
       y += (s.mileage - lastMileage) * this.diagram.config.yScale;
@@ -182,7 +182,7 @@ export default class App extends Vue {
       lastMileage = s.mileage;
     }
 
-    this.viewState.maxRelY = stations[stations.length - 1].bottomRelY;
+    this.viewState.maxRelY = stations[stations.length - 1].bottomRelY + this.diagram.config.plotPaneVerticalPadding;
   }
 }
 </script>
@@ -205,7 +205,6 @@ html, body, #app {
 }
 #view-pane {
   flex: 1 0 0;
-  overflow: hidden;
 }
 #stage-pane {
   width: 100% !important;
@@ -218,6 +217,7 @@ html, body, #app {
   width: 100%;
   height: 100%;
   pointer-events: none;
+  overflow: hidden;
 }
 #ui-pane > * {
   position: absolute;

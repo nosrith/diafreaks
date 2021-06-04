@@ -1,5 +1,5 @@
 <template>
-  <b-icon :icon="icon" size="is-small" :style="style" @click.native="onClick"></b-icon>
+  <b-icon v-if="isBottomLineIntersectingPlotPane" :icon="icon" size="is-small" :style="style" @click.native="onClick"></b-icon>
 </template>
 
 <script lang="ts">
@@ -24,6 +24,11 @@ export default class StationExpandButton extends Vue {
       top: `${this.diagram.getYByRelY(this.station.bottomRelY)}px`,
       height: `${this.diagram.config.trackLineSpan}px`,
     };
+  }
+
+  get isBottomLineIntersectingPlotPane(): boolean {
+    return this.diagram.getYByRelY(this.station.bottomRelY) >= this.diagram.config.topPaneHeight && 
+      this.diagram.getYByRelY(this.station.bottomRelY) < this.viewState.viewHeight;
   }
 
   onClick(): void {
