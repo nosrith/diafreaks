@@ -26,4 +26,14 @@ export default class Station {
             o.expanded,
         )
     }
+
+    toJSON(): unknown {
+        return {
+            id: this.id,
+            name: this.name,
+            mileage: this.mileage,
+            tracks: this.tracks,
+            expanded: this.expanded,
+        };
+    }
 }

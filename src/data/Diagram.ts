@@ -84,4 +84,12 @@ export default class Diagram {
     genId(): number {
         return ++this.maxId;
     }
+
+    toJSON(): unknown {
+        return {
+            config: this.config,
+            stations: this.stations,
+            trains: this.trains,
+        };
+    }
 }

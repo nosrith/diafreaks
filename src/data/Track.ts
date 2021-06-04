@@ -11,6 +11,13 @@ export default class Track {
         if (!(o && typeof o == "object" && o.id != null && o.name != null)) {
             throw "Invalid JSON @ Track";
         }
-        return o as Track;
+        return new Track(o.id, o.name);
+    }
+
+    toJSON(): unknown {
+        return {
+            id: this.id,
+            name: this.name,
+        };
     }
 }
