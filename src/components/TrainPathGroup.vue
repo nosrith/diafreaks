@@ -150,20 +150,6 @@ export default class TrainPathGroup extends Vue {
     return result;
   }
 
-  mounted(): void {
-    window.addEventListener("mousemove", this.onWindowMouseMove);
-    window.addEventListener("mouseup", this.onWindowMouseUp);
-    document.addEventListener("keydown", this.onKeyDown);
-    document.addEventListener("keyup", this.onKeyUp);
-  }
-
-  unmounted(): void {
-    window.removeEventListener("mousemove", this.onWindowMouseMove);
-    window.removeEventListener("mouseup", this.onWindowMouseUp);
-    document.removeEventListener("keydown", this.onKeyDown);
-    document.removeEventListener("keyup", this.onKeyUp);
-  }
-
   onTrainPathClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
     const clickedStopRange = this.getClickedStopRange(konvaEvent.evt.clientX, konvaEvent.evt.clientY);
     this.changeTrainSelections(konvaEvent, clickedStopRange, false);
@@ -353,6 +339,8 @@ export default class TrainPathGroup extends Vue {
     this.viewState.trainPathDragState = {
       timeShift: 0
     };
+    window.addEventListener("mousemove", this.onWindowMouseMove);
+    window.addEventListener("mouseup", this.onWindowMouseUp);
   }
 
   onMarkerMouseDown(konvaEvent: KonvaEventObject<MouseEvent>, node: TrainPathNode): void {
@@ -380,6 +368,8 @@ export default class TrainPathGroup extends Vue {
     this.viewState.trainPathDragState = {
       timeShift: 0
     };
+    window.addEventListener("mousemove", this.onWindowMouseMove);
+    window.addEventListener("mouseup", this.onWindowMouseUp);
   }
 
   onWindowMouseMove(event: MouseEvent): void {
@@ -398,6 +388,8 @@ export default class TrainPathGroup extends Vue {
 
   onWindowMouseUp(): void {
     if (this.dragState && this.viewState.trainPathDragState) {
+      window.removeEventListener("mousemove", this.onWindowMouseMove);
+      window.removeEventListener("mouseup", this.onWindowMouseUp);
       if (!this.viewState.controlKeyPressed) {
         const targets = 
           this.dragState.targetStopEvents ??
@@ -442,21 +434,6 @@ export default class TrainPathGroup extends Vue {
       this.viewState.pointerDragging = false;
       this.viewState.trainPathDragState = null;
       this.dragState = null;
-    }
-  }
-
-  onKeyDown(event: KeyboardEvent): void {
-    if (event.key == "Shift" && !event.repeat) {
-      this.viewState.pointerPreciseState = {
-        sx0: this.viewState.pointerScreenX,
-        t0: this.viewState.pointerTime
-      };
-    }
-  }
-
-  onKeyUp(event: KeyboardEvent): void {
-    if (event.key == "Shift") {
-      this.viewState.pointerPreciseState = null;
     }
   }
 }
