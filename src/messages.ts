@@ -7,6 +7,7 @@ export default {
             editButtonTooltip: "編集モード",
             uploadButtonTooltip: "ダイヤファイルを読み込む",
             downloadButtonTooltip: "ダイヤファイルを保存する",
+            helpButtonTooltip: "操作方法",
         },
     },
 };

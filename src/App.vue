@@ -47,6 +47,11 @@
             <b-button icon-left="download" size="medium" @click="onDownloadButtonClick"></b-button>
           </b-tooltip>
         </b-navbar-item>
+        <b-navbar-item>
+          <b-tooltip :label="$t('message.helpButtonTooltip')" type="is-light">
+            <b-button icon-left="help" size="medium" @click="onDownloadButtonClick"></b-button>
+          </b-tooltip>
+        </b-navbar-item>
       </template>
     </b-navbar>
   </div>
