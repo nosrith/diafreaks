@@ -27,7 +27,7 @@
     </div>
     <b-navbar id="nav-pane" transparent>
       <template #brand>
-        <b-navbar-item>Diafreaks</b-navbar-item>
+        <b-navbar-item><img src="@/assets/logo.png"></b-navbar-item>
       </template>
       <template #start>
         <b-navbar-item>
