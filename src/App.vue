@@ -31,15 +31,21 @@
       </template>
       <template #start>
         <b-navbar-item>
-          <b-button icon-left="pencil-outline" size="medium" :class="viewState.editMode ? 'is-selected': ''" @click="onEditButtonClick"></b-button>
+          <b-tooltip :label="$t('message.editButtonTooltip')" type="is-light">
+            <b-button icon-left="pencil-outline" size="medium" :class="viewState.editMode ? 'is-selected': ''" @click="onEditButtonClick"></b-button>
+          </b-tooltip>
         </b-navbar-item>
       </template>
       <template #end>
         <b-navbar-item>
-          <b-button icon-left="upload" size="medium" @click="onUploadButtonClick"></b-button>
+          <b-tooltip :label="$t('message.uploadButtonTooltip')" type="is-light">
+            <b-button icon-left="upload" size="medium" @click="onUploadButtonClick"></b-button>
+          </b-tooltip>
         </b-navbar-item>
         <b-navbar-item>
-          <b-button icon-left="download" size="medium" @click="onDownloadButtonClick"></b-button>
+          <b-tooltip :label="$t('message.downloadButtonTooltip')" type="is-light">
+            <b-button icon-left="download" size="medium" @click="onDownloadButtonClick"></b-button>
+          </b-tooltip>
         </b-navbar-item>
       </template>
     </b-navbar>
