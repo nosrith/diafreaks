@@ -8,6 +8,9 @@ export default {
             uploadButtonTooltip: "ダイヤファイルを読み込む",
             downloadButtonTooltip: "ダイヤファイルを保存する",
             helpButtonTooltip: "操作方法",
+            useDoubleClickToAddNewItem: "ダブルクリックで、駅や列車線を追加できます。",
+            addStationUsingDoubleClick: "駅名エリアでダブルクリックすると、新しい駅が追加されます。",
+            addTrainUsingDoubleClick: "駅線上でダブルクリックすると、新しい列車が追加されます。<br>駅線を続けてクリックすることで列車線が引けます。"
         },
     },
 };
