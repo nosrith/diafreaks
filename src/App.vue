@@ -51,13 +51,13 @@
             <b-button icon-left="download" size="medium" @click="onDownloadButtonClick"></b-button>
           </b-tooltip>
         </b-navbar-item>
+      </template>
+      <template #end>
         <b-navbar-item>
           <b-tooltip :label="$t('message.helpButtonTooltip')" type="is-light">
             <b-button icon-left="help" size="medium" :class="viewState.helpPaneEnabled ? 'is-selected': ''" @click="onHelpButtonClick"></b-button>
           </b-tooltip>
         </b-navbar-item>
-      </template>
-      <template #end>
       </template>
     </b-navbar>
   </div>
