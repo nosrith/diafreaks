@@ -78,8 +78,6 @@ import StationRemoveButton from "./components/StationRemoveButton.vue";
 import StationRemoveTrackButton from "./components/StationRemoveTrackButton.vue";
 import TrackNameInput from "./components/TrackNameInput.vue";
 
-import defaultDiagramJson from "./default-diagram";
-
 @Component({
   components: {
     HelpPane, Stage, StationAddTrackButton, StationExpandButton, StationNameInput, StationRemoveButton, StationRemoveTrackButton, TrackNameInput
@@ -103,8 +101,11 @@ export default class App extends Vue {
       resizeObserver.observe(viewPane);
     }
 
-    this.diagram = Diagram.fromJSON(defaultDiagramJson);
-    this.updateY();
+    fetch("sample-diagram.json").then(async result => {
+      const json = await result.json();
+      this.diagram = Diagram.fromJSON(json);
+      this.updateY();
+    });
 }
 
   onStationNameInputStart(): void {
