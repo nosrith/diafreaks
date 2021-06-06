@@ -35,8 +35,11 @@
             <b-button icon-left="pencil-outline" size="medium" :class="viewState.editMode ? 'is-selected': ''" @click="onEditButtonClick"></b-button>
           </b-tooltip>
         </b-navbar-item>
-      </template>
-      <template #end>
+        <b-navbar-item>
+          <b-tooltip :label="$t('message.vanishButtonTooltip')" type="is-light">
+            <b-button icon-left="vanish" size="medium" @click="onVanishButtonClick"></b-button>
+          </b-tooltip>
+        </b-navbar-item>
         <b-navbar-item>
           <b-tooltip :label="$t('message.uploadButtonTooltip')" type="is-light">
             <b-button icon-left="upload" size="medium" @click="onUploadButtonClick"></b-button>
@@ -47,6 +50,8 @@
             <b-button icon-left="download" size="medium" @click="onDownloadButtonClick"></b-button>
           </b-tooltip>
         </b-navbar-item>
+      </template>
+      <template #end>
       </template>
     </b-navbar>
   </div>
@@ -106,6 +111,15 @@ export default class App extends Vue {
 
   onEditButtonClick(): void {
     this.viewState.editMode = !this.viewState.editMode;    
+  }
+
+  onVanishButtonClick(): void {
+    this.$buefy.dialog.confirm({
+      message: this.$t("message.confirmVanish").toString(),
+      onConfirm: () => {
+        this.diagram = Diagram.fromJSON({ stations: {}, trains: {} });
+      },
+    });
   }
 
   onUploadButtonClick(): void {
