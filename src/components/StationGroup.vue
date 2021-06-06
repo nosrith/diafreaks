@@ -111,13 +111,15 @@ export default class StationGroup extends Vue {
   }
 
   onStationLabelMouseDown(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    this.dragState = {
-      sy0: konvaEvent.evt.screenY,
-      mileage0: this.station.mileage,
-      dragging: false,
-    };
-    window.addEventListener("mousemove", this.onWindowMouseMove);
-    window.addEventListener("mouseup", this.onWindowMouseUp);
+    if (this.viewState.editMode) {
+      this.dragState = {
+        sy0: konvaEvent.evt.screenY,
+        mileage0: this.station.mileage,
+        dragging: false,
+      };
+      window.addEventListener("mousemove", this.onWindowMouseMove);
+      window.addEventListener("mouseup", this.onWindowMouseUp);
+    }
   }
 
   onWindowMouseMove(event: MouseEvent): void {
