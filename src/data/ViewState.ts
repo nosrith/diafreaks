@@ -10,7 +10,6 @@ export interface TrainSelectionState {
 export default class ViewState {
     viewWidth = 0;
     viewHeight = 0;
-    appHeight = 0;
     maxRelY = 0;
     trainSelections: { [trainId: number]: TrainSelectionState } = {};
     pointerDragging = false;
@@ -27,6 +26,7 @@ export default class ViewState {
     trackNameInputTarget: { stationId: number, trackId: number } | null = null;
     controlKeyPressed = false;
     diagramFileName = "diafreaks-diagram.json";
+    helpPaneEnabled = false;
 
     get isInputEnabled(): boolean {
         return this.stationNameInputTarget != null || this.trackNameInputTarget != null;

@@ -25,6 +25,7 @@
         </template>
       </div>
     </div>
+    <help-pane id="help-pane" v-if="viewState.helpPaneEnabled"></help-pane>
     <b-navbar id="nav-pane" transparent>
       <template #brand>
         <b-navbar-item><img src="@/assets/logo.png"></b-navbar-item>
@@ -50,6 +51,11 @@
             <b-button icon-left="download" size="medium" @click="onDownloadButtonClick"></b-button>
           </b-tooltip>
         </b-navbar-item>
+        <b-navbar-item>
+          <b-tooltip :label="$t('message.helpButtonTooltip')" type="is-light">
+            <b-button icon-left="help" size="medium" :class="viewState.helpPaneEnabled ? 'is-selected': ''" @click="onHelpButtonClick"></b-button>
+          </b-tooltip>
+        </b-navbar-item>
       </template>
       <template #end>
       </template>
@@ -63,6 +69,7 @@ import Diagram from "./data/Diagram";
 import Station from "./data/Station";
 import ViewConfig from "./data/ViewConfig";
 import ViewState from "./data/ViewState";
+import HelpPane from "./components/HelpPane.vue";
 import Stage from "./components/Stage.vue";
 import StationAddTrackButton from "./components/StationAddTrackButton.vue";
 import StationExpandButton from "./components/StationExpandButton.vue";
@@ -75,7 +82,7 @@ import defaultDiagramJson from "./default-diagram";
 
 @Component({
   components: {
-    Stage, StationAddTrackButton, StationExpandButton, StationNameInput, StationRemoveButton, StationRemoveTrackButton, TrackNameInput
+    HelpPane, Stage, StationAddTrackButton, StationExpandButton, StationNameInput, StationRemoveButton, StationRemoveTrackButton, TrackNameInput
   },
 })
 export default class App extends Vue {
@@ -90,16 +97,15 @@ export default class App extends Vue {
   }
 
   mounted(): void {
-    window.addEventListener("resize", this.updateAppSize);
-    this.updateAppSize();
+    const viewPane = document.getElementById("view-pane");
+    if (viewPane) {
+      const resizeObserver = new ResizeObserver(this.updateViewSize);
+      resizeObserver.observe(viewPane);
+    }
 
     this.diagram = Diagram.fromJSON(defaultDiagramJson);
     this.updateY();
 }
-
-  unmounted(): void {
-    window.removeEventListener("resize", this.updateAppSize);
-  }
 
   onStationNameInputStart(): void {
     this.$nextTick(() => ((this.$refs.stationNameInput as Vue).$el as HTMLInputElement).focus());
@@ -143,7 +149,7 @@ export default class App extends Vue {
               });
             }
             this.viewState = new ViewState();
-            this.updateAppSize();
+            this.updateViewSize();
             this.viewState.diagramFileName = file.name;
             this.updateY();
           }
@@ -163,12 +169,15 @@ export default class App extends Vue {
     a.click();
   }
 
-  updateAppSize(): void {
+  onHelpButtonClick(): void {
+    this.viewState.helpPaneEnabled = !this.viewState.helpPaneEnabled;
+  }
+
+  updateViewSize(): void {
     const viewElem = document.getElementById("view-pane");
     if (viewElem) {
       this.viewState.viewWidth = viewElem.clientWidth;
       this.viewState.viewHeight = viewElem.clientHeight;
-      this.viewState.appHeight = document.getElementById("app")?.clientHeight || 0;
     }
   }
 
@@ -224,7 +233,8 @@ html, body, #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
 }
 #view-pane {
-  flex: 1 0 0;
+  flex: 1 1 0;
+  overflow: hidden;
 }
 #stage-pane {
   width: 100% !important;
