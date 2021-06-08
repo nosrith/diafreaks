@@ -99,10 +99,10 @@ export default class TrainPathMarker extends Vue {
     if (this.viewState.editMode && !this.viewState.drawingState) {
       const n = this.trainPathNode;
       if (n.stop.id == n.train.stops[0].id && (n.side == "arr" || n.stop.arrTime == n.stop.depTime)) {
-        this.viewState.drawingState = { trainId: n.train.id, lastStopId: n.stop.id, direction: -1 };
+        this.viewState.drawingState = { train: n.train, lastStop: n.stop, direction: -1 };
         this.viewState.trainSelections[n.train.id].stopRange = null;
       } else if (n.stop.id == n.train.stops[n.train.stops.length - 1].id && (n.side == "dep" || n.stop.arrTime == n.stop.depTime)) {
-        this.viewState.drawingState = { trainId: n.train.id, lastStopId: n.stop.id, direction: 1 };
+        this.viewState.drawingState = { train: n.train, lastStop: n.stop, direction: 1 };
         this.viewState.trainSelections[n.train.id].stopRange = null;
       }
     }

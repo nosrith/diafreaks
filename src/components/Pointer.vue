@@ -58,22 +58,17 @@ export default class TrainPathGroup extends Vue {
   get drawingLineConfig(): unknown {
     const drawingState = this.viewState.drawingState;
     if (drawingState) {  // always true
-      const train = this.diagram.trains[drawingState.trainId];
-      const stop = train.stops.find(s => s.id == drawingState.lastStopId);
-      if (stop) {
-        return {
-          points: [  
-            this.diagram.getXByTime(this.viewState.pointerTime),
-            this.viewState.pointerY,
-            this.diagram.getXByTime(drawingState.direction > 0 ? stop.depTime : stop.arrTime),
-            this.diagram.getYByRelY(this.diagram.stations[stop.stationId].tracks.find(t => t.id == stop.trackId)?.relY ?? 0)
-          ],
-          stroke: this.viewConfig.selectedTrainPathColor,
-          strokeWidth: this.diagram.config.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale,
-        };
-      } else {
-        return {};
-      }
+      const stop = drawingState.lastStop;
+      return {
+        points: [  
+          this.diagram.getXByTime(this.viewState.pointerTime),
+          this.viewState.pointerY,
+          this.diagram.getXByTime(drawingState.direction > 0 ? stop.depTime : stop.arrTime),
+          this.diagram.getYByRelY(this.diagram.stations[stop.stationId].tracks.find(t => t.id == stop.trackId)?.relY ?? 0)
+        ],
+        stroke: this.viewConfig.selectedTrainPathColor,
+        strokeWidth: this.diagram.config.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale,
+      };
     } else {
       return {};
     }

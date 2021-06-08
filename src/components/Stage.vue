@@ -99,8 +99,7 @@ export default class Stage extends Vue {
       }
     }
     if (this.viewState.drawingState) {
-      const train = this.diagram.trains[this.viewState.drawingState.trainId];
-      const lastStop = train.stops.find(s => s.id == this.viewState.drawingState?.lastStopId);
+      const lastStop = this.viewState.drawingState.lastStop;
       if (lastStop) {
         if (this.viewState.drawingState.direction > 0) {
           this.viewState.pointerTime = Math.max(this.viewState.pointerTime, lastStop.depTime);
@@ -115,14 +114,12 @@ export default class Stage extends Vue {
     const stationPointedOnTop = this.stationsInMileageOrder.find(s => 
       Math.abs(this.diagram.getYByRelY(s.topRelY) - y) < Math.max(this.diagram.config.stationLineWidth * 0.5, this.viewConfig.minHitWidth));
     if (stationPointedOnTop) {
-      console.log("top");
       return { station: stationPointedOnTop, track: "top", relY: stationPointedOnTop.topRelY };
     }
 
     const stationPointedOnBottom = this.stationsInMileageOrder.find(s =>
       Math.abs(this.diagram.getYByRelY(s.bottomRelY) - y) < Math.max(this.diagram.config.stationLineWidth * 0.5, this.viewConfig.minHitWidth));
     if (stationPointedOnBottom) {
-      console.log("bottom");
       return { station: stationPointedOnBottom, track: "bottom", relY: stationPointedOnBottom.bottomRelY };
     }
 
@@ -141,9 +138,8 @@ export default class Stage extends Vue {
   onStageClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
     const drawingState = this.viewState.drawingState;
     if (drawingState) {
-      const train = this.diagram.trains[drawingState.trainId];
       if (this.viewState.pointerTargetLine) {
-        const lastStop = train.stops.find(s => s.id == drawingState.lastStopId);
+        const lastStop = drawingState.lastStop;
         if (lastStop) {
           if (drawingState.direction == 0) {
             drawingState.direction = Math.sign(this.viewState.pointerTime - lastStop.arrTime);
@@ -164,16 +160,16 @@ export default class Stage extends Vue {
               depTime: this.viewState.pointerTime
             });
             if (drawingState.direction > 0) {
-              train.stops.push(stop);
+              drawingState.train.stops.push(stop);
             } else {
-              train.stops.splice(0, 0, stop);
+              drawingState.train.stops.splice(0, 0, stop);
             }
-            drawingState.lastStopId = stop.id;
+            drawingState.lastStop = stop;
           }
         }
       } else {
-        if (train.stops.length == 0) {
-          this.$delete(this.diagram.trains, train.id);
+        if (drawingState.train.stops.length == 0) {
+          this.$delete(this.diagram.trains, drawingState.train.id);
         }
         this.viewState.drawingState = null;
       }
@@ -204,7 +200,7 @@ export default class Stage extends Vue {
           });
           this.$set(this.diagram.trains, train.id, train);
           this.viewState.trainSelections = { [train.id]: { trainId: train.id, stopRange: null } };
-          this.viewState.drawingState = { trainId: train.id, lastStopId: stop.id, direction: 0 };
+          this.viewState.drawingState = { train: train, lastStop: stop, direction: 0 };
         }
       } else {
         const relY = this.diagram.getRelYByY(konvaEvent.evt.clientY);

@@ -1,6 +1,7 @@
 import Station from "./Station";
-import { TrainStopRange } from "./Train";
+import Stop from "./Stop";
 import Track from "./Track";
+import Train, { TrainStopRange } from "./Train";
 
 export interface TrainSelectionState {
     trainId: number;
@@ -20,7 +21,7 @@ export default class ViewState {
     pointerTargetLine: { station: Station, track: "top" | "bottom" | Track } | null = null;
     pointerPreciseState: { sx0: number, t0: number } | null = null;
     editMode = true;
-    drawingState: { trainId: number, lastStopId: number, direction: number } | null = null;
+    drawingState: { train: Train, lastStop: Stop, direction: number } | null = null;
     trainPathDragState: { timeShift: number } | null = null;
     stationNameInputTarget: { stationId: number } | null = null;
     trackNameInputTarget: { stationId: number, trackId: number } | null = null;
