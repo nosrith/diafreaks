@@ -110,7 +110,8 @@ export default class TrainPathGroup extends Vue {
           if (prevSE.stop.stationId != se.stop.stationId) {
             const prevStation = this.diagram.stations[prevSE.stop.stationId];
             result.push({ 
-              train: this.train, stop: se.stop, side: "arr", vSide: "station", 
+              train: this.train, stop: se.stop, side: "arr", 
+              vSide: prevStation.mileage < station.mileage ? "top" : "bottom", 
               time, x, 
               y: this.diagram.getYByRelY(prevStation.mileage < station.mileage ? station.topRelY : station.bottomRelY),
               selected: inRange,
@@ -118,7 +119,8 @@ export default class TrainPathGroup extends Vue {
           }
         }
         result.push({
-          train: this.train, stop: se.stop, side: se.side, vSide: "track", 
+          train: this.train, stop: se.stop, side: se.side, 
+          vSide: "track", 
           time, x,
           y: this.diagram.getYByRelY(station.tracks.find(t => t.id == se.stop.trackId)?.relY ?? 0),
           selected: inRange,
@@ -128,7 +130,8 @@ export default class TrainPathGroup extends Vue {
           if (nextSE.stop.stationId != se.stop.stationId) {
             const nextStation = this.diagram.stations[nextSE.stop.stationId];
             result.push({
-              train: this.train, stop: se.stop, side: "dep", vSide: "station",
+              train: this.train, stop: se.stop, side: "dep", 
+              vSide: nextStation.mileage > station.mileage ? "bottom" : "top",
               time: time, x,
               y: this.diagram.getYByRelY(nextStation.mileage > station.mileage ? station.bottomRelY : station.topRelY),
               selected: inRange,
@@ -137,7 +140,7 @@ export default class TrainPathGroup extends Vue {
         }
       } else {
         result.push({ 
-          train: this.train, stop: se.stop, side: se.side, vSide: "station", 
+          train: this.train, stop: se.stop, side: se.side, vSide: "top", 
           time, x, 
           y: this.diagram.getYByRelY(station.topRelY),
           selected: inRange,

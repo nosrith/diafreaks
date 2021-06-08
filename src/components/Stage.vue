@@ -90,7 +90,7 @@ export default class Stage extends Vue {
         const pointerTargetLine = this.findPointerTargetLine(event.clientY);
         if (pointerTargetLine) {
           this.viewState.pointerTargetLine = pointerTargetLine ?? null;
-          this.viewState.pointerY = this.diagram.getYByRelY(pointerTargetLine.track?.relY ?? pointerTargetLine.station.topRelY);
+          this.viewState.pointerY = this.diagram.getYByRelY(pointerTargetLine.relY);
         } else {
           this.viewState.pointerTargetLine = null;
         }
@@ -111,13 +111,19 @@ export default class Stage extends Vue {
     }
   }
 
-  findPointerTargetLine(y: number): { station: Station, track?: Track } | undefined {
-    const pointedStation = this.stationsInMileageOrder.find(s => 
-      Math.min(Math.abs(this.diagram.getYByRelY(s.topRelY) - y), Math.abs(this.diagram.getYByRelY(s.bottomRelY) - y)) < 
-        Math.max(this.diagram.config.stationLineWidth * 0.5, this.viewConfig.minHitWidth)
-    );
-    if (pointedStation) {
-      return { station: pointedStation };
+  findPointerTargetLine(y: number): { station: Station, track: "top" | "bottom" | Track, relY: number } | undefined {
+    const stationPointedOnTop = this.stationsInMileageOrder.find(s => 
+      Math.abs(this.diagram.getYByRelY(s.topRelY) - y) < Math.max(this.diagram.config.stationLineWidth * 0.5, this.viewConfig.minHitWidth));
+    if (stationPointedOnTop) {
+      console.log("top");
+      return { station: stationPointedOnTop, track: "top", relY: stationPointedOnTop.topRelY };
+    }
+
+    const stationPointedOnBottom = this.stationsInMileageOrder.find(s =>
+      Math.abs(this.diagram.getYByRelY(s.bottomRelY) - y) < Math.max(this.diagram.config.stationLineWidth * 0.5, this.viewConfig.minHitWidth));
+    if (stationPointedOnBottom) {
+      console.log("bottom");
+      return { station: stationPointedOnBottom, track: "bottom", relY: stationPointedOnBottom.bottomRelY };
     }
 
     const station = this.stationsInMileageOrder.find(s => 
@@ -127,7 +133,7 @@ export default class Stage extends Vue {
     if (station) {
       const pointedTrack = station.tracks.find(t => Math.abs(this.diagram.getYByRelY(t.relY) - y) < Math.max(this.diagram.config.trackLineWidth * 0.5, this.viewConfig.minHitWidth));
       if (pointedTrack) {
-        return { station, track: pointedTrack };
+        return { station, track: pointedTrack, relY: pointedTrack.relY };
       }
     }
   }
@@ -152,7 +158,8 @@ export default class Stage extends Vue {
             const stop = Stop.fromJSON({ 
               id: this.diagram.genId(), 
               stationId: this.viewState.pointerTargetLine.station.id,
-              trackId: this.viewState.pointerTargetLine.track?.id ?? this.viewState.pointerTargetLine.station.tracks[0].id,
+              trackId: this.viewState.pointerTargetLine.track == "top" || this.viewState.pointerTargetLine.track == "bottom" ?
+                this.viewState.pointerTargetLine.station.tracks[0].id : this.viewState.pointerTargetLine.track.id,
               arrTime: this.viewState.pointerTime,
               depTime: this.viewState.pointerTime
             });
@@ -182,7 +189,7 @@ export default class Stage extends Vue {
       if (konvaEvent.evt.clientX >= this.diagram.config.leftPaneWidth) {
         const targetLine = this.viewState.pointerTargetLine;
         if (targetLine && (targetLine.track || !targetLine.station.expanded)) {
-          const track = targetLine.track ?? targetLine.station.tracks[0];
+          const track = targetLine.track == "top" || targetLine.track == "bottom" ? targetLine.station.tracks[0] : targetLine.track;
           const stop = Stop.fromJSON({
             id: this.diagram.genId(),
             stationId: targetLine.station.id,

@@ -34,7 +34,7 @@ export default class TrainPathMarker extends Vue {
   get labelEnabled(): boolean {
     const n = this.trainPathNode;
     const isLastStop = n.stop.id == n.train.stops[n.train.stops.length - 1].id;
-    return n.vSide == "station" &&
+    return (n.vSide == "top" || n.vSide == "bottom") &&
       ((isLastStop && n.side == "arr") || (!isLastStop && (n.side == "dep" || n.stop.arrTime != n.stop.depTime)));
   }
 
@@ -84,7 +84,9 @@ export default class TrainPathMarker extends Vue {
     const event = konvaEvent.evt;
     if (!this.viewState.pointerPreciseState && !this.viewState.pointerDragging && !this.viewState.drawingState) {
       const station = this.diagram.stations[this.trainPathNode.stop.stationId];
-      const track = this.trainPathNode.vSide == "track" ? station.tracks.find(t => t.id == this.trainPathNode.stop.trackId) : undefined;
+      const track = this.trainPathNode.vSide == "track" ? 
+        (station.tracks.find(t => t.id == this.trainPathNode.stop.trackId) ?? "top") :
+        this.trainPathNode.vSide;
       this.viewState.pointerTargetLine = { station, track };
       this.viewState.pointerScreenX = event.screenX;
       this.viewState.pointerTime = this.trainPathNode.time;

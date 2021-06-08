@@ -5,7 +5,7 @@ export default interface TrainPathNode {
     train: Train;
     stop: Stop;
     side: "arr" | "dep";
-    vSide: "station" | "track";
+    vSide: "top" | "bottom" | "track";
     time: number;
     x: number;
     y: number;
