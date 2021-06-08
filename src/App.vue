@@ -104,6 +104,7 @@ export default class App extends Vue {
     fetch("sample-diagram.json").then(async result => {
       const json = await result.json();
       this.diagram = Diagram.fromJSON(json);
+      this.viewState.diagramFileName = "sample-diagram.json";
       this.updateY();
     });
 }
