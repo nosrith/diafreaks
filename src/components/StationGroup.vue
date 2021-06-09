@@ -124,9 +124,13 @@ export default class StationGroup extends Vue {
 
   onWindowMouseMove(event: MouseEvent): void {
     if (this.dragState) {
-      this.dragState.dragging = true;
-      this.station.mileage = this.dragState.mileage0 + (event.screenY - this.dragState.sy0) / this.diagram.config.yScale;
-      this.$emit("updateY");
+      if (Math.abs(event.screenY - this.dragState.sy0) > 1) {
+        this.dragState.dragging = true;
+      }
+      if (this.dragState.dragging) {
+        this.station.mileage = this.dragState.mileage0 + (event.screenY - this.dragState.sy0) / this.diagram.config.yScale;
+        this.$emit("updateY");
+      }
     }
   }
 
