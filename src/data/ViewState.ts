@@ -21,7 +21,7 @@ export default class ViewState {
     pointerTargetLine: { station: Station, track: "top" | "bottom" | Track } | null = null;
     pointerPreciseState: { sx0: number, t0: number } | null = null;
     editMode = true;
-    drawingState: { train: Train, lastStop: Stop, direction: number } | null = null;
+    drawingState: { train: Train, lastStop: Stop, floating: Stop | "arr" | "dep" | null, direction: number } | null = null;
     trainPathDragState: { timeShift: number } | null = null;
     stationNameInputTarget: { stationId: number } | null = null;
     trackNameInputTarget: { stationId: number, trackId: number } | null = null;

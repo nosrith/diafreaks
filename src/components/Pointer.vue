@@ -1,6 +1,5 @@
 <template>
-  <v-group :config="groupConfig">
-    <v-line v-if="viewState.drawingState" :config="drawingLineConfig"></v-line>
+  <v-group v-if="pointerEnabled">
     <v-rect :config="rectConfig"></v-rect>
     <v-text :config="labelConfig"></v-text>
   </v-group>
@@ -19,10 +18,9 @@ export default class TrainPathGroup extends Vue {
   @InjectReactive() viewState!: ViewState;
   @InjectReactive() diagram!: Diagram;
 
-  get groupConfig(): unknown {
-    return {
-      visible: this.viewState.pointerTargetLine != null && (Object.keys(this.viewState.trainSelections).length == 0 || this.viewState.drawingState != null),
-    };
+  get pointerEnabled(): unknown {
+    return this.viewState.pointerTargetLine != null && 
+      Object.keys(this.viewState.trainSelections).length == 0;
   }
 
   get rectConfig(): unknown {
@@ -52,25 +50,6 @@ export default class TrainPathGroup extends Vue {
       align: "left",
       verticalAlign: "bottom",
       listening: false,
-    }
-  }
-
-  get drawingLineConfig(): unknown {
-    const drawingState = this.viewState.drawingState;
-    if (drawingState) {  // always true
-      const stop = drawingState.lastStop;
-      return {
-        points: [  
-          this.diagram.getXByTime(this.viewState.pointerTime),
-          this.viewState.pointerY,
-          this.diagram.getXByTime(drawingState.direction > 0 ? stop.depTime : stop.arrTime),
-          this.diagram.getYByRelY(this.diagram.stations[stop.stationId].tracks.find(t => t.id == stop.trackId)?.relY ?? 0)
-        ],
-        stroke: this.viewConfig.selectedTrainPathColor,
-        strokeWidth: this.diagram.config.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale,
-      };
-    } else {
-      return {};
     }
   }
 }

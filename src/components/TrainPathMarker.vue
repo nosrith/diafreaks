@@ -64,7 +64,8 @@ export default class TrainPathMarker extends Vue {
         const prevSta = this.diagram.stations[prevSE.stop.stationId];
         const thisRelY = prevSta.mileage < thisSta.mileage ? thisSta.topRelY : thisSta.bottomRelY;
         const prevRelY = prevSta.mileage < thisSta.mileage ? prevSta.bottomRelY : prevSta.topRelY;
-        const x = -this.viewConfig.markerLabelLineHeight *
+        const x = thisRelY == prevRelY ? 0:
+          -this.viewConfig.markerLabelLineHeight *
           ((thisTime - prevSE.time) * this.diagram.config.xScale) /
           Math.abs(thisRelY - prevRelY);
         return {
@@ -99,10 +100,10 @@ export default class TrainPathMarker extends Vue {
     if (this.viewState.editMode && !this.viewState.drawingState) {
       const n = this.trainPathNode;
       if (n.stop.id == n.train.stops[0].id && (n.side == "arr" || n.stop.arrTime == n.stop.depTime)) {
-        this.viewState.drawingState = { train: n.train, lastStop: n.stop, direction: -1 };
+        this.viewState.drawingState = { train: n.train, lastStop: n.stop, floating: null, direction: -1 };
         this.viewState.trainSelections[n.train.id].stopRange = null;
       } else if (n.stop.id == n.train.stops[n.train.stops.length - 1].id && (n.side == "dep" || n.stop.arrTime == n.stop.depTime)) {
-        this.viewState.drawingState = { train: n.train, lastStop: n.stop, direction: 1 };
+        this.viewState.drawingState = { train: n.train, lastStop: n.stop, floating: null, direction: 1 };
         this.viewState.trainSelections[n.train.id].stopRange = null;
       }
     }
