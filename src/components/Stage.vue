@@ -254,11 +254,16 @@ export default class Stage extends Vue {
 
   onWindowMouseMove(event: MouseEvent): void {
     if (this.stageDragState) {
-      this.stageDragState.dragged = true;
-      this.diagram.config.scrollX = this.stageDragState.scrollX0 - (event.screenX - this.stageDragState.screenX0);
-      this.diagram.config.scrollY = 
-        Math.max(0, Math.min(this.viewState.maxRelY + this.diagram.config.topPaneHeight - this.viewState.viewHeight, 
-          this.stageDragState.scrollY0 - (event.screenY - this.stageDragState.screenY0)));
+      if (Math.hypot(event.screenX - this.stageDragState.screenX0, event.screenY - this.stageDragState.screenY0) > 1) {
+        this.stageDragState.dragged = true;
+      }
+      if (this.stageDragState.dragged) {
+        this.stageDragState.dragged = true;
+        this.diagram.config.scrollX = this.stageDragState.scrollX0 - (event.screenX - this.stageDragState.screenX0);
+        this.diagram.config.scrollY = 
+          Math.max(0, Math.min(this.viewState.maxRelY + this.diagram.config.topPaneHeight - this.viewState.viewHeight, 
+            this.stageDragState.scrollY0 - (event.screenY - this.stageDragState.screenY0)));
+      }
     }
   }
 
