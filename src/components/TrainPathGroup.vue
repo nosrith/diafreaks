@@ -37,7 +37,8 @@ export default class TrainPathGroup extends Vue {
     y0: number,
     minTimeShift: number,
     maxTimeShift: number,
-    targetStopEvents: TrainStopEvent[] | null
+    targetStopEvents: TrainStopEvent[] | null,
+    targetStop: Stop | null,
   } | null = null;
 
   get regularTrainPathConfig(): unknown {
@@ -328,6 +329,9 @@ export default class TrainPathGroup extends Vue {
       }
     }
 
+    const targetTime = this.diagram.getTimeByX(konvaEvent.evt.clientX);
+    const targetStop = this.train.stops.find(s => s.arrTime <= targetTime && s.depTime >= targetTime);
+
     const firstNode = this.selectedTrainPathNodes[0];
     this.dragState = { 
       t0: firstNode.time, 
@@ -335,7 +339,8 @@ export default class TrainPathGroup extends Vue {
       y0: firstNode.y,
       minTimeShift: minTimeShift,
       maxTimeShift: maxTimeShift,
-      targetStopEvents: null
+      targetStopEvents: null,
+      targetStop: targetStop ?? null
     };
     this.viewState.trainPathDragState = {
       timeShift: 0
@@ -364,7 +369,8 @@ export default class TrainPathGroup extends Vue {
       maxTimeShift: nextSE ? nextSE.time - node.time : 86400,
       targetStopEvents: node.stop.arrTime == node.stop.depTime ?
         [ { stop: node.stop, side: "arr", time: node.stop.arrTime }, { stop: node.stop, side: "dep", time: node.stop.depTime } ] :
-        [ node ]
+        [ node ],
+      targetStop: node.stop
     };
     this.viewState.trainPathDragState = {
       timeShift: 0
@@ -384,6 +390,14 @@ export default class TrainPathGroup extends Vue {
       }
       this.viewState.trainPathDragState.timeShift = 
         Math.min(this.dragState.maxTimeShift, Math.max(this.dragState.minTimeShift, this.viewState.pointerTime - this.dragState.t0));
+      if (this.dragState.targetStop) {
+        const mouseRelY = this.diagram.getRelYByY(event.clientY);
+        const targetStation = this.diagram.stations[this.dragState.targetStop.stationId];
+        const mouseTrack = targetStation.tracks.find(t => Math.abs(t.relY - mouseRelY) < this.viewConfig.minHitWidth);
+        if (mouseTrack) {
+          this.dragState.targetStop.trackId = mouseTrack.id;
+        }
+      }
     }
   }
 
