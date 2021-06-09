@@ -181,34 +181,6 @@ export default class Stage extends Vue {
     const drawingState = this.viewState.drawingState;
     if (drawingState) {
       if (this.viewState.pointerTargetLine) {
-        // const lastStop = drawingState.lastStop;
-        // if (lastStop) {
-        //   if (drawingState.direction == 0) {
-        //     drawingState.direction = Math.sign(this.viewState.pointerTime - lastStop.arrTime);
-        //   }
-        //   if (this.viewState.pointerTargetLine.station.id == lastStop.stationId) {
-        //     if (drawingState.direction > 0) {
-        //       lastStop.depTime = this.viewState.pointerTime;
-        //     } else {
-        //       lastStop.arrTime = this.viewState.pointerTime;
-        //     }
-        //   } else {
-        //     const stop = Stop.fromJSON({ 
-        //       id: this.diagram.genId(), 
-        //       stationId: this.viewState.pointerTargetLine.station.id,
-        //       trackId: this.viewState.pointerTargetLine.track == "top" || this.viewState.pointerTargetLine.track == "bottom" ?
-        //         this.viewState.pointerTargetLine.station.tracks[0].id : this.viewState.pointerTargetLine.track.id,
-        //       arrTime: this.viewState.pointerTime,
-        //       depTime: this.viewState.pointerTime
-        //     });
-        //     if (drawingState.direction > 0) {
-        //       drawingState.train.stops.push(stop);
-        //     } else {
-        //       drawingState.train.stops.splice(0, 0, stop);
-        //     }
-        //     drawingState.lastStop = stop;
-        //   }
-        // }
         if (drawingState.direction == 0) {
           drawingState.direction = Math.sign(this.viewState.pointerTime - drawingState.lastStop.arrTime);
         }
