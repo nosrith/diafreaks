@@ -85,6 +85,10 @@ export default class Diagram {
         return ++this.maxId;
     }
 
+    releaseId(id: number) {
+        if (id == this.maxId) --this.maxId;
+    }
+
     toJSON(): unknown {
         return {
             config: this.config,

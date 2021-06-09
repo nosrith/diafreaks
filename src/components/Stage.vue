@@ -114,6 +114,7 @@ export default class Stage extends Vue {
           drawingState.lastStop.depTime = drawingState.lastStop.arrTime;
         } else {
           drawingState.train.stops.splice(drawingState.train.stops.indexOf(drawingState.floating), 1);
+          this.diagram.releaseId(drawingState.floating.id);
         }
         drawingState.floating = null;
       }
