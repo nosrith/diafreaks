@@ -33,9 +33,10 @@ export default class TrainPathMarker extends Vue {
 
   get labelEnabled(): boolean {
     const n = this.trainPathNode;
+    const station = this.diagram.stations[n.stop.stationId];
     const isLastStop = n.stop.id == n.train.stops[n.train.stops.length - 1].id;
-    return (n.vSide == "top" || n.vSide == "bottom") &&
-      ((isLastStop && n.side == "arr") || (!isLastStop && (n.side == "dep" || n.stop.arrTime != n.stop.depTime)));
+    return (station.expanded ? n.vSide == "track" : n.vSide != "track") &&
+      (n.stop.arrTime != n.stop.depTime || (!isLastStop &&  n.side == "dep") || (isLastStop && n.side == "arr"));
   }
 
   get labelConfig(): unknown {
@@ -56,7 +57,7 @@ export default class TrainPathMarker extends Vue {
   }
 
   getLabelPosition(): { x: number, y: number } {
-    if (this.trainPathNode.side == "arr") {
+    if (this.trainPathNode.side == "arr" && this.trainPathNode.vSide != "track") {
       const prevSE = this.trainPathNode.train.getPreviousStopEvent(this.trainPathNode.stop.id, "arr");
       if (prevSE) {
         const thisTime = this.trainPathNode.side  == "arr" ? this.trainPathNode.stop.arrTime : this.trainPathNode.stop.depTime;
@@ -77,7 +78,7 @@ export default class TrainPathMarker extends Vue {
     const dir = this.diagram.getTrainPathDirection(this.trainPathNode.train.id, this.trainPathNode.stop.id, this.trainPathNode.side);
     return {
       x: 0,
-      y: dir < 0 || (dir == 0 && this.trainPathNode.side == "arr") ? 0 : this.viewConfig.markerLabelLineHeight
+      y: dir <= 0 ? 0 : this.viewConfig.markerLabelLineHeight,
     };
   }
 
