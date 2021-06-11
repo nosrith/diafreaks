@@ -106,6 +106,7 @@ export default class TrainPathMarker extends Vue {
             train: n.train,
             lastStop: n.stop,
             direction: -1,
+            stableEnd: { stopId: n.stop.id, side: n.side },
             floating: null
           };
           this.viewState.trainSelections[n.train.id].stopRange = null;
@@ -114,6 +115,7 @@ export default class TrainPathMarker extends Vue {
             train: n.train,
             lastStop: n.stop,
             direction: 1,
+            stableEnd: { stopId: n.stop.id, side: n.side },
             floating: null
           };
           this.viewState.trainSelections[n.train.id].stopRange = null;

@@ -214,7 +214,7 @@ export default class Stage extends Vue {
           this.$delete(this.diagram.trains, drawingState.train.id);
           this.viewState.drawingState = null;
         } else if (drawingState.direction > 0) {
-          if (drawingState.lastStop.arrTime == drawingState.lastStop.depTime) {
+          if (drawingState.lastStop.arrTime == drawingState.lastStop.depTime && !(drawingState.stableEnd && drawingState.stableEnd.stopId == drawingState.lastStop.id && drawingState.stableEnd.side == "arr")) {
             drawingState.train.stops.pop();
             if (drawingState.train.stops.length == 0) {
               this.$delete(this.diagram.trains, drawingState.train.id);
@@ -222,11 +222,11 @@ export default class Stage extends Vue {
             } else {
               drawingState.lastStop = drawingState.train.stops[drawingState.train.stops.length - 1];
             }
-          } else {
+          } else if (!(drawingState.stableEnd && drawingState.stableEnd.stopId == drawingState.lastStop.id && drawingState.stableEnd.side == "dep")) {
             drawingState.lastStop.depTime = drawingState.lastStop.arrTime;
           }
         } else {
-          if (drawingState.lastStop.arrTime == drawingState.lastStop.depTime) {
+          if (drawingState.lastStop.arrTime == drawingState.lastStop.depTime && !(drawingState.stableEnd && drawingState.stableEnd.stopId == drawingState.lastStop.id && drawingState.stableEnd.side == "dep")) {
             drawingState.train.stops.shift();
             if (drawingState.train.stops.length == 0) {
               this.$delete(this.diagram.trains, drawingState.train.id);
@@ -234,7 +234,7 @@ export default class Stage extends Vue {
             } else {
               drawingState.lastStop = drawingState.train.stops[0];
             }
-          } else {
+          } else if (!(drawingState.stableEnd && drawingState.stableEnd.stopId == drawingState.lastStop.id && drawingState.stableEnd.side == "arr")) {
             drawingState.lastStop.arrTime = drawingState.lastStop.depTime;
           }
         }
@@ -280,6 +280,7 @@ export default class Stage extends Vue {
             train: this.diagram.trains[train.id],
             lastStop: this.diagram.trains[train.id].stops[0],
             direction: 0,
+            stableEnd: null,
             floating: null
           };
         }

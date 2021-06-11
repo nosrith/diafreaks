@@ -25,6 +25,7 @@ export default class ViewState {
         train: Train,
         lastStop: Stop,
         direction: number,
+        stableEnd: { stopId: number, side: "arr" | "dep" } | null,
         floating: Stop | "arr" | "dep" | null
     } | null = null;
     trainPathDragState: { timeShift: number } | null = null;
