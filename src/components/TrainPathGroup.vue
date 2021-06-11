@@ -3,7 +3,7 @@
     <v-line :config="regularTrainPathConfig" @click="onTrainPathClick"></v-line>
     <template v-if="selectedTrainPathEnabled">
       <v-line :config="selectedTrainPathConfig" @click="onSelectedTrainPathClick" @dblclick="onSelectedTrainPathDoubleClick" @mousedown="onSelectedTrainPathMouseDown"></v-line>
-      <train-path-marker v-for="(n, index) in selectedTrainPathNodes" :key="`train-path-${train.id}-marker-${index}`" :trainPathNode="n" @click="onMarkerClick" @mousedown="onMarkerMouseDown"></train-path-marker>
+      <train-path-marker v-for="n in selectedTrainPathNodes" :key="`marker-${train.id}-${n.stop.id}-${n.side}-${n.vSide}`" :trainPathNode="n" @click="onMarkerClick" @mousedown="onMarkerMouseDown"></train-path-marker>
     </template>
   </v-group>
 </template>
