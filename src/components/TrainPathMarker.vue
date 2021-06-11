@@ -98,14 +98,29 @@ export default class TrainPathMarker extends Vue {
   }
 
   onRectDoubleClick(): void {
-    if (this.viewState.editMode && !this.viewState.drawingState) {
-      const n = this.trainPathNode;
-      if (n.stop.id == n.train.stops[0].id && (n.side == "arr" || n.stop.arrTime == n.stop.depTime)) {
-        this.viewState.drawingState = { train: n.train, lastStop: n.stop, floating: null, direction: -1 };
-        this.viewState.trainSelections[n.train.id].stopRange = null;
-      } else if (n.stop.id == n.train.stops[n.train.stops.length - 1].id && (n.side == "dep" || n.stop.arrTime == n.stop.depTime)) {
-        this.viewState.drawingState = { train: n.train, lastStop: n.stop, floating: null, direction: 1 };
-        this.viewState.trainSelections[n.train.id].stopRange = null;
+    if (this.viewState.editMode) {
+      if (!this.viewState.drawingState) {
+        const n = this.trainPathNode;
+        if (n.stop.id == n.train.stops[0].id && (n.side == "arr" || n.stop.arrTime == n.stop.depTime)) {
+          this.viewState.drawingState = {
+            train: n.train,
+            lastStop: n.stop,
+            direction: -1,
+            floating: null
+          };
+          this.viewState.trainSelections[n.train.id].stopRange = null;
+        } else if (n.stop.id == n.train.stops[n.train.stops.length - 1].id && (n.side == "dep" || n.stop.arrTime == n.stop.depTime)) {
+          this.viewState.drawingState = {
+            train: n.train,
+            lastStop: n.stop,
+            direction: 1,
+            floating: null
+          };
+          this.viewState.trainSelections[n.train.id].stopRange = null;
+        }
+      } else {
+        this.viewState.drawingState = null;
+        this.viewState.trainSelections = {};
       }
     }
   }
