@@ -2,40 +2,43 @@
   <div id="app">
     <diagram-view id="diagram-view" :diagram="diagram" :viewConfig="viewConfig" :editMode="viewConfig.editMode"></diagram-view>
     <help-pane id="help-pane" v-if="helpPaneVisible"></help-pane>
-    <b-navbar id="nav-pane" transparent>
-      <template #brand>
-        <b-navbar-item><img src="@/assets/logo.png"></b-navbar-item>
-      </template>
-      <template #start>
-        <b-navbar-item>
-          <b-tooltip :label="$t('message.editButtonTooltip')" type="is-light">
-            <b-button icon-left="pencil-outline" size="medium" :class="viewConfig.editMode ? 'is-selected': ''" @click="onEditButtonClick"></b-button>
-          </b-tooltip>
-        </b-navbar-item>
-        <b-navbar-item>
-          <b-tooltip :label="$t('message.vanishButtonTooltip')" type="is-light">
-            <b-button icon-left="vanish" size="medium" @click="onVanishButtonClick"></b-button>
-          </b-tooltip>
-        </b-navbar-item>
-        <b-navbar-item>
-          <b-tooltip :label="$t('message.uploadButtonTooltip')" type="is-light">
-            <b-button icon-left="upload" size="medium" @click="onUploadButtonClick"></b-button>
-          </b-tooltip>
-        </b-navbar-item>
-        <b-navbar-item>
-          <b-tooltip :label="$t('message.downloadButtonTooltip')" type="is-light">
-            <b-button icon-left="download" size="medium" @click="onDownloadButtonClick"></b-button>
-          </b-tooltip>
-        </b-navbar-item>
-      </template>
-      <template #end>
-        <b-navbar-item>
-          <b-tooltip :label="$t('message.helpButtonTooltip')" type="is-light">
-            <b-button icon-left="help" size="medium" :class="helpPaneVisible ? 'is-selected': ''" @click="onHelpButtonClick"></b-button>
-          </b-tooltip>
-        </b-navbar-item>
-      </template>
-    </b-navbar>
+    <div id="nav-pane">
+      <span id="nav-pane-logo" class="nav-pane-item">
+        <img src="@/assets/logo.png">
+      </span>
+      <span id="nav-pane-buttons">
+        <span id="nav-pane-buttons-left">
+          <span class="nav-pane-item">
+            <b-tooltip :label="$t('message.editButtonTooltip')" type="is-light">
+              <b-button icon-left="pencil-outline" size="medium" :class="viewConfig.editMode ? 'is-selected': ''" @click="onEditButtonClick"></b-button>
+            </b-tooltip>
+          </span>
+          <span class="nav-pane-item">
+            <b-tooltip :label="$t('message.vanishButtonTooltip')" type="is-light">
+              <b-button icon-left="vanish" size="medium" @click="onVanishButtonClick"></b-button>
+            </b-tooltip>
+          </span>
+          <span class="nav-pane-item">
+            <b-tooltip :label="$t('message.uploadButtonTooltip')" type="is-light">
+              <b-button icon-left="upload" size="medium" @click="onUploadButtonClick"></b-button>
+            </b-tooltip>
+          </span>
+          <span class="nav-pane-item">
+            <b-tooltip :label="$t('message.downloadButtonTooltip')" type="is-light">
+              <b-button icon-left="download" size="medium" @click="onDownloadButtonClick"></b-button>
+            </b-tooltip>
+          </span>
+        </span>
+        <span id="nav-pane-buttons-spacer"></span>
+        <span id="nav-pane-buttons-right">
+          <span class="nav-pane-item">
+            <b-tooltip :label="$t('message.helpButtonTooltip')" type="is-light">
+              <b-button icon-left="help" size="medium" :class="helpPaneVisible ? 'is-selected': ''" @click="onHelpButtonClick"></b-button>
+            </b-tooltip>
+          </span>
+        </span>
+      </span>
+    </div>
   </div>
 </template>
 
@@ -143,6 +146,29 @@ html, body, #app {
 }
 #nav-pane {
   flex: 0 0 auto;
+  display: flex;
+  flex-flow: row wrap;
+}
+#nav-pane-logo {
+  flex: 0 0 auto;
+}
+#nav-pane-buttons {
+  flex: 1 0 0;
+  display: flex;
+  flex-flow: row nowrap;
+}
+#nav-pane-buttons-left {
+  flex: 0 0 auto;
+}
+#nav-pane-buttons-spacer {
+  flex: 1 0 0;
+}
+#nav-pane-buttons-right {
+  flex: 0 0 auto;
+}
+#nav-pane .nav-pane-item {
+  display: inline-block;
+  padding: 0.5rem;
 }
 #nav-pane a.navbar-item:not(:focus), #nav-pane a.navbar-item:not(:hover) {
   background-color: initial !important;
