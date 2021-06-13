@@ -205,7 +205,7 @@ export default class TrainPathGroup extends Vue {
       const nearestStev = this.getNearestStopEvent(targetTime);
       if (!(nearestStation == nearestStev.station && (nearestStev.prev?.track == nearestStev.track || nearestStev.next?.track == nearestStev.track))) {
         const index = this.train.stevs.findIndex(s => s.time > targetTime);
-        const newStev = this.train.addNewStopEvent(nearestStev.station.tracks[0], targetTime, index);
+        const newStev = this.train.addNewStopEvent(nearestStation.tracks[0], targetTime, index);
         this.viewState.trainSelections = { 
           [this.train.id]: {
             trainId: this.train.id,
