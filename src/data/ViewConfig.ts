@@ -17,4 +17,5 @@ export default class ViewConfig {
     markerLabelFontSize = 12;
     markerLabelLineHeight = 16;
     wheelScale = 1;
+    editMode = true;
 }

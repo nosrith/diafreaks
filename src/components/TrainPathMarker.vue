@@ -91,7 +91,7 @@ export default class TrainPathMarker extends Vue {
   }
 
   onRectDoubleClick(): void {
-    if (this.viewState.editMode) {
+    if (this.viewConfig.editMode) {
       if (!this.viewState.drawingState) {
         const n = this.trainPathNode;
         if (!n.stev.prev) {

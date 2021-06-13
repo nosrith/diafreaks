@@ -231,7 +231,7 @@ export default class TrainPathGroup extends Vue {
   }
 
   onSelectedTrainPathDoubleClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    if (this.viewState.editMode && !this.viewState.drawingState) {
+    if (this.viewConfig.editMode && !this.viewState.drawingState) {
       const targetTime = this.viewState.pointerTime;
       const nearestStation = this.getNearestStation(konvaEvent.evt.clientY);
       const nearestStev = this.getNearestStopEvent(targetTime);
@@ -279,7 +279,7 @@ export default class TrainPathGroup extends Vue {
   }
 
   onSelectedTrainPathMouseDown(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    if (!this.viewState.editMode) {
+    if (!this.viewConfig.editMode) {
       return;
     }
 
@@ -321,7 +321,7 @@ export default class TrainPathGroup extends Vue {
   }
 
   onMarkerMouseDown(konvaEvent: KonvaEventObject<MouseEvent>, node: TrainPathNode): void {
-    if (!this.viewState.editMode) {
+    if (!this.viewConfig.editMode) {
       return;
     }
 

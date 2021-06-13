@@ -46,7 +46,7 @@ export default class Train {
         const stops: { stationId: number, trackId: number, arrTime: number, depTime: number }[] = [];
         for (const stev of this.stevs) {
             const lastStop = stops[stops.length - 1];
-            if (lastStop.trackId == stev.track.id && lastStop.arrTime == lastStop.depTime) {
+            if (lastStop && lastStop.trackId == stev.track.id && lastStop.arrTime == lastStop.depTime) {
                 lastStop.depTime = stev.time;
             } else {
                 stops.push({ 

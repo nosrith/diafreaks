@@ -203,7 +203,7 @@ export default class Stage extends Vue {
       }
       this.viewState.drawingState = null;
       this.viewState.trainSelections = {};
-    } else if (konvaEvent.target == konvaEvent.currentTarget && this.viewState.editMode) {
+    } else if (konvaEvent.target == konvaEvent.currentTarget && this.viewConfig.editMode) {
       if (konvaEvent.evt.clientX >= this.diagram.config.leftPaneWidth) {
         const targetLine = this.viewState.pointerTargetLine;
         if (targetLine && (targetLine.track || !targetLine.station.expanded)) {
@@ -249,7 +249,7 @@ export default class Stage extends Vue {
         this.stageDragState.dragged = true;
         this.diagram.config.scrollX = this.stageDragState.scrollX0 - (event.screenX - this.stageDragState.screenX0);
         this.diagram.config.scrollY = 
-          Math.max(0, Math.min(this.viewState.maxRelY + this.diagram.config.topPaneHeight - this.viewState.viewHeight, 
+          Math.max(0, Math.min(this.diagram.maxRelY + this.diagram.config.topPaneHeight - this.viewState.viewHeight, 
             this.stageDragState.scrollY0 - (event.screenY - this.stageDragState.screenY0)));
       }
     }
@@ -266,7 +266,7 @@ export default class Stage extends Vue {
     const f = Math.pow(2, -konvaEvent.evt.deltaY * this.viewConfig.wheelScale * 0.001);
     this.diagram.config.scrollX += (f - 1) * (konvaEvent.evt.clientX - this.diagram.config.leftPaneWidth + this.diagram.config.scrollX);
     this.diagram.config.scrollY = 
-      Math.max(0, Math.min(this.viewState.maxRelY + this.diagram.config.topPaneHeight - this.viewState.viewHeight,
+      Math.max(0, Math.min(this.diagram.maxRelY + this.diagram.config.topPaneHeight - this.viewState.viewHeight,
       this.diagram.config.scrollY + (f - 1) * (konvaEvent.evt.clientY - this.diagram.config.topPaneHeight + this.diagram.config.scrollY)));
     this.diagram.config.xScale *= f;
     this.diagram.config.yScale *= f;

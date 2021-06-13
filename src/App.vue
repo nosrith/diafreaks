@@ -1,31 +1,7 @@
 <template>
   <div id="app">
-    <div id="view-pane">
-      <stage id="stage-pane" @updateY="updateY" @stationNameInputStart="onStationNameInputStart" @trackNameInputStart="onTrackNameInputStart"></stage>
-      <div id="ui-pane">
-        <station-name-input ref="stationNameInput"></station-name-input>
-        <track-name-input ref="trackNameInput"></track-name-input>
-        <station-expand-button
-          v-for="s in Object.values(diagram.stations)" :key="`station-expand-button-${s.id}`" 
-          :station="s" 
-          @updateY="updateY" @trackNameInputStart="onTrackNameInputStart"></station-expand-button>
-        <station-remove-button
-          v-for="s in Object.values(diagram.stations)" :key="`station-remove-button-${s.id}`"
-          :station="s"
-          @updateY="updateY"></station-remove-button>
-        <station-add-track-button
-          v-for="s in Object.values(diagram.stations)" :key="`station-add-track-button-${s.id}`" 
-          :station="s" 
-          @updateY="updateY" @trackNameInputStart="onTrackNameInputStart"></station-add-track-button>
-        <template v-for="s in Object.values(diagram.stations)">
-          <station-remove-track-button
-            v-for="t in s.tracks" :key="`station-remove-track-button-${s.id}-${t.id}`"
-            :station="s" :track="t"
-            @updateY="updateY"></station-remove-track-button>
-        </template>
-      </div>
-    </div>
-    <help-pane id="help-pane" v-if="viewState.helpPaneEnabled"></help-pane>
+    <diagram-view id="diagram-view" :diagram="diagram" :viewConfig="viewConfig" :editMode="editMode"></diagram-view>
+    <help-pane id="help-pane" v-if="helpPaneVisible"></help-pane>
     <b-navbar id="nav-pane" transparent>
       <template #brand>
         <b-navbar-item><img src="@/assets/logo.png"></b-navbar-item>
@@ -33,7 +9,7 @@
       <template #start>
         <b-navbar-item>
           <b-tooltip :label="$t('message.editButtonTooltip')" type="is-light">
-            <b-button icon-left="pencil-outline" size="medium" :class="viewState.editMode ? 'is-selected': ''" @click="onEditButtonClick"></b-button>
+            <b-button icon-left="pencil-outline" size="medium" :class="viewConfig.editMode ? 'is-selected': ''" @click="onEditButtonClick"></b-button>
           </b-tooltip>
         </b-navbar-item>
         <b-navbar-item>
@@ -55,7 +31,7 @@
       <template #end>
         <b-navbar-item>
           <b-tooltip :label="$t('message.helpButtonTooltip')" type="is-light">
-            <b-button icon-left="help" size="medium" :class="viewState.helpPaneEnabled ? 'is-selected': ''" @click="onHelpButtonClick"></b-button>
+            <b-button icon-left="help" size="medium" :class="helpPaneVisible ? 'is-selected': ''" @click="onHelpButtonClick"></b-button>
           </b-tooltip>
         </b-navbar-item>
       </template>
@@ -64,61 +40,33 @@
 </template>
 
 <script lang="ts">
-import { Component, ProvideReactive, Vue } from "vue-property-decorator";
+import { Component, Vue } from "vue-property-decorator";
 import Diagram from "./data/Diagram";
-import Station from "./data/Station";
 import ViewConfig from "./data/ViewConfig";
-import ViewState from "./data/ViewState";
+import DiagramView from "./components/DiagramView.vue";
 import HelpPane from "./components/HelpPane.vue";
-import Stage from "./components/Stage.vue";
-import StationAddTrackButton from "./components/StationAddTrackButton.vue";
-import StationExpandButton from "./components/StationExpandButton.vue";
-import StationNameInput from "./components/StationNameInput.vue";
-import StationRemoveButton from "./components/StationRemoveButton.vue";
-import StationRemoveTrackButton from "./components/StationRemoveTrackButton.vue";
-import TrackNameInput from "./components/TrackNameInput.vue";
 
 @Component({
   components: {
-    HelpPane, Stage, StationAddTrackButton, StationExpandButton, StationNameInput, StationRemoveButton, StationRemoveTrackButton, TrackNameInput
+    DiagramView, HelpPane 
   },
 })
 export default class App extends Vue {
-  @ProvideReactive() viewConfig = new ViewConfig();
-  @ProvideReactive() viewState = new ViewState();
-  @ProvideReactive() diagram: Diagram = Diagram.fromJSON({ stations: [], trains: [] });
-
-  file: File | null = null;
-
-  get stationsInMileageOrder(): Station[] {
-    return this.diagram.getStationsInMileageOrder();
-  }
+  diagramFileName = "diagram.json";
+  diagram = Diagram.fromJSON({ stations: [], trains: [] });
+  viewConfig = new ViewConfig();
+  helpPaneVisible = false;
 
   mounted(): void {
-    const viewPane = document.getElementById("view-pane");
-    if (viewPane) {
-      const resizeObserver = new ResizeObserver(this.updateViewSize);
-      resizeObserver.observe(viewPane);
-    }
-
     fetch("sample-diagram.json").then(async result => {
       const json = await result.json();
       this.diagram = Diagram.fromJSON(json);
-      this.viewState.diagramFileName = "sample-diagram.json";
-      this.updateY();
+      this.diagramFileName = "sample-diagram.json";
     });
-}
-
-  onStationNameInputStart(): void {
-    this.$nextTick(() => ((this.$refs.stationNameInput as Vue).$el as HTMLInputElement).focus());
-  }
-
-  onTrackNameInputStart(): void {
-    this.$nextTick(() => ((this.$refs.trackNameInput as Vue).$el as HTMLInputElement).focus());
   }
 
   onEditButtonClick(): void {
-    this.viewState.editMode = !this.viewState.editMode;    
+    this.viewConfig.editMode = !this.viewConfig.editMode;
   }
 
   onVanishButtonClick(): void {
@@ -141,19 +89,16 @@ export default class App extends Vue {
         reader.readAsText(file);
         reader.onload = () => {
           if (typeof(reader.result) == "string") {
-            const data = JSON.parse(reader.result);
             try {
+              const data = JSON.parse(reader.result);
               this.diagram = Diagram.fromJSON(data);
+              this.diagramFileName = file.name;
             } catch (e) {
               this.$buefy.notification.open({
                 type: "is-danger",
                 message: `${this.$t("message.failedToLoadJSON").toString()}<br>${file.name}`,
               });
             }
-            this.viewState = new ViewState();
-            this.updateViewSize();
-            this.viewState.diagramFileName = file.name;
-            this.updateY();
           }
         };
       }
@@ -167,52 +112,12 @@ export default class App extends Vue {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = this.viewState.diagramFileName;
+    a.download = this.diagramFileName;
     a.click();
   }
 
   onHelpButtonClick(): void {
-    this.viewState.helpPaneEnabled = !this.viewState.helpPaneEnabled;
-  }
-
-  updateViewSize(): void {
-    const viewElem = document.getElementById("view-pane");
-    if (viewElem) {
-      this.viewState.viewWidth = viewElem.clientWidth;
-      this.viewState.viewHeight = viewElem.clientHeight;
-    }
-  }
-
-  updateY(): void {
-    const stations = this.stationsInMileageOrder;
-    if (stations.length == 0) {
-      return;
-    }
-
-    const initialMileage = stations[0].mileage;
-    for (const s of stations) {
-      s.mileage = s.mileage - initialMileage;
-    }
-
-    let y = this.diagram.config.plotPaneVerticalPadding;
-    let lastMileage = 0;
-    for (const s of stations) {
-      y += (s.mileage - lastMileage) * this.diagram.config.yScale;
-      s.topRelY = y;
-      if (s.expanded) {
-        s.tracks.forEach((t, i) => {
-          t.relY = y + (i + 1) * this.diagram.config.trackLineSpan;
-        });
-        s.bottomRelY = y + (s.tracks.length + 1) * this.diagram.config.trackLineSpan;
-        y += (s.tracks.length + 1) * this.diagram.config.trackLineSpan;
-      } else {
-        Object.values(s.tracks).forEach(t => t.relY = y);
-        s.bottomRelY = y;
-      }
-      lastMileage = s.mileage;
-    }
-
-    this.viewState.maxRelY = stations[stations.length - 1].bottomRelY + this.diagram.config.plotPaneVerticalPadding;
+    this.helpPaneVisible = !this.helpPaneVisible;
   }
 }
 </script>
@@ -233,30 +138,8 @@ html, body, #app {
   flex-direction: column;
   font-family: Avenir, Helvetica, Arial, sans-serif;
 }
-#view-pane {
+#diagram-view {
   flex: 1 1 0;
-  overflow: hidden;
-}
-#stage-pane {
-  width: 100% !important;
-  height: 100% !important;
-}
-#ui-pane {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  overflow: hidden;
-}
-#ui-pane > * {
-  position: absolute;
-  pointer-events: initial;
-}
-#ui-pane span.icon {
-  cursor: pointer;
-  overflow: hidden;
 }
 #nav-pane {
   flex: 0 0 auto;

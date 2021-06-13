@@ -8,8 +8,9 @@ export default class Diagram {
         public config: DiagramConfig,
         public stations: { [id: number]: Station },
         public trains: { [id: number]: Train },
-        public maxId: number,
     ) {}
+    maxId = 0;
+    maxRelY = 0;
     
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
     static fromJSON(o: any): Diagram {
@@ -20,6 +21,7 @@ export default class Diagram {
         const config = DiagramConfig.fromJSON(o.config || {});
         const stations: { [id: number]: Station } = Object.fromEntries(Object.values(o.stations).map((s: any) => [ s.id, Station.fromJSON(s) ]));
         const trains: { [id: number]: Train } = Object.fromEntries(Object.values(o.trains).map((t: any) => [ t.id, Train.fromJSON(t, stations) ]));
+        const diagram = new Diagram(config, stations, trains);
 
         let maxId = o.maxId ? Math.max(o.maxId, 0) : 0;
         for (const s of Object.values(stations)) {
@@ -31,8 +33,11 @@ export default class Diagram {
         for (const t of Object.values(trains)) {
             maxId = Math.max(t.id, maxId);
         }
+        diagram.maxId = maxId;
 
-        return new Diagram(config, stations, trains, maxId);
+        diagram.updateY();
+
+        return diagram;
     }
 
     getYByRelY(relY: number): number {
@@ -74,6 +79,40 @@ export default class Diagram {
         Vue.delete(this.trains, train.id);
     }
 
+    updateY(): void {
+        if (Object.keys(this.stations).length == 0) {
+            this.maxRelY = 0;
+            return;
+        }
+
+        const stations = this.getStationsInMileageOrder();
+    
+        const initialMileage = stations[0].mileage;
+        for (const s of stations) {
+          s.mileage = s.mileage - initialMileage;
+        }
+    
+        let y = this.config.plotPaneVerticalPadding;
+        let lastMileage = 0;
+        for (const s of stations) {
+          y += (s.mileage - lastMileage) * this.config.yScale;
+          s.topRelY = y;
+          if (s.expanded) {
+            s.tracks.forEach((t, i) => {
+              t.relY = y + (i + 1) * this.config.trackLineSpan;
+            });
+            s.bottomRelY = y + (s.tracks.length + 1) * this.config.trackLineSpan;
+            y += (s.tracks.length + 1) * this.config.trackLineSpan;
+          } else {
+            Object.values(s.tracks).forEach(t => t.relY = y);
+            s.bottomRelY = y;
+          }
+          lastMileage = s.mileage;
+        }
+    
+        this.maxRelY = stations[stations.length - 1].bottomRelY + this.config.plotPaneVerticalPadding;
+      }
+    
     toJSON(): unknown {
         return {
             config: this.config,

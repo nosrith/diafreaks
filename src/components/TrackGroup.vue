@@ -60,14 +60,14 @@ export default class TrackGroup extends Vue {
   }
 
   onLabelClick(): void {
-    if (this.viewState.editMode && !this.viewState.isInputEnabled) {
+    if (this.viewConfig.editMode && !this.viewState.isInputEnabled) {
       this.viewState.trackNameInputTarget = { stationId: this.station.id, trackId: this.track.id };
       this.$emit("trackNameInputStart");
     }
   }
 
   onLabelMouseDown(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    if (this.viewState.editMode) {
+    if (this.viewConfig.editMode) {
       this.dragState = { sy0: konvaEvent.evt.screenY, dragging: false };
       window.addEventListener("mousemove", this.onWindowMouseMove);
       window.addEventListener("mouseup", this.onWindowMouseUp);
