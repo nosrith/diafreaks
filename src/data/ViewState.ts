@@ -13,7 +13,6 @@ export default class ViewState {
     viewHeight = 0;
     trainSelections: { [trainId: number]: TrainSelectionState } = {};
     pointerDragging = false;
-    pointerOnMarker = false;
     pointerScreenX = 0;
     pointerTime = 0;
     pointerY = 0;

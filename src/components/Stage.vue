@@ -75,8 +75,6 @@ export default class Stage extends Vue {
   }
 
   onStageMouseMove(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    this.viewState.pointerOnMarker = false;
-
     const event = konvaEvent.evt;
     this.viewState.pointerScreenX = event.screenX;
     if (this.viewState.pointerPreciseState) {

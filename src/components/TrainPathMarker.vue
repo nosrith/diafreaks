@@ -86,7 +86,6 @@ export default class TrainPathMarker extends Vue {
       this.viewState.pointerScreenX = event.screenX;
       this.viewState.pointerTime = this.trainPathNode.time;
       this.viewState.pointerY = this.trainPathNode.y;
-      this.viewState.pointerOnMarker = true;
     }
   }
 

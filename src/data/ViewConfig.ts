@@ -2,7 +2,6 @@ export default class ViewConfig {
     minHitWidth = 3;
     pointerWidth = 3;
     pointerColor = "rgb(0, 0, 0)";
-    pointerOnMarkerColor = "rgb(255, 0, 0)";
     pointerLabelFontSize = 12;
     pointerPrecisePixelPerTimeUnit = 5;
     selectedTrackLabelColor = "rgb(255, 0, 0)";

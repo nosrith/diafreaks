@@ -19,8 +19,7 @@ export default class TrainPathGroup extends Vue {
   @InjectReactive() diagram!: Diagram;
 
   get pointerEnabled(): unknown {
-    return this.viewState.pointerTargetLine != null && 
-      Object.keys(this.viewState.trainSelections).length == 0;
+    return this.viewState.pointerTargetLine != null && this.viewState.trainPathDragState == null && this.viewState.drawingState == null;
   }
 
   get rectConfig(): unknown {
@@ -30,7 +29,7 @@ export default class TrainPathGroup extends Vue {
       y: this.viewState.pointerY - width * 0.5,
       width: width,
       height: width,
-      fill: this.viewState.pointerOnMarker || this.viewState.drawingState ? this.viewConfig.pointerOnMarkerColor : this.viewConfig.pointerColor,
+      fill: this.viewConfig.pointerColor,
       listening: false,
     };
   }
@@ -46,7 +45,7 @@ export default class TrainPathGroup extends Vue {
       text: getTimeText(time, this.viewState.pointerPreciseState != null),
       fontSize: this.viewConfig.pointerLabelFontSize,
       fontFamily: this.diagram.config.fontFamily,
-      fill: this.viewState.pointerOnMarker || this.viewState.drawingState ? this.viewConfig.pointerOnMarkerColor : this.viewConfig.pointerColor,
+      fill: this.viewConfig.pointerColor,
       align: "left",
       verticalAlign: "bottom",
       listening: false,
