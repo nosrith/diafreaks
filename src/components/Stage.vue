@@ -161,14 +161,18 @@ export default class Stage extends Vue {
           drawingState.floating = null;
         }
       }
-      if (konvaEvent.evt.button == 2 && drawingState.lastStev != drawingState.stableEnd) {
-        const newLastStev = drawingState.direction > 0 ? drawingState.lastStev.prev : drawingState.lastStev.next;
-        if (newLastStev) {
-          drawingState.train.stevs.splice(drawingState.train.stevs.indexOf(drawingState.lastStev), 1);
-          drawingState.lastStev = newLastStev;
-        } else {
-          this.$delete(this.diagram.trains, drawingState.train.id);
+      if (konvaEvent.evt.button == 2) {
+        if (drawingState.lastStev == drawingState.stableEnd) {
           this.viewState.drawingState = null;
+        } else {
+          const newLastStev = drawingState.direction > 0 ? drawingState.lastStev.prev : drawingState.lastStev.next;
+          if (newLastStev) {
+            drawingState.train.stevs.splice(drawingState.train.stevs.indexOf(drawingState.lastStev), 1);
+            drawingState.lastStev = newLastStev;
+          } else {
+            this.$delete(this.diagram.trains, drawingState.train.id);
+            this.viewState.drawingState = null;
+          }
         }
       }
     }
