@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <diagram-view id="diagram-view" :diagram="diagram" :viewConfig="viewConfig" :editMode="editMode"></diagram-view>
+    <diagram-view id="diagram-view" :diagram="diagram" :viewConfig="viewConfig" :editMode="viewConfig.editMode"></diagram-view>
     <help-pane id="help-pane" v-if="helpPaneVisible"></help-pane>
     <b-navbar id="nav-pane" transparent>
       <template #brand>
