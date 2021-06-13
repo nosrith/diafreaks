@@ -29,9 +29,6 @@ export default class Diagram {
         }
         for (const t of Object.values(trains)) {
             maxId = Math.max(t.id, maxId);
-            for (const s of t.stops) {
-                maxId = Math.max(s.id, maxId);
-            }
         }
 
         return new Diagram(config, stations, trains, maxId);
@@ -52,33 +49,6 @@ export default class Diagram {
 
     getStationsInMileageOrder(): Station[] {
         return Object.values(this.stations).sort((a, b) => a.mileage - b.mileage);
-    }
-
-    getTrainPathDirection(trainId: number, stopId: number, side: "arr" | "dep"): number {
-        const train = this.trains[trainId];
-        if (!train) return 0;
-
-        const stop = train.stops.find(s => s.id == stopId);
-        if (!stop) return 0;
-
-        const sta = this.stations[stop.stationId];
-        if (!sta) return 0;
-
-        const nextSE = side == "arr" ? train.getPreviousStopEvent(stopId, "arr") : train.getNextStopEvent(stopId, "dep");
-        if (nextSE) {
-            const nextSta = this.stations[nextSE.stop.stationId];
-            if (!nextSta) return 0;
-            return Math.sign(nextSta.mileage - sta.mileage);
-        }
-
-        const revNextSE = side == "arr" ? train.getNextStopEvent(stopId, "dep") : train.getPreviousStopEvent(stopId, "arr");
-        if (revNextSE) {
-            const revNextSta = this.stations[revNextSE.stop.stationId];
-            if (!revNextSta) return 0;
-            return Math.sign(sta.mileage - revNextSta.mileage);
-        }
-
-        return 0;
     }
 
     genId(): number {

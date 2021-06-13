@@ -17,7 +17,7 @@ import { Component, InjectReactive, Vue } from "vue-property-decorator";
 import { KonvaEventObject } from "konva/types/Node";
 import Diagram from "@/data/Diagram";
 import Station from "@/data/Station";
-import Stop from "@/data/Stop";
+import StopEvent from "@/data/StopEvent";
 import Track from "@/data/Track";
 import Train from "@/data/Train";
 import ViewConfig from "@/data/ViewConfig";
@@ -102,20 +102,13 @@ export default class Stage extends Vue {
     const drawingState = this.viewState.drawingState;
     if (drawingState) {
       if (drawingState.direction > 0) {
-        this.viewState.pointerTime = Math.max(this.viewState.pointerTime, drawingState.floating != "dep" ? drawingState.lastStop.depTime : drawingState.lastStop.arrTime);
+        this.viewState.pointerTime = Math.max(this.viewState.pointerTime, drawingState.lastStev.time);
       } else if (drawingState.direction < 0) {
-        this.viewState.pointerTime = Math.min(this.viewState.pointerTime, drawingState.floating != "arr" ? drawingState.lastStop.arrTime : drawingState.lastStop.depTime);
+        this.viewState.pointerTime = Math.min(this.viewState.pointerTime, drawingState.lastStev.time);
       }
 
       if (drawingState.floating) {
-        if (drawingState.floating == "arr") {
-          drawingState.lastStop.arrTime = drawingState.lastStop.depTime;
-        } else if (drawingState.floating == "dep") {
-          drawingState.lastStop.depTime = drawingState.lastStop.arrTime;
-        } else {
-          drawingState.train.stops.splice(drawingState.train.stops.indexOf(drawingState.floating), 1);
-          this.diagram.releaseId(drawingState.floating.id);
-        }
+        drawingState.train.stevs.splice(drawingState.train.stevs.indexOf(drawingState.floating), 1);
         drawingState.floating = null;
       }
 
@@ -124,30 +117,17 @@ export default class Stage extends Vue {
       if (pointerTargetLine) {
         const targetTrack = pointerTargetLine.track == "top" || pointerTargetLine.track == "bottom" ?
           pointerTargetLine.station.tracks[0] : pointerTargetLine.track;
-        if (pointerTargetLine.station.id == drawingState.lastStop.stationId &&
-          targetTrack.id == drawingState.lastStop.trackId &&
-          (drawingState.lastStop.arrTime == drawingState.lastStop.depTime)) {
-          if (drawingState.direction > 0 || (drawingState.direction == 0 && this.viewState.pointerTime > drawingState.lastStop.depTime)) {
-            drawingState.lastStop.depTime = this.viewState.pointerTime;
-            drawingState.floating = "dep";
-          } else {
-            drawingState.lastStop.arrTime = this.viewState.pointerTime;
-            drawingState.floating = "arr";
-          }
+        const stev = new StopEvent(
+          pointerTargetLine.station.id,
+          targetTrack.id,
+          this.viewState.pointerTime
+        );
+        if (drawingState.direction > 0 || (drawingState.direction == 0 && this.viewState.pointerTime >= drawingState.lastStev.time)) {
+          drawingState.train.stevs.push(stev);
+          drawingState.floating = drawingState.train.stevs[drawingState.train.stevs.length - 1];
         } else {
-          const stop = new Stop(
-            this.diagram.genId(),
-            pointerTargetLine.station.id,
-            targetTrack.id,
-            this.viewState.pointerTime,
-            this.viewState.pointerTime
-          );
-          if (drawingState.direction > 0 || (drawingState.direction == 0 && this.viewState.pointerTime >= drawingState.lastStop.depTime)) {
-            drawingState.train.stops.push(stop);
-          } else if (drawingState.direction < 0) {
-            drawingState.train.stops.splice(0, 0, stop);
-          }
-          drawingState.floating = drawingState.train.stops.find(s => s.id == stop.id) ?? null;
+          drawingState.train.stevs.splice(0, 0, stev);
+          drawingState.floating = drawingState.train.stevs[0];
         }
       }
     }
@@ -183,60 +163,32 @@ export default class Stage extends Vue {
     if (drawingState) {
       if (konvaEvent.evt.button == 0 && this.viewState.pointerTargetLine) {
         if (drawingState.direction == 0) {
-          drawingState.direction = Math.sign(this.viewState.pointerTime - drawingState.lastStop.arrTime);
+          drawingState.direction = Math.sign(this.viewState.pointerTime - drawingState.lastStev.time);
         }
         if (drawingState.floating){
-          if (drawingState.floating == "arr") {
-            drawingState.lastStop.arrTime = this.viewState.pointerTime;
-          } else if (drawingState.floating == "dep") {
-            drawingState.lastStop.depTime = this.viewState.pointerTime;
+          const triple = drawingState.floating.trackId == drawingState.lastStev.trackId && (
+            drawingState.direction > 0 && drawingState.lastStev.trackId == drawingState.train.getPreviousStopEvent(drawingState.lastStev)?.trackId ||
+            drawingState.direction < 0 && drawingState.floating.trackId == drawingState.train.getNextStopEvent(drawingState.lastStev)?.trackId
+          );
+          if (triple) {
+            drawingState.lastStev.time = this.viewState.pointerTime;
+            drawingState.train.stevs.splice(drawingState.train.stevs.indexOf(drawingState.floating), 1);
           } else {
-            drawingState.lastStop = drawingState.floating;
-            drawingState.lastStop.arrTime = this.viewState.pointerTime;
-            drawingState.lastStop.depTime = this.viewState.pointerTime;
+            drawingState.lastStev = drawingState.floating;
           }
           drawingState.floating = null;
         }
       }
-      if (konvaEvent.evt.button == 2) {
-        if (drawingState.floating) {
-          if (drawingState.floating == "arr") {
-            drawingState.lastStop.arrTime = drawingState.lastStop.depTime;
-          } else if (drawingState.floating == "dep") {
-            drawingState.lastStop.depTime = drawingState.lastStop.arrTime;
-          } else {
-            drawingState.train.stops.splice(drawingState.train.stops.indexOf(drawingState.floating), 1);
-            this.diagram.releaseId(drawingState.floating.id);
-          }
-          drawingState.floating = null;
-        }
-        if (drawingState.direction == 0) {
+      if (konvaEvent.evt.button == 2 && drawingState.lastStev != drawingState.stableEnd) {
+        const newLastStev = drawingState.direction > 0 ?
+          drawingState.train.getPreviousStopEvent(drawingState.lastStev) :
+          drawingState.train.getNextStopEvent(drawingState.lastStev);
+        if (newLastStev) {
+          drawingState.train.stevs.splice(drawingState.train.stevs.indexOf(drawingState.lastStev), 1);
+          drawingState.lastStev = newLastStev;
+        } else {
           this.$delete(this.diagram.trains, drawingState.train.id);
           this.viewState.drawingState = null;
-        } else if (drawingState.direction > 0) {
-          if (drawingState.lastStop.arrTime == drawingState.lastStop.depTime && !(drawingState.stableEnd && drawingState.stableEnd.stopId == drawingState.lastStop.id && drawingState.stableEnd.side == "arr")) {
-            drawingState.train.stops.pop();
-            if (drawingState.train.stops.length == 0) {
-              this.$delete(this.diagram.trains, drawingState.train.id);
-              this.viewState.drawingState = null;
-            } else {
-              drawingState.lastStop = drawingState.train.stops[drawingState.train.stops.length - 1];
-            }
-          } else if (!(drawingState.stableEnd && drawingState.stableEnd.stopId == drawingState.lastStop.id && drawingState.stableEnd.side == "dep")) {
-            drawingState.lastStop.depTime = drawingState.lastStop.arrTime;
-          }
-        } else {
-          if (drawingState.lastStop.arrTime == drawingState.lastStop.depTime && !(drawingState.stableEnd && drawingState.stableEnd.stopId == drawingState.lastStop.id && drawingState.stableEnd.side == "dep")) {
-            drawingState.train.stops.shift();
-            if (drawingState.train.stops.length == 0) {
-              this.$delete(this.diagram.trains, drawingState.train.id);
-              this.viewState.drawingState = null;
-            } else {
-              drawingState.lastStop = drawingState.train.stops[0];
-            }
-          } else if (!(drawingState.stableEnd && drawingState.stableEnd.stopId == drawingState.lastStop.id && drawingState.stableEnd.side == "arr")) {
-            drawingState.lastStop.arrTime = drawingState.lastStop.depTime;
-          }
         }
       }
     }
@@ -252,7 +204,11 @@ export default class Stage extends Vue {
 
   onStageDoubleClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
     if (konvaEvent.target == konvaEvent.currentTarget && this.viewState.drawingState) {
-      if (this.viewState.drawingState.train.stops.length == 0) {
+      const drawingState = this.viewState.drawingState;
+      if (drawingState.floating) {
+        drawingState.train.stevs.splice(drawingState.train.stevs.indexOf(drawingState.floating), 1);
+      }
+      if (drawingState.train.stevs.length == 0) {
         this.$delete(this.diagram.trains, this.viewState.drawingState.train.id);
       }
       this.viewState.drawingState = null;
@@ -262,23 +218,21 @@ export default class Stage extends Vue {
         const targetLine = this.viewState.pointerTargetLine;
         if (targetLine && (targetLine.track || !targetLine.station.expanded)) {
           const track = targetLine.track == "top" || targetLine.track == "bottom" ? targetLine.station.tracks[0] : targetLine.track;
-          const stop = Stop.fromJSON({
-            id: this.diagram.genId(),
-            stationId: targetLine.station.id,
-            trackId: track.id,
-            arrTime: this.viewState.pointerTime,
-            depTime: this.viewState.pointerTime,
-          });
-          const train = Train.fromJSON({
-            id: this.diagram.genId(),
-            name: "",
-            stops: [ stop ]
-          });
+          const stev = new StopEvent(
+            targetLine.station.id,
+            track.id,
+            this.viewState.pointerTime
+          );
+          const train = new Train(
+            this.diagram.genId(),
+            "",
+            [ stev ]
+          );
           this.$set(this.diagram.trains, train.id, train);
-          this.viewState.trainSelections = { [train.id]: { trainId: train.id, stopRange: null } };
+          this.viewState.trainSelections = { [train.id]: { trainId: train.id, stevRange: null } };
           this.viewState.drawingState = {
             train: this.diagram.trains[train.id],
-            lastStop: this.diagram.trains[train.id].stops[0],
+            lastStev: this.diagram.trains[train.id].stevs[0],
             direction: 0,
             stableEnd: null,
             floating: null
@@ -351,54 +305,21 @@ export default class Stage extends Vue {
         this.viewState.controlKeyPressed = true;
       }
       if (event.key == "Delete") {
-        let notEnd = false;
         for (const sel of Object.values(this.viewState.trainSelections)) {
-          const stopRange = sel.stopRange;
-          if (!stopRange) {
+          if (!sel.stevRange) {
             this.$delete(this.diagram.trains, sel.trainId);
-            this.$delete(this.viewState.trainSelections, sel.trainId);
           } else {
             const train = this.diagram.trains[sel.trainId];
-            if (stopRange.fromStopId == train.stops[0].id && stopRange.fromStopSide == "arr") {
-              if (stopRange.toStopId == stopRange.fromStopId && stopRange.toStopSide == "arr") {
-                train.stops[0].arrTime = train.stops[0].depTime;
-              } else if (stopRange.toStopId == stopRange.fromStopId && train.stops[0].arrTime == train.stops[0].depTime) {
-                train.stops.splice(0, 1);
-              } else {
-                const toStopIndex = train.stops.findIndex(s => s.id == stopRange.toStopId);
-                train.stops.splice(0, toStopIndex);
-                if (stopRange.toStopSide == "dep") {
-                  train.stops[0].arrTime = train.stops[0].depTime;
-                }
-              }
-              if (train.stops.length == 1 && train.stops[0].arrTime == train.stops[0].depTime) {
-                this.$delete(this.diagram.trains, sel.trainId);
-              }
-              this.$delete(this.viewState.trainSelections, sel.trainId);
-            } else if (stopRange.toStopId == train.stops[train.stops.length - 1].id && stopRange.toStopSide == "dep") {
-              const lastStop = train.stops[train.stops.length - 1];
-              if (stopRange.fromStopId == stopRange.toStopId && stopRange.fromStopSide == "dep") {
-                lastStop.depTime = lastStop.arrTime;
-              } else if (stopRange.fromStopId == stopRange.toStopId && lastStop.arrTime == lastStop.depTime) {
-                train.stops.splice(train.stops.length - 1, 1);
-              } else {
-                const fromStopIndex = train.stops.findIndex(s => s.id == stopRange.fromStopId);
-                train.stops.splice(fromStopIndex + 1, train.stops.length - fromStopIndex - 1);
-                if (stopRange.fromStopSide == "arr") {
-                  train.stops[fromStopIndex].depTime = train.stops[fromStopIndex].arrTime;
-                }
-              }
-              if (train.stops.length == 1 && train.stops[0].arrTime == train.stops[0].depTime) {
-                this.$delete(this.diagram.trains, sel.trainId);
-              }
-              this.$delete(this.viewState.trainSelections, sel.trainId);
+            const fromIndex = train.stevs.indexOf(sel.stevRange.from);
+            const toIndex = train.stevs.indexOf(sel.stevRange.to);
+            const size = toIndex - fromIndex + 1;
+            if (size >= train.stevs.length - 1) {
+              this.$delete(this.diagram.trains, sel.trainId);
             } else {
-              notEnd = true;
+              train.stevs.splice(fromIndex, size);
             }
           }
-        }
-        if (notEnd) {
-          // this.$buefy.notification.open({ message: this.$t("message.tryedToDeleteMiddleOfTrainPath").toString(), type: "is-danger" });
+          this.$delete(this.viewState.trainSelections, sel.trainId);
         }
       }
     }

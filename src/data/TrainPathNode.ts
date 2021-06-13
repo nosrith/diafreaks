@@ -1,10 +1,9 @@
-import Stop from "./Stop";
+import StopEvent from "./StopEvent";
 import Train from "./Train";
 
 export default interface TrainPathNode {
     train: Train;
-    stop: Stop;
-    side: "arr" | "dep";
+    stev: StopEvent;
     vSide: "top" | "bottom" | "track";
     time: number;
     x: number;

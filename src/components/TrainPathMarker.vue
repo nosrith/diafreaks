@@ -33,10 +33,8 @@ export default class TrainPathMarker extends Vue {
 
   get labelEnabled(): boolean {
     const n = this.trainPathNode;
-    const station = this.diagram.stations[n.stop.stationId];
-    const isLastStop = n.stop.id == n.train.stops[n.train.stops.length - 1].id;
-    return (station.expanded ? n.vSide == "track" : n.vSide != "track") &&
-      (n.stop.arrTime != n.stop.depTime || (!isLastStop &&  n.side == "dep") || (isLastStop && n.side == "arr"));
+    const station = this.diagram.stations[n.stev.stationId];
+    return station.expanded ? n.vSide == "track" : n.vSide != "track";
   }
 
   get labelConfig(): unknown {
@@ -57,37 +55,38 @@ export default class TrainPathMarker extends Vue {
   }
 
   getLabelPosition(): { x: number, y: number } {
-    if (this.trainPathNode.side == "arr" && this.trainPathNode.vSide != "track") {
-      const prevSE = this.trainPathNode.train.getPreviousStopEvent(this.trainPathNode.stop.id, "arr");
-      if (prevSE) {
-        const thisTime = this.trainPathNode.side  == "arr" ? this.trainPathNode.stop.arrTime : this.trainPathNode.stop.depTime;
-        const thisSta = this.diagram.stations[this.trainPathNode.stop.stationId];
-        const prevSta = this.diagram.stations[prevSE.stop.stationId];
-        const thisRelY = prevSta.mileage < thisSta.mileage ? thisSta.topRelY : thisSta.bottomRelY;
-        const prevRelY = prevSta.mileage < thisSta.mileage ? prevSta.bottomRelY : prevSta.topRelY;
-        const x = thisRelY == prevRelY ? 0:
-          -this.viewConfig.markerLabelLineHeight *
-          ((thisTime - prevSE.time) * this.diagram.config.xScale) /
-          Math.abs(thisRelY - prevRelY);
-        return {
-          x: Math.max(x, -this.viewConfig.markerLabelMaxDistance),
-          y: prevSta.mileage < thisSta.mileage ? 0 : this.viewConfig.markerLabelLineHeight
-        };
-      }
+    const thisStev = this.trainPathNode.stev;
+    const prevStev = this.trainPathNode.train.getPreviousStopEvent(thisStev);
+    const nextStev = this.trainPathNode.train.getNextStopEvent(thisStev);
+    const thisSta = this.diagram.stations[thisStev.stationId];
+    if (prevStev && prevStev.trackId != thisStev.trackId && (!nextStev || nextStev.trackId == thisStev.trackId)) {
+      const prevSta = this.diagram.stations[prevStev.stationId];
+      const thisRelY = prevSta.mileage < thisSta.mileage ? thisSta.topRelY : thisSta.bottomRelY;
+      const prevRelY = prevSta.mileage < thisSta.mileage ? prevSta.bottomRelY : prevSta.topRelY;
+      const x = thisRelY == prevRelY ? 0:
+        -this.viewConfig.markerLabelLineHeight *
+        ((thisStev.time - prevStev.time) * this.diagram.config.xScale) /
+        Math.abs(thisRelY - prevRelY);
+      return {
+        x: Math.max(x, -this.viewConfig.markerLabelMaxDistance),
+        y: prevSta.mileage < thisSta.mileage ? 0 : this.viewConfig.markerLabelLineHeight
+      };
     }
-    const dir = this.diagram.getTrainPathDirection(this.trainPathNode.train.id, this.trainPathNode.stop.id, this.trainPathNode.side);
+
+    const prevSta = prevStev ? this.diagram.stations[prevStev.stationId] : undefined;
+    const nextSta = nextStev ? this.diagram.stations[nextStev.stationId] : undefined;
     return {
       x: 0,
-      y: dir <= 0 ? 0 : this.viewConfig.markerLabelLineHeight,
+      y: nextSta && nextSta.mileage < thisSta.mileage || prevSta && prevSta.mileage > thisSta.mileage ? 0 : this.viewConfig.markerLabelLineHeight,
     };
   }
 
   onRectMouseMove(konvaEvent: KonvaEventObject<MouseEvent>): void {
     const event = konvaEvent.evt;
     if (!this.viewState.pointerPreciseState && !this.viewState.pointerDragging && !this.viewState.drawingState) {
-      const station = this.diagram.stations[this.trainPathNode.stop.stationId];
+      const station = this.diagram.stations[this.trainPathNode.stev.stationId];
       const track = this.trainPathNode.vSide == "track" ? 
-        (station.tracks.find(t => t.id == this.trainPathNode.stop.trackId) ?? "top") :
+        (station.tracks.find(t => t.id == this.trainPathNode.stev.trackId) ?? "top") :
         this.trainPathNode.vSide;
       this.viewState.pointerTargetLine = { station, track };
       this.viewState.pointerScreenX = event.screenX;
@@ -101,24 +100,24 @@ export default class TrainPathMarker extends Vue {
     if (this.viewState.editMode) {
       if (!this.viewState.drawingState) {
         const n = this.trainPathNode;
-        if (n.stop.id == n.train.stops[0].id && (n.side == "arr" || n.stop.arrTime == n.stop.depTime)) {
+        if (!n.train.getPreviousStopEvent(n.stev)) {
           this.viewState.drawingState = {
             train: n.train,
-            lastStop: n.stop,
+            lastStev: n.stev,
             direction: -1,
-            stableEnd: { stopId: n.stop.id, side: n.side },
+            stableEnd: n.stev,
             floating: null
           };
-          this.viewState.trainSelections[n.train.id].stopRange = null;
-        } else if (n.stop.id == n.train.stops[n.train.stops.length - 1].id && (n.side == "dep" || n.stop.arrTime == n.stop.depTime)) {
+          this.viewState.trainSelections[n.train.id].stevRange = null;
+        } else if (!n.train.getNextStopEvent(n.stev)) {
           this.viewState.drawingState = {
             train: n.train,
-            lastStop: n.stop,
+            lastStev: n.stev,
             direction: 1,
-            stableEnd: { stopId: n.stop.id, side: n.side },
+            stableEnd: n.stev,
             floating: null
           };
-          this.viewState.trainSelections[n.train.id].stopRange = null;
+          this.viewState.trainSelections[n.train.id].stevRange = null;
         }
       } else {
         this.viewState.drawingState = null;

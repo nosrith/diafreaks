@@ -3,7 +3,7 @@
     <v-line :config="regularTrainPathConfig" @click="onTrainPathClick"></v-line>
     <template v-if="selectedTrainPathEnabled">
       <v-line :config="selectedTrainPathConfig" @click="onSelectedTrainPathClick" @dblclick="onSelectedTrainPathDoubleClick" @mousedown="onSelectedTrainPathMouseDown"></v-line>
-      <train-path-marker v-for="n in selectedTrainPathNodes" :key="`marker-${train.id}-${n.stop.id}-${n.side}-${n.vSide}`" :trainPathNode="n" @click="onMarkerClick" @mousedown="onMarkerMouseDown"></train-path-marker>
+      <train-path-marker v-for="(n, i) in selectedTrainPathNodes" :key="`marker-${train.id}-${i}-${n.vSide}`" :trainPathNode="n" @click="onMarkerClick" @mousedown="onMarkerMouseDown"></train-path-marker>
     </template>
   </v-group>
 </template>
@@ -13,9 +13,9 @@ import { Component, InjectReactive, Prop, Vue } from "vue-property-decorator";
 import { KonvaEventObject } from "konva/types/Node";
 import Diagram from "@/data/Diagram";
 import Station from "@/data/Station";
-import Stop from "@/data/Stop";
+import StopEvent, { StopEventRange } from "@/data/StopEvent";
 import TrainPathNode from "@/data/TrainPathNode";
-import Train, { TrainStopRange, TrainStopEvent } from "@/data/Train";
+import Train from "@/data/Train";
 import ViewConfig from "@/data/ViewConfig";
 import ViewState from "@/data/ViewState";
 import TrainPathMarker from "./TrainPathMarker.vue";
@@ -37,8 +37,8 @@ export default class TrainPathGroup extends Vue {
     y0: number,
     minTimeShift: number,
     maxTimeShift: number,
-    targetStopEvents: TrainStopEvent[] | null,
-    targetStop: Stop | null,
+    changeTimeTargets: StopEvent[] | null,
+    changeTrackTargets: StopEvent[] | null,
   } | null = null;
 
   get regularTrainPathConfig(): unknown {
@@ -56,9 +56,13 @@ export default class TrainPathGroup extends Vue {
     for (const n of this.trainPathNodes) {
       const time = n.time + (this.selectedTrainPathEnabled && n.selected && this.viewState.trainPathDragState && !this.viewState.controlKeyPressed ? this.viewState.trainPathDragState.timeShift : 0);
       result.push({
-        train: n.train, stop: n.stop, side: n.side, vSide: n.vSide,
-        time, x: this.diagram.getXByTime(time),
-        y: n.y, selected: n.selected
+        train: n.train, 
+        stev: n.stev, 
+        vSide: n.vSide,
+        time, 
+        x: this.diagram.getXByTime(time),
+        y: n.y, 
+        selected: n.selected
       });
     }
     return result;
@@ -83,9 +87,13 @@ export default class TrainPathGroup extends Vue {
       if (n.selected) {
         const time = n.time + (this.viewState.trainPathDragState?.timeShift ?? 0);
         result.push({
-          train: n.train, stop: n.stop, side: n.side, vSide: n.vSide,
-          time, x: this.diagram.getXByTime(time),
-          y: n.y, selected: n.selected
+          train: n.train, 
+          stev: n.stev, 
+          vSide: n.vSide,
+          time, 
+          x: this.diagram.getXByTime(time),
+          y: n.y, 
+          selected: n.selected
         });
       }
     }
@@ -94,60 +102,59 @@ export default class TrainPathGroup extends Vue {
 
   get trainPathNodes(): TrainPathNode[] {
     const result: TrainPathNode[] = [];
-    const stopEvents = this.train.getStopEvents();
-    const selectedStopRange = this.viewState.trainSelections[this.train.id]?.stopRange;
-    let inRange = selectedStopRange === null;
-    for (let i = 0; i < stopEvents.length; i++) {
-      const se = stopEvents[i];
-      const station = this.diagram.stations[se.stop.stationId];
-      if (selectedStopRange && selectedStopRange.fromStopId == se.stop.id && selectedStopRange.fromStopSide == se.side) {
+    const selectedStevRange = this.viewState.trainSelections[this.train.id]?.stevRange;
+    let inRange = selectedStevRange === null;
+    for (const stev of this.train.stevs) {
+      const station = this.diagram.stations[stev.stationId];
+      if (selectedStevRange && selectedStevRange.from == stev) {
         inRange = true;
       }
-      const time = se.time;
+      const time = stev.time;
       const x = this.diagram.getXByTime(time);
       if (station.expanded) {
-        if (se.side == "arr" && i > 0) {
-          const prevSE = stopEvents[i - 1];
-          if (prevSE.stop.stationId != se.stop.stationId) {
-            const prevStation = this.diagram.stations[prevSE.stop.stationId];
-            result.push({ 
-              train: this.train, stop: se.stop, side: "arr", 
-              vSide: prevStation.mileage < station.mileage ? "top" : "bottom", 
-              time, x, 
-              y: this.diagram.getYByRelY(prevStation.mileage < station.mileage ? station.topRelY : station.bottomRelY),
-              selected: inRange,
-            });
-          }
+        const prevStev = this.train.getPreviousStopEvent(stev);
+        if (prevStev && prevStev.stationId != stev.stationId) {
+          const prevStation = this.diagram.stations[prevStev.stationId];
+          result.push({ 
+            train: this.train, 
+            stev, 
+            vSide: prevStation.mileage < station.mileage ? "top" : "bottom", 
+            time, x, 
+            y: this.diagram.getYByRelY(prevStation.mileage < station.mileage ? station.topRelY : station.bottomRelY),
+            selected: inRange,
+          });
         }
         result.push({
-          train: this.train, stop: se.stop, side: se.side, 
+          train: this.train, 
+          stev, 
           vSide: "track", 
           time, x,
-          y: this.diagram.getYByRelY(station.tracks.find(t => t.id == se.stop.trackId)?.relY ?? 0),
+          y: this.diagram.getYByRelY(station.tracks.find(t => t.id == stev.trackId)?.relY ?? 0),
           selected: inRange,
         });
-        if (se.side == "dep" && i < stopEvents.length - 1) {
-          const nextSE = stopEvents[i + 1];
-          if (nextSE.stop.stationId != se.stop.stationId) {
-            const nextStation = this.diagram.stations[nextSE.stop.stationId];
-            result.push({
-              train: this.train, stop: se.stop, side: "dep", 
-              vSide: nextStation.mileage > station.mileage ? "bottom" : "top",
-              time: time, x,
-              y: this.diagram.getYByRelY(nextStation.mileage > station.mileage ? station.bottomRelY : station.topRelY),
-              selected: inRange,
-            });
-          }        
+        const nextStev = this.train.getNextStopEvent(stev);
+        if (nextStev && nextStev.stationId != stev.stationId) {
+          const nextStation = this.diagram.stations[nextStev.stationId];
+          result.push({
+            train: this.train, 
+            stev, 
+            vSide: nextStation.mileage > station.mileage ? "bottom" : "top",
+            time, x,
+            y: this.diagram.getYByRelY(nextStation.mileage > station.mileage ? station.bottomRelY : station.topRelY),
+            selected: inRange,
+          });
         }
       } else {
         result.push({ 
-          train: this.train, stop: se.stop, side: se.side, vSide: "top", 
+          train: this.train, 
+          stev,
+          vSide: "top", 
           time, x, 
           y: this.diagram.getYByRelY(station.topRelY),
           selected: inRange,
         });        
       }
-      if (selectedStopRange && selectedStopRange.toStopId == se.stop.id && selectedStopRange.toStopSide == se.side) {
+      if (selectedStevRange && selectedStevRange.to == stev) {
         inRange = false;
       }
     }
@@ -155,26 +162,21 @@ export default class TrainPathGroup extends Vue {
   }
 
   onTrainPathClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    const clickedStopRange = this.getClickedStopRange(konvaEvent.evt.clientX, konvaEvent.evt.clientY);
+    const clickedStopRange = this.getClickedStevRange(konvaEvent.evt.clientX, konvaEvent.evt.clientY);
     this.changeTrainSelections(konvaEvent, clickedStopRange, false);
   }
 
   onSelectedTrainPathClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    const clickedStopRange = this.getClickedStopRange(konvaEvent.evt.clientX, konvaEvent.evt.clientY);
+    const clickedStopRange = this.getClickedStevRange(konvaEvent.evt.clientX, konvaEvent.evt.clientY);
     this.changeTrainSelections(konvaEvent, clickedStopRange, true);
   }
 
   onMarkerClick(konvaEvent: KonvaEventObject<MouseEvent>, trainPathNode: TrainPathNode): void {
-    const clickedStopRange = {
-      fromStopId: trainPathNode.stop.id,
-      fromStopSide: trainPathNode.stop.arrTime != trainPathNode.stop.depTime ? trainPathNode.side : "arr",
-      toStopId: trainPathNode.stop.id,
-      toStopSide: trainPathNode.stop.arrTime != trainPathNode.stop.depTime ? trainPathNode.side : "dep"
-    };
-    this.changeTrainSelections(konvaEvent, clickedStopRange, true);
+    const clickedStevRange = { from: trainPathNode.stev, to: trainPathNode.stev };
+    this.changeTrainSelections(konvaEvent, clickedStevRange, true);
   }
 
-  changeTrainSelections(konvaEvent: KonvaEventObject<MouseEvent>, clickedStopRange: TrainStopRange, clickSelected: boolean): void {
+  changeTrainSelections(konvaEvent: KonvaEventObject<MouseEvent>, clickedStevRange: StopEventRange, clickSelected: boolean): void {
     if (!this.viewState.pointerDragging && !this.viewState.drawingState) {
       const sel = this.viewState.trainSelections[this.train.id];
 
@@ -184,25 +186,28 @@ export default class TrainPathGroup extends Vue {
       }
 
       if (!sel) {
-        this.$set(this.viewState.trainSelections, this.train.id, { trainId: this.train.id, stopRange: null });
+        this.$set(this.viewState.trainSelections, this.train.id, { trainId: this.train.id, stevRange: null });
       } else {
-        const selectedStopRange = sel.stopRange;
-        if (!selectedStopRange) {
-          sel.stopRange = clickedStopRange;
+        const selectedStevRange = sel.stevRange;
+        if (!selectedStevRange) {
+          sel.stevRange = clickedStevRange;
         } else if (!konvaEvent.evt.ctrlKey) {
-          sel.stopRange = clickSelected ? clickedStopRange : null;
+          sel.stevRange = clickSelected ? clickedStevRange : null;
         } else {
-          const selectedFromStopIndex = this.train.stops.findIndex(s => s.id == selectedStopRange.fromStopId);
-          const selectedToStopIndex = this.train.stops.findIndex(s => s.id == selectedStopRange.toStopId);
-          const clickedFromStopIndex = this.train.stops.findIndex(s => s.id == clickedStopRange.fromStopId);
-          const clickedToStopIndex = this.train.stops.findIndex(s => s.id == clickedStopRange.toStopId);
-          if (clickedFromStopIndex < selectedFromStopIndex || (clickedFromStopIndex == selectedFromStopIndex && clickedStopRange.fromStopSide == "arr")) {
-            selectedStopRange.fromStopId = clickedStopRange.fromStopId;
-            selectedStopRange.fromStopSide = clickedStopRange.fromStopSide;
-          } else if (clickedToStopIndex > selectedToStopIndex || (clickedToStopIndex == selectedToStopIndex && clickedStopRange.toStopSide == "dep")) {
-            selectedStopRange.toStopId = clickedStopRange.toStopId;
-            selectedStopRange.toStopSide = clickedStopRange.toStopSide;
-          } else {
+          let selStart = false, selEnd = false, changed = false;
+          for (const stev of this.train.stevs) {
+            if (!selStart && stev == clickedStevRange.from) {
+              selectedStevRange.from = clickedStevRange.from;
+              changed = true;
+            }
+            if (stev == selectedStevRange.from) selStart = true;
+            if (stev == selectedStevRange.to) selEnd = true;
+            if (selEnd && stev == clickedStevRange.to) {
+              selectedStevRange.to = clickedStevRange.to;
+              changed = true;
+            }
+          }
+          if (!changed) {
             this.$delete(this.viewState.trainSelections, this.train.id);
           }
         }
@@ -210,63 +215,50 @@ export default class TrainPathGroup extends Vue {
     }
   }
 
-  getClickedStopRange(x: number, y: number): TrainStopRange {
+  getClickedStevRange(x: number, y: number): StopEventRange {
     const targetTime = this.diagram.getTimeByX(x);
-    for (let i = 0; i < this.train.stops.length; ++i) {
-      const stop = this.train.stops[i];
-      const station = this.diagram.stations[stop.stationId];
+    if (this.train.stevs.length <= 2) {
+      return { from: this.train.stevs[0], to: this.train.stevs[this.train.stevs.length - 1] };
+    }
 
-      if (y > this.diagram.getYByRelY(station.topRelY) - this.viewConfig.minHitWidth && y < this.diagram.getYByRelY(station.bottomRelY) + this.viewConfig.minHitWidth) {
-        return { fromStopId: stop.id, fromStopSide: "arr", toStopId: stop.id, toStopSide: "dep" };
-      }
-      if (i > 0 && targetTime < stop.arrTime) {
-        const prevStop = this.train.stops[i - 1];
-        return { 
-          fromStopId: prevStop.id,
-          fromStopSide: prevStop.arrTime == prevStop.depTime ? "arr" : "dep",
-          toStopId: stop.id,
-          toStopSide: stop.arrTime == stop.depTime ? "dep" : "arr"
-        };
+    // TODO: more precise detection
+    for (let i = 0; i < this.train.stevs.length - 1; ++i) {
+      const thisStev = this.train.stevs[i];
+      const nextStev = this.train.stevs[i + 1];
+      const thisTrack = this.diagram.stations[thisStev.stationId].tracks.find(t => t.id == thisStev.trackId);
+      const nextTrack = this.diagram.stations[nextStev.stationId].tracks.find(t => t.id == nextStev.trackId);
+      if (thisTrack && nextTrack) {
+        const leftX = this.diagram.getXByTime(thisStev.time) - this.viewConfig.minHitWidth;
+        const rightX = this.diagram.getXByTime(nextStev.time) + this.viewConfig.minHitWidth;
+        const topY = this.diagram.getYByRelY(Math.min(thisTrack.relY, nextTrack.relY)) - this.viewConfig.minHitWidth;
+        const bottomY = this.diagram.getYByRelY(Math.max(thisTrack.relY, nextTrack.relY)) + this.viewConfig.minHitWidth;
+        if (leftX < x && x < rightX && topY < y && y < bottomY) {
+          return { from: thisStev, to: nextStev };
+        }
       }
     }
-    const lastStop = this.train.stops[this.train.stops.length - 1];
-    return { fromStopId: lastStop.id, fromStopSide: "arr", toStopId: lastStop.id, toStopSide: "dep" };
+    return { from: this.train.stevs[0], to: this.train.stevs[this.train.stevs.length - 1] };
   }
 
   onSelectedTrainPathDoubleClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
     if (this.viewState.editMode && !this.viewState.drawingState) {
       const targetTime = this.viewState.pointerTime;
       const nearestSta = this.getNearestStation(konvaEvent.evt.clientY);
-      const nearestStop = this.getNearestStop(targetTime);
-      if (nearestSta.id != nearestStop.stationId) {
-        const index = this.train.stops.findIndex(s => s.arrTime > targetTime);
-        const id = this.diagram.genId();
-        this.train.stops.splice(index, 0, new Stop(
-          id,
-          nearestSta.id,
+      const nearestStev = this.getNearestStopEvent(targetTime);
+      if (!(nearestSta.id == nearestStev.stationId &&
+        this.train.getPreviousStopEvent(nearestStev)?.trackId == nearestStev.trackId &&
+        this.train.getNextStopEvent(nearestStev)?.trackId == nearestStev.trackId)) {
+        const newStev = new StopEvent(
+          this.diagram.genId(),
           this.diagram.stations[nearestSta.id].tracks[0].id,
-          targetTime,
           targetTime
-        ));
-
+        );
+        const index = this.train.stevs.findIndex(s => s.time > targetTime);
+        this.train.stevs.splice(index, 0, newStev);
         this.viewState.trainSelections = { [this.train.id]: {
           trainId: this.train.id,
-          stopRange: { fromStopId: id, fromStopSide: "arr", toStopId: id, toStopSide: "dep" }
+          stevRange: { from: this.train.stevs[index], to: this.train.stevs[index] }
         } };
-      } else if (nearestStop.arrTime == nearestStop.depTime) {
-        if (targetTime < nearestStop.arrTime) {
-          nearestStop.arrTime = targetTime;
-          this.viewState.trainSelections = { [this.train.id]: {
-            trainId: this.train.id,
-            stopRange: { fromStopId: nearestStop.id, fromStopSide: "arr", toStopId: nearestStop.id, toStopSide: "arr" }
-          } };
-        } else if (targetTime > nearestStop.depTime) {
-          nearestStop.depTime = targetTime;
-          this.viewState.trainSelections = { [ this.train.id]: {
-            trainId: this.train.id,
-            stopRange: { fromStopId: nearestStop.id, fromStopSide: "dep", toStopId: nearestStop.id, toStopSide: "dep" }
-          } };
-        }
       }
     }
   }
@@ -289,17 +281,13 @@ export default class TrainPathGroup extends Vue {
     return minSta;
   }
 
-  getNearestStop(time: number): Stop {
-    let minStop = this.train.stops[0];
-    let minDist = Math.abs(time - minStop.arrTime);
-    for (const s of this.train.stops) {
-      if (Math.abs(time - s.arrTime) < minDist) {
+  getNearestStopEvent(time: number): StopEvent {
+    let minStop = this.train.stevs[0];
+    let minDist = Math.abs(time - minStop.time);
+    for (const s of this.train.stevs) {
+      if (Math.abs(time - s.time) < minDist) {
         minStop = s;
-        minDist = Math.abs(time - s.arrTime);
-      }
-      if (Math.abs(time - s.depTime) < minDist) {
-        minStop = s;
-        minDist = Math.abs(time - s.depTime);
+        minDist = Math.abs(time - s.time);
       }
     }
     return minStop;
@@ -313,24 +301,25 @@ export default class TrainPathGroup extends Vue {
     let minTimeShift = -86400;
     let maxTimeShift = 86400;
     for (const sel of Object.values(this.viewState.trainSelections)) {
-      const stopRange = sel.stopRange;
-      if (stopRange) {
+      const stevRange = sel.stevRange;
+      if (stevRange) {
         const train = this.diagram.trains[sel.trainId];
-        const fromSE = train.getStopEvent(stopRange.fromStopId, stopRange.fromStopSide);
-        const prevFromSE = fromSE ? train.getPreviousStopEvent(fromSE.stop.id, fromSE.side) : undefined;
-        if (fromSE && prevFromSE) {
-          minTimeShift = Math.max(minTimeShift, prevFromSE.time - fromSE.time);
+        const prevFrom = train.getPreviousStopEvent(stevRange.from);
+        if (prevFrom) {
+          minTimeShift = Math.max(minTimeShift, prevFrom.time - stevRange.from.time);
         }
-        const toSE = train.getStopEvent(stopRange.toStopId, stopRange.toStopSide);
-        const nextToSE = toSE ? train.getNextStopEvent(toSE.stop.id, toSE.side) : undefined;  
-        if (toSE && nextToSE) {
-          maxTimeShift = Math.min(maxTimeShift, nextToSE.time - toSE.time);
+        const nextTo = train.getNextStopEvent(stevRange.to);  
+        if (nextTo) {
+          maxTimeShift = Math.min(maxTimeShift, nextTo.time - stevRange.to.time);
         }
       }
     }
 
-    const targetTime = this.diagram.getTimeByX(konvaEvent.evt.clientX);
-    const targetStop = this.train.stops.find(s => s.arrTime <= targetTime && s.depTime >= targetTime);
+    const clickedStevRange = this.getClickedStevRange(konvaEvent.evt.clientX, konvaEvent.evt.clientY);
+    const changeTrackTargets = 
+      clickedStevRange.from == clickedStevRange.to ? [ clickedStevRange.from ] : 
+      clickedStevRange.from.trackId == clickedStevRange.to.trackId ? [ clickedStevRange.from, clickedStevRange.to ] :
+      null;
 
     const firstNode = this.selectedTrainPathNodes[0];
     this.dragState = { 
@@ -339,8 +328,8 @@ export default class TrainPathGroup extends Vue {
       y0: firstNode.y,
       minTimeShift: minTimeShift,
       maxTimeShift: maxTimeShift,
-      targetStopEvents: null,
-      targetStop: targetStop ?? null
+      changeTimeTargets: null,
+      changeTrackTargets: changeTrackTargets ?? null
     };
     this.viewState.trainPathDragState = {
       timeShift: 0
@@ -354,23 +343,17 @@ export default class TrainPathGroup extends Vue {
       return;
     }
     
-    const prevSE = node.side == "dep" && node.stop.arrTime == node.stop.depTime ? 
-      this.train.getPreviousStopEvent(node.stop.id, "arr") :
-      this.train.getPreviousStopEvent(node.stop.id, node.side);
-    const nextSE = node.side == "arr" && node.stop.arrTime == node.stop.depTime ?
-       this.train.getNextStopEvent(node.stop.id, "dep") :
-       this.train.getNextStopEvent(node.stop.id, node.side);
-    
+    const prevStev = this.train.getPreviousStopEvent(node.stev);
+    const nextStev = this.train.getNextStopEvent(node.stev);
+
     this.dragState = {
       t0: node.time,
       sx0: konvaEvent.evt.screenX,
       y0: node.y,
-      minTimeShift: prevSE ? prevSE.time - node.time : -86400,
-      maxTimeShift: nextSE ? nextSE.time - node.time : 86400,
-      targetStopEvents: node.stop.arrTime == node.stop.depTime ?
-        [ { stop: node.stop, side: "arr", time: node.stop.arrTime }, { stop: node.stop, side: "dep", time: node.stop.depTime } ] :
-        [ node ],
-      targetStop: node.stop
+      minTimeShift: prevStev ? prevStev.time - node.time : -86400,
+      maxTimeShift: nextStev ? nextStev.time - node.time : 86400,
+      changeTimeTargets: [ node.stev ],
+      changeTrackTargets: [ node.stev ]
     };
     this.viewState.trainPathDragState = {
       timeShift: 0
@@ -390,12 +373,14 @@ export default class TrainPathGroup extends Vue {
       }
       this.viewState.trainPathDragState.timeShift = 
         Math.min(this.dragState.maxTimeShift, Math.max(this.dragState.minTimeShift, this.viewState.pointerTime - this.dragState.t0));
-      if (this.dragState.targetStop) {
+      if (this.dragState.changeTrackTargets) {
         const mouseRelY = this.diagram.getRelYByY(event.clientY);
-        const targetStation = this.diagram.stations[this.dragState.targetStop.stationId];
+        const targetStation = this.diagram.stations[this.dragState.changeTrackTargets[0].stationId];
         const mouseTrack = targetStation.tracks.find(t => Math.abs(t.relY - mouseRelY) < this.viewConfig.minHitWidth);
         if (mouseTrack) {
-          this.dragState.targetStop.trackId = mouseTrack.id;
+          for (const stev of this.dragState.changeTrackTargets) {
+            stev.trackId = mouseTrack.id;
+          }
         }
       }
     }
@@ -407,43 +392,35 @@ export default class TrainPathGroup extends Vue {
       window.removeEventListener("mouseup", this.onWindowMouseUp);
       if (!this.viewState.controlKeyPressed) {
         const targets = 
-          this.dragState.targetStopEvents ??
-          Object.values(this.viewState.trainSelections).flatMap(sel => this.diagram.trains[sel.trainId].getStopEvents(sel.stopRange));
-        for (const se of targets) {
-          const newTime = se.time + this.viewState.trainPathDragState.timeShift;
-          if (se.side == "arr") {
-            se.stop.arrTime = newTime;
-          } else {
-            se.stop.depTime = newTime;
-          }
+          this.dragState.changeTimeTargets ??
+          Object.values(this.viewState.trainSelections).flatMap(sel => {
+            const train = this.diagram.trains[sel.trainId];
+            return sel.stevRange ? train.getStopEventsInRange(sel.stevRange) : train.stevs;
+          });
+        for (const stev of targets) {
+          stev.time += this.viewState.trainPathDragState.timeShift;
         }
       } else {
         for (const sel of Object.values(this.viewState.trainSelections)) {
-          const targetTrain = this.diagram.trains[sel.trainId];
-          const newStops: Stop[] = [];
-          for (const se of targetTrain.getStopEvents(sel.stopRange)) {
-            const time = se.time + this.viewState.trainPathDragState.timeShift;
-            if (newStops.length > 0 && newStops[newStops.length - 1].stationId == se.stop.stationId) {
-              newStops[newStops.length - 1].depTime = time;
-            } else {
-              const newStop = Stop.fromJSON({ 
-                id: this.diagram.genId(), 
-                stationId: se.stop.stationId, 
-                trackId: se.stop.trackId, 
-                arrTime: time, 
-                depTime: time
-              });
-              newStops.push(newStop);
-            }
+          const newStevs: StopEvent[] = [];
+          const srcTrain = this.diagram.trains[sel.trainId];
+          const srcStevs = sel.stevRange ? srcTrain.getStopEventsInRange(sel.stevRange) : srcTrain.stevs;
+          for (const srcStev of srcStevs) {
+            const newStev = new StopEvent( 
+              srcStev.stationId, 
+              srcStev.trackId, 
+              srcStev.time + this.viewState.trainPathDragState.timeShift
+            );
+            newStevs.push(newStev);
           }
-          const newTrain = Train.fromJSON({
-            id: this.diagram.genId(),
-            name: "",
-            stops: newStops
-          });
+          const newTrain = new Train(
+            this.diagram.genId(),
+            "",
+            newStevs
+          );
           this.$set(this.diagram.trains, newTrain.id, newTrain);
           this.$delete(this.viewState.trainSelections, sel.trainId);
-          this.$set(this.viewState.trainSelections, newTrain.id, { trainId: newTrain.id, stopRange: null });
+          this.$set(this.viewState.trainSelections, newTrain.id, { trainId: newTrain.id, stevRange: null });
         }
       }
       this.viewState.pointerDragging = false;

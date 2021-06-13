@@ -31,14 +31,14 @@ export default class StationRemoveTrackButton extends Vue {
 
   onClick(): void {
     if (!this.viewState.isInputEnabled) {
-      const refered = Object.values(this.diagram.trains).some(t => t.stops.some(s => s.stationId == this.station.id && s.trackId == this.track.id));
+      const refered = Object.values(this.diagram.trains).some(t => t.stevs.some(s => s.stationId == this.station.id && s.trackId == this.track.id));
       if (refered) {
         this.$buefy.dialog.confirm({
           message: this.$t("message.confirmRemoveTrackRefered").toString(),
           onConfirm: () => {
             Object.values(this.diagram.trains).forEach(t => {
-              t.stops.map((s, i) => s.stationId == this.station.id && s.trackId == this.track.id ? i : -1).filter(i => i >= 0).reverse()
-                .forEach(i => t.stops.splice(i, 1))
+              t.stevs.map((s, i) => s.stationId == this.station.id && s.trackId == this.track.id ? i : -1).filter(i => i >= 0).reverse()
+                .forEach(i => t.stevs.splice(i, 1))
             });
             this.$delete(this.station.tracks, this.track.id);
             this.$emit("updateY");

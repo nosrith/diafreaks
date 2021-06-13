@@ -1,11 +1,11 @@
 import Station from "./Station";
-import Stop from "./Stop";
+import StopEvent, { StopEventRange } from "./StopEvent";
 import Track from "./Track";
-import Train, { TrainStopRange } from "./Train";
+import Train from "./Train";
 
 export interface TrainSelectionState {
     trainId: number;
-    stopRange: TrainStopRange | null;
+    stevRange: StopEventRange | null;
 }
 
 export default class ViewState {
@@ -23,10 +23,10 @@ export default class ViewState {
     editMode = true;
     drawingState: {
         train: Train,
-        lastStop: Stop,
+        lastStev: StopEvent,
         direction: number,
-        stableEnd: { stopId: number, side: "arr" | "dep" } | null,
-        floating: Stop | "arr" | "dep" | null
+        stableEnd: StopEvent | null,
+        floating: StopEvent | null
     } | null = null;
     trainPathDragState: { timeShift: number } | null = null;
     stationNameInputTarget: { stationId: number } | null = null;
