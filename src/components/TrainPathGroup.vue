@@ -172,7 +172,7 @@ export default class TrainPathGroup extends Vue {
   }
 
   changeTrainSelections(konvaEvent: KonvaEventObject<MouseEvent>, clickedStevRange: StopEventRange, clickSelected: boolean): void {
-    if (!this.viewState.pointerDragging && !this.viewState.drawingState) {
+    if (!this.viewState.trainPathDragState?.dragging && !this.viewState.drawingState) {
       const sel = this.viewState.trainSelections[this.train.id];
 
       // Remove other trains if ctrl not pressed
@@ -314,6 +314,7 @@ export default class TrainPathGroup extends Vue {
       changeTrackTargets: changeTrackTargets ?? null
     };
     this.viewState.trainPathDragState = {
+      dragging: false,
       timeShift: 0
     };
     window.addEventListener("mousemove", this.onWindowMouseMove);
@@ -335,6 +336,7 @@ export default class TrainPathGroup extends Vue {
       changeTrackTargets: [ node.stev ]
     };
     this.viewState.trainPathDragState = {
+      dragging: false,
       timeShift: 0
     };
     window.addEventListener("mousemove", this.onWindowMouseMove);
@@ -343,8 +345,8 @@ export default class TrainPathGroup extends Vue {
 
   onWindowMouseMove(event: MouseEvent): void {
     if (this.dragState && this.viewState.trainPathDragState) {
-      if (!this.viewState.pointerDragging) {
-        this.viewState.pointerDragging = true;
+      if (!this.viewState.trainPathDragState.dragging) {
+        this.viewState.trainPathDragState.dragging = true;
         this.viewState.pointerY = this.dragState.y0;
       }
       if (!this.viewState.pointerPreciseState) {
@@ -391,7 +393,6 @@ export default class TrainPathGroup extends Vue {
           this.$set(this.viewState.trainSelections, newTrain.id, { trainId: newTrain.id, stevRange: null });
         }
       }
-      this.viewState.pointerDragging = false;
       this.viewState.trainPathDragState = null;
       this.dragState = null;
     }

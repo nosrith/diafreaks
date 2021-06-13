@@ -34,7 +34,7 @@ export default class Stage extends Vue {
   @InjectReactive() viewState!: ViewState;
   @InjectReactive() diagram!: Diagram;
 
-  stageDragState: { scrollX0: number, scrollY0: number, screenX0: number, screenY0: number, dragged: boolean } | null = null;
+  stageDragState: { scrollX0: number, scrollY0: number, screenX0: number, screenY0: number, dragging: boolean } | null = null;
 
   get stageConfig(): unknown {
     return {
@@ -69,7 +69,7 @@ export default class Stage extends Vue {
         scrollY0: this.diagram.config.scrollY,
         screenX0: event.screenX,
         screenY0: event.screenY,
-        dragged: false,
+        dragging: false,
       };
     }
   }
@@ -80,7 +80,7 @@ export default class Stage extends Vue {
     if (this.viewState.pointerPreciseState) {
       const dUnit = Math.round((event.screenX - this.viewState.pointerPreciseState.sx0) / this.viewConfig.pointerPrecisePixelPerTimeUnit);
       this.viewState.pointerTime = dUnit * this.diagram.config.minimumTimeUnit + this.viewState.pointerPreciseState.t0;
-    } else if (!this.viewState.pointerDragging) {
+    } else if (!this.viewState.trainPathDragState?.dragging) {
       this.viewState.pointerTime = Math.round(this.diagram.getTimeByX(event.clientX) / 60) * 60;
       if (event.clientX >= this.diagram.config.leftPaneWidth) {
         const pointerTargetLine = this.findPointerTargetLine(event.clientY);
@@ -183,8 +183,8 @@ export default class Stage extends Vue {
 
     if (konvaEvent.target == konvaEvent.currentTarget && 
         !konvaEvent.evt.ctrlKey && 
-        !this.stageDragState?.dragged && 
-        !this.viewState.pointerDragging && 
+        !this.stageDragState?.dragging && 
+        !this.viewState.trainPathDragState?.dragging && 
         !this.viewState.drawingState) {
       this.viewState.trainSelections = {};
     }
@@ -241,10 +241,10 @@ export default class Stage extends Vue {
   onWindowMouseMove(event: MouseEvent): void {
     if (this.stageDragState) {
       if (Math.hypot(event.screenX - this.stageDragState.screenX0, event.screenY - this.stageDragState.screenY0) > 1) {
-        this.stageDragState.dragged = true;
+        this.stageDragState.dragging = true;
       }
-      if (this.stageDragState.dragged) {
-        this.stageDragState.dragged = true;
+      if (this.stageDragState.dragging) {
+        this.stageDragState.dragging = true;
         this.diagram.config.scrollX = this.stageDragState.scrollX0 - (event.screenX - this.stageDragState.screenX0);
         this.diagram.config.scrollY = 
           Math.max(0, Math.min(this.diagram.maxRelY + this.diagram.config.topPaneHeight - this.viewState.viewHeight, 

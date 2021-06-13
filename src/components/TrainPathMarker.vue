@@ -78,7 +78,7 @@ export default class TrainPathMarker extends Vue {
 
   onRectMouseMove(konvaEvent: KonvaEventObject<MouseEvent>): void {
     const event = konvaEvent.evt;
-    if (!this.viewState.pointerPreciseState && !this.viewState.pointerDragging && !this.viewState.drawingState) {
+    if (!this.viewState.pointerPreciseState && !this.viewState.trainPathDragState?.dragging && !this.viewState.drawingState) {
       const station = this.trainPathNode.stev.station;
       const track = this.trainPathNode.vSide == "track" ? 
         this.trainPathNode.stev.track : this.trainPathNode.vSide;

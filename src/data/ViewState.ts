@@ -12,7 +12,6 @@ export default class ViewState {
     viewWidth = 0;
     viewHeight = 0;
     trainSelections: { [trainId: number]: TrainSelectionState } = {};
-    pointerDragging = false;
     pointerScreenX = 0;
     pointerTime = 0;
     pointerY = 0;
@@ -25,7 +24,10 @@ export default class ViewState {
         stableEnd: StopEvent | null,
         floating: StopEvent | null
     } | null = null;
-    trainPathDragState: { timeShift: number } | null = null;
+    trainPathDragState: { 
+        dragging: boolean,
+        timeShift: number 
+    } | null = null;
     stationNameInputTarget: { stationId: number } | null = null;
     trackNameInputTarget: { stationId: number, trackId: number } | null = null;
     controlKeyPressed = false;
