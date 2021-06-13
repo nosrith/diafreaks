@@ -1,7 +1,7 @@
 <template>
   <div class="diagram-view">
     <stage class="diagram-view-stage" @updateY="updateY" @stationNameInputStart="onStationNameInputStart" @trackNameInputStart="onTrackNameInputStart"></stage>
-    <div id="diagram-view-ui">
+    <div class="diagram-view-ui">
       <station-name-input ref="stationNameInput"></station-name-input>
       <track-name-input ref="trackNameInput"></track-name-input>
       <station-expand-button

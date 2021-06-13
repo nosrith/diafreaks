@@ -1,5 +1,5 @@
 <template>
-  <b-icon v-if="isLineIntersectingPlotPane" icon="close" size="is-small" v-show="viewState.editMode && station.expanded && Object.values(station.tracks).length > 1" :style="style" @click.native="onClick"></b-icon>
+  <b-icon v-if="viewConfig.editMode && station.expanded && Object.values(station.tracks).length > 1 && isLineIntersectingPlotPane" icon="close" size="is-small" :style="style" @click.native="onClick"></b-icon>
 </template>
 
 <script lang="ts">
@@ -7,10 +7,12 @@ import { Component, InjectReactive, Prop, Vue } from "vue-property-decorator";
 import Diagram from "@/data/Diagram";
 import Station from "@/data/Station";
 import Track from "@/data/Track";
+import ViewConfig from "@/data/ViewConfig";
 import ViewState from "@/data/ViewState";
 
 @Component
 export default class StationRemoveTrackButton extends Vue {
+  @InjectReactive() viewConfig!: ViewConfig;
   @InjectReactive() viewState!: ViewState;
   @InjectReactive() diagram!: Diagram;
   @Prop() station!: Station;

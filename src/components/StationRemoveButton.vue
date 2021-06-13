@@ -1,15 +1,17 @@
 <template>
-  <b-icon v-if="isTopLineIntersectingPlotPane" icon="close" size="is-small" v-show="viewState.editMode" :style="style" @click.native="onClick"></b-icon>
+  <b-icon v-if="viewConfig.editMode && isTopLineIntersectingPlotPane" icon="close" size="is-small" :style="style" @click.native="onClick"></b-icon>
 </template>
 
 <script lang="ts">
 import { Component, InjectReactive, Prop, Vue } from "vue-property-decorator";
 import Diagram from "@/data/Diagram";
 import Station from "@/data/Station";
+import ViewConfig from "@/data/ViewConfig";
 import ViewState from "@/data/ViewState";
 
 @Component
 export default class StationRemoveButton extends Vue {
+  @InjectReactive() viewConfig!: ViewConfig;
   @InjectReactive() viewState!: ViewState;
   @InjectReactive() diagram!: Diagram;
   @Prop() station!: Station;
