@@ -33,8 +33,7 @@ export default class TrainPathMarker extends Vue {
 
   get labelEnabled(): boolean {
     const n = this.trainPathNode;
-    const station = this.diagram.stations[n.stev.stationId];
-    return station.expanded ? n.vSide == "track" : n.vSide != "track";
+    return n.stev.station.expanded ? n.vSide == "track" : n.vSide != "track";
   }
 
   get labelConfig(): unknown {
@@ -56,38 +55,33 @@ export default class TrainPathMarker extends Vue {
 
   getLabelPosition(): { x: number, y: number } {
     const thisStev = this.trainPathNode.stev;
-    const prevStev = this.trainPathNode.train.getPreviousStopEvent(thisStev);
-    const nextStev = this.trainPathNode.train.getNextStopEvent(thisStev);
-    const thisSta = this.diagram.stations[thisStev.stationId];
-    if (prevStev && prevStev.trackId != thisStev.trackId && (!nextStev || nextStev.trackId == thisStev.trackId)) {
-      const prevSta = this.diagram.stations[prevStev.stationId];
-      const thisRelY = prevSta.mileage < thisSta.mileage ? thisSta.topRelY : thisSta.bottomRelY;
-      const prevRelY = prevSta.mileage < thisSta.mileage ? prevSta.bottomRelY : prevSta.topRelY;
+    const prevStev = thisStev.prev;
+    const nextStev = thisStev.next;
+    if (prevStev && prevStev.track != thisStev.track && (!nextStev || nextStev.track == thisStev.track)) {
+      const thisRelY = prevStev.station.mileage < thisStev.station.mileage ? thisStev.station.topRelY : thisStev.station.bottomRelY;
+      const prevRelY = prevStev.station.mileage < thisStev.station.mileage ? prevStev.station.bottomRelY : prevStev.station.topRelY;
       const x = thisRelY == prevRelY ? 0:
         -this.viewConfig.markerLabelLineHeight *
         ((thisStev.time - prevStev.time) * this.diagram.config.xScale) /
         Math.abs(thisRelY - prevRelY);
       return {
         x: Math.max(x, -this.viewConfig.markerLabelMaxDistance),
-        y: prevSta.mileage < thisSta.mileage ? 0 : this.viewConfig.markerLabelLineHeight
+        y: prevStev.station.mileage < thisStev.station.mileage ? 0 : this.viewConfig.markerLabelLineHeight
       };
     }
 
-    const prevSta = prevStev ? this.diagram.stations[prevStev.stationId] : undefined;
-    const nextSta = nextStev ? this.diagram.stations[nextStev.stationId] : undefined;
     return {
       x: 0,
-      y: nextSta && nextSta.mileage < thisSta.mileage || prevSta && prevSta.mileage > thisSta.mileage ? 0 : this.viewConfig.markerLabelLineHeight,
+      y: nextStev && nextStev.station.mileage < thisStev.station.mileage || prevStev && prevStev.station.mileage > thisStev.station.mileage ? 0 : this.viewConfig.markerLabelLineHeight,
     };
   }
 
   onRectMouseMove(konvaEvent: KonvaEventObject<MouseEvent>): void {
     const event = konvaEvent.evt;
     if (!this.viewState.pointerPreciseState && !this.viewState.pointerDragging && !this.viewState.drawingState) {
-      const station = this.diagram.stations[this.trainPathNode.stev.stationId];
+      const station = this.trainPathNode.stev.station;
       const track = this.trainPathNode.vSide == "track" ? 
-        (station.tracks.find(t => t.id == this.trainPathNode.stev.trackId) ?? "top") :
-        this.trainPathNode.vSide;
+        this.trainPathNode.stev.track : this.trainPathNode.vSide;
       this.viewState.pointerTargetLine = { station, track };
       this.viewState.pointerScreenX = event.screenX;
       this.viewState.pointerTime = this.trainPathNode.time;
@@ -100,7 +94,7 @@ export default class TrainPathMarker extends Vue {
     if (this.viewState.editMode) {
       if (!this.viewState.drawingState) {
         const n = this.trainPathNode;
-        if (!n.train.getPreviousStopEvent(n.stev)) {
+        if (!n.stev.prev) {
           this.viewState.drawingState = {
             train: n.train,
             lastStev: n.stev,
@@ -109,7 +103,7 @@ export default class TrainPathMarker extends Vue {
             floating: null
           };
           this.viewState.trainSelections[n.train.id].stevRange = null;
-        } else if (!n.train.getNextStopEvent(n.stev)) {
+        } else if (!n.stev.next) {
           this.viewState.drawingState = {
             train: n.train,
             lastStev: n.stev,

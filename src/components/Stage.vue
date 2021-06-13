@@ -17,9 +17,7 @@ import { Component, InjectReactive, Vue } from "vue-property-decorator";
 import { KonvaEventObject } from "konva/types/Node";
 import Diagram from "@/data/Diagram";
 import Station from "@/data/Station";
-import StopEvent from "@/data/StopEvent";
 import Track from "@/data/Track";
-import Train from "@/data/Train";
 import ViewConfig from "@/data/ViewConfig";
 import ViewState from "@/data/ViewState";
 import BackLayer from "./BackLayer.vue";
@@ -117,18 +115,12 @@ export default class Stage extends Vue {
       if (pointerTargetLine) {
         const targetTrack = pointerTargetLine.track == "top" || pointerTargetLine.track == "bottom" ?
           pointerTargetLine.station.tracks[0] : pointerTargetLine.track;
-        const stev = new StopEvent(
-          pointerTargetLine.station.id,
-          targetTrack.id,
-          this.viewState.pointerTime
+        const newStev = drawingState.train.addNewStopEvent(
+          targetTrack, 
+          this.viewState.pointerTime,
+          drawingState.direction > 0 || (drawingState.direction == 0 && this.viewState.pointerTime >= drawingState.lastStev.time) ? undefined : 0
         );
-        if (drawingState.direction > 0 || (drawingState.direction == 0 && this.viewState.pointerTime >= drawingState.lastStev.time)) {
-          drawingState.train.stevs.push(stev);
-          drawingState.floating = drawingState.train.stevs[drawingState.train.stevs.length - 1];
-        } else {
-          drawingState.train.stevs.splice(0, 0, stev);
-          drawingState.floating = drawingState.train.stevs[0];
-        }
+        drawingState.floating = newStev;
       }
     }
   }
@@ -166,9 +158,9 @@ export default class Stage extends Vue {
           drawingState.direction = Math.sign(this.viewState.pointerTime - drawingState.lastStev.time);
         }
         if (drawingState.floating){
-          const triple = drawingState.floating.trackId == drawingState.lastStev.trackId && (
-            drawingState.direction > 0 && drawingState.lastStev.trackId == drawingState.train.getPreviousStopEvent(drawingState.lastStev)?.trackId ||
-            drawingState.direction < 0 && drawingState.floating.trackId == drawingState.train.getNextStopEvent(drawingState.lastStev)?.trackId
+          const triple = drawingState.floating.track == drawingState.lastStev.track && (
+            drawingState.direction > 0 && drawingState.lastStev.track == drawingState.lastStev.prev?.track ||
+            drawingState.direction < 0 && drawingState.lastStev.track == drawingState.lastStev.next?.track
           );
           if (triple) {
             drawingState.lastStev.time = this.viewState.pointerTime;
@@ -180,9 +172,7 @@ export default class Stage extends Vue {
         }
       }
       if (konvaEvent.evt.button == 2 && drawingState.lastStev != drawingState.stableEnd) {
-        const newLastStev = drawingState.direction > 0 ?
-          drawingState.train.getPreviousStopEvent(drawingState.lastStev) :
-          drawingState.train.getNextStopEvent(drawingState.lastStev);
+        const newLastStev = drawingState.direction > 0 ? drawingState.lastStev.prev : drawingState.lastStev.next;
         if (newLastStev) {
           drawingState.train.stevs.splice(drawingState.train.stevs.indexOf(drawingState.lastStev), 1);
           drawingState.lastStev = newLastStev;
@@ -218,17 +208,8 @@ export default class Stage extends Vue {
         const targetLine = this.viewState.pointerTargetLine;
         if (targetLine && (targetLine.track || !targetLine.station.expanded)) {
           const track = targetLine.track == "top" || targetLine.track == "bottom" ? targetLine.station.tracks[0] : targetLine.track;
-          const stev = new StopEvent(
-            targetLine.station.id,
-            track.id,
-            this.viewState.pointerTime
-          );
-          const train = new Train(
-            this.diagram.genId(),
-            "",
-            [ stev ]
-          );
-          this.$set(this.diagram.trains, train.id, train);
+          const train = this.diagram.addNewTrain(this.diagram.genId(), "");
+          train.addNewStopEvent(track, this.viewState.pointerTime);
           this.viewState.trainSelections = { [train.id]: { trainId: train.id, stevRange: null } };
           this.viewState.drawingState = {
             train: this.diagram.trains[train.id],

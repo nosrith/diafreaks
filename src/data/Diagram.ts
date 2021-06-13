@@ -1,3 +1,4 @@
+import Vue from "vue";
 import DiagramConfig from "./DiagramConfig";
 import Station from "./Station";
 import Train from "./Train";
@@ -18,7 +19,7 @@ export default class Diagram {
         }
         const config = DiagramConfig.fromJSON(o.config || {});
         const stations: { [id: number]: Station } = Object.fromEntries(Object.values(o.stations).map((s: any) => [ s.id, Station.fromJSON(s) ]));
-        const trains: { [id: number]: Train } = Object.fromEntries(Object.values(o.trains).map((t: any) => [ t.id, Train.fromJSON(t) ]));
+        const trains: { [id: number]: Train } = Object.fromEntries(Object.values(o.trains).map((t: any) => [ t.id, Train.fromJSON(t, stations) ]));
 
         let maxId = o.maxId ? Math.max(o.maxId, 0) : 0;
         for (const s of Object.values(stations)) {
@@ -34,16 +35,16 @@ export default class Diagram {
         return new Diagram(config, stations, trains, maxId);
     }
 
-    getYByRelY(relY: number) {
+    getYByRelY(relY: number): number {
         return relY + this.config.topPaneHeight - this.config.scrollY;
     }
-    getRelYByY(y: number) {
+    getRelYByY(y: number): number {
         return y - this.config.topPaneHeight + this.config.scrollY;
     }
-    getXByTime(time: number) {
+    getXByTime(time: number): number {
         return time * this.config.xScale + this.config.leftPaneWidth - this.config.scrollX;
     }
-    getTimeByX(x: number) {
+    getTimeByX(x: number): number {
         return (x - this.config.leftPaneWidth + this.config.scrollX) / this.config.xScale;
     }
 
@@ -54,9 +55,23 @@ export default class Diagram {
     genId(): number {
         return ++this.maxId;
     }
-
-    releaseId(id: number) {
+    releaseId(id: number): void {
         if (id == this.maxId) --this.maxId;
+    }
+
+    addNewStation(id: number, name: string, mileage: number): Station {
+        Vue.set(this.stations, id, new Station(id, name, mileage));
+        return this.stations[id];
+    }
+    removeStation(station: Station): void {
+        Vue.delete(this.stations, station.id);
+    }
+    addNewTrain(id: number, name: string): Train {
+        Vue.set(this.trains, id, new Train(id, name));
+        return this.trains[id];
+    }
+    removeTrain(train: Train): void {
+        Vue.delete(this.trains, train.id);
     }
 
     toJSON(): unknown {

@@ -1,33 +1,22 @@
+import Station from "./Station";
 import StopEvent, { StopEventRange } from "./StopEvent";
+import Track from "./Track";
 
 export default class Train {
     constructor(
-        public id: number, 
+        public readonly id: number, 
         public name: string,
-        public stevs: StopEvent[] = [],
     ) {}
+    stevs: StopEvent[] = [];
 
-    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-    static fromJSON(o: any): Train {
-        /* eslint-disable @typescript-eslint/no-explicit-any */
-        if (!(o && typeof o == "object" && o.id != null && o.name != null && Array.isArray(o.stops))) {
-            throw "Invalid JSON @ Train";
-        }
-        return new Train(
-            o.id,
-            o.name,
-            o.stops.flatMap((s: any) => StopEvent.fromJSON(s)),
-        )
+    addNewStopEvent(track: Track, time: number, index: number = this.stevs.length): StopEvent {
+        this.stevs.splice(index, 0, new StopEvent(this, track, time));
+        return this.stevs[index];
     }
 
-    getPreviousStopEvent(stev: StopEvent): StopEvent | undefined {
+    removeStopEvent(stev: StopEvent): void {
         const index = this.stevs.indexOf(stev);
-        return index > 0 ? this.stevs[index - 1] : undefined;
-    }
-
-    getNextStopEvent(stev: StopEvent): StopEvent | undefined {
-        const index = this.stevs.indexOf(stev);
-        return index < this.stevs.length - 1 ? this.stevs[index + 1] : undefined;
+        if (index >= 0) this.stevs.splice(index, 1);
     }
 
     getStopEventsInRange(stevRange: StopEventRange): StopEvent[] {
@@ -39,5 +28,39 @@ export default class Train {
             if (stev == stevRange.to) inRange = false;
         }
         return result;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+    static fromJSON(o: any, stations: { [id: number]: Station }): Train {
+        /* eslint-disable @typescript-eslint/no-explicit-any */
+        if (!(o && typeof o == "object" && o.id != null && o.name != null && Array.isArray(o.stops))) {
+            throw "Invalid JSON @ Train";
+        }
+        const train = new Train(o.id, o.name);
+        (o.stops as any[]).flatMap((s: any) => StopEvent.fromJSONStop(s, train, stations))
+            .forEach(stev => train.stevs.push(stev));
+        return train;
+    }
+
+    toJSON(): unknown {
+        const stops: { stationId: number, trackId: number, arrTime: number, depTime: number }[] = [];
+        for (const stev of this.stevs) {
+            const lastStop = stops[stops.length - 1];
+            if (lastStop.trackId == stev.track.id && lastStop.arrTime == lastStop.depTime) {
+                lastStop.depTime = stev.time;
+            } else {
+                stops.push({ 
+                    stationId: stev.station.id, 
+                    trackId: stev.track.id, 
+                    arrTime: stev.time, 
+                    depTime: stev.time 
+                });
+            }
+        }
+        return {
+            id: this.id,
+            name: this.name,
+            stops: stops
+        };
     }
 }

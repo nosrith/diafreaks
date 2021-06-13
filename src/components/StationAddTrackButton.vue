@@ -6,7 +6,6 @@
 import { Component, InjectReactive, Prop, Vue } from "vue-property-decorator";
 import Diagram from "@/data/Diagram";
 import Station from "@/data/Station";
-import Track from "@/data/Track";
 import ViewState from "@/data/ViewState";
 
 @Component
@@ -30,11 +29,7 @@ export default class StationAddTrackButton extends Vue {
 
   onClick(): void {
     if (!this.viewState.isInputEnabled) {
-      const newTrack = Track.fromJSON({
-        id: this.diagram.genId(),
-        name: ""
-      });
-      this.station.tracks.push(newTrack);
+      const newTrack = this.station.addNewTrack(this.diagram.genId(), "");
       this.$emit("updateY");
 
       this.viewState.trackNameInputTarget = { stationId: this.station.id, trackId: newTrack.id };

@@ -29,14 +29,14 @@ export default class StationRemoveButton extends Vue {
 
   onClick(): void {
     if (!this.viewState.isInputEnabled) {
-      const refered = Object.values(this.diagram.trains).some(t => t.stevs.some(s => s.stationId == this.station.id));
+      const refered = Object.values(this.diagram.trains).some(t => t.stevs.some(stev => stev.station == this.station));
       if (refered) {
         this.$buefy.dialog.confirm({
           message: this.$t("message.confirmRemoveStationRefered").toString(),
           onConfirm: () => {
             Object.values(this.diagram.trains).forEach(t => {
-              t.stevs.map((s, i) => s.stationId == this.station.id ? i : -1).filter(i => i >= 0).reverse()
-                .forEach(i => t.stevs.splice(i, 1))
+              t.stevs.filter(stev => stev.station == this.station)
+                .forEach(stev => stev.train.removeStopEvent(stev))
             });
             this.$delete(this.diagram.stations, this.station.id);
             this.$emit("updateY");

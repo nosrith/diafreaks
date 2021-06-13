@@ -2,15 +2,24 @@ import Track from "./Track";
 
 export default class Station {
     constructor(
-        public id: number, 
+        public readonly id: number, 
         public name: string,
-        public mileage: number = 0,
-        public tracks: Track[] = [],
-        public expanded: boolean = false,
-        public topRelY: number = 0,
-        public bottomRelY: number = 0,
-        public floating: number = 0,
+        public mileage: number,
+        public expanded = false,
+        public topRelY = 0,
+        public bottomRelY = 0
     ) {}
+    readonly tracks: Track[] = [];
+
+    addNewTrack(id: number, name: string, index: number = this.tracks.length): Track {
+        this.tracks.splice(index, 0, new Track(this, id, name));
+        return this.tracks[index];
+    }
+
+    removeTrack(t: Track): void {
+        const index = this.tracks.indexOf(t);
+        if (index >= 0) this.tracks.splice(index, 1);
+    }
 
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
     static fromJSON(o: any): Station {
@@ -18,13 +27,10 @@ export default class Station {
         if (!(o && typeof o == "object" && o.id != null && o.name != null && o.mileage != null && Array.isArray(o.tracks))) {
             throw "Invalid JSON @ Station"
         }
-        return new Station(
-            o.id,
-            o.name,
-            o.mileage,
-            o.tracks.map((t: any) => Track.fromJSON(t)),
-            o.expanded,
-        )
+        const station = new Station(o.id, o.name, o.mileage, o.expanded);
+        (o.tracks as any[]).map((t: any) => Track.fromJSON(t, station))
+            .forEach(t => station.tracks.push(t));
+        return station;
     }
 
     toJSON(): unknown {

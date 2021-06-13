@@ -198,17 +198,16 @@ export default class App extends Vue {
     let lastMileage = 0;
     for (const s of stations) {
       y += (s.mileage - lastMileage) * this.diagram.config.yScale;
-      const sy = s.floating ? s.topRelY : y;
-      s.topRelY = sy;
+      s.topRelY = y;
       if (s.expanded) {
         s.tracks.forEach((t, i) => {
-          t.relY = sy + (i + 1) * this.diagram.config.trackLineSpan;
+          t.relY = y + (i + 1) * this.diagram.config.trackLineSpan;
         });
-        s.bottomRelY = sy + (s.tracks.length + 1) * this.diagram.config.trackLineSpan;
+        s.bottomRelY = y + (s.tracks.length + 1) * this.diagram.config.trackLineSpan;
         y += (s.tracks.length + 1) * this.diagram.config.trackLineSpan;
       } else {
-        Object.values(s.tracks).forEach(t => t.relY = sy);
-        s.bottomRelY = sy;
+        Object.values(s.tracks).forEach(t => t.relY = y);
+        s.bottomRelY = y;
       }
       lastMileage = s.mileage;
     }
