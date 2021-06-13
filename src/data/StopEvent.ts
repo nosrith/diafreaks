@@ -8,6 +8,8 @@ export default class StopEvent {
         public track: Track,
         public time: number
     ) {}
+    privateId: number = ++StopEvent.maxPrivateId;
+    static maxPrivateId = 0;
 
     get station(): Station {
         return this.track.station;
