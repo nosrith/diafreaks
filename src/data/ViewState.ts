@@ -15,7 +15,7 @@ export default class ViewState {
     pointerScreenX = 0;
     pointerTime = 0;
     pointerY = 0;
-    pointerTargetLine: { station: Station, track: "top" | "bottom" | Track } | null = null;
+    pointerTargetLine: { station: Station, track: Track | null, relY: number } | null = null;
     pointerPreciseState: { sx0: number, t0: number } | null = null;
     drawingState: {
         train: Train,
@@ -26,6 +26,7 @@ export default class ViewState {
     } | null = null;
     trainPathDragState: { 
         dragging: boolean,
+        targets: { [trainId: number]: TrainSelectionState },
         timeShift: number 
     } | null = null;
     stationNameInputTarget: { stationId: number } | null = null;

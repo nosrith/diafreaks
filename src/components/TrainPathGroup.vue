@@ -43,7 +43,7 @@ export default class TrainPathGroup extends Vue {
 
   get regularTrainPathConfig(): unknown {
     return {
-      points: this.regularTrainPathNodes.map(n => [n.x, n.y]).flat(),
+      points: this.regularTrainPathNodes.flatMap(n => [this.diagram.getXByTime(n.time), this.diagram.getYByRelY(n.relY)]),
       stroke: this.diagram.config.trainPathColor,
       opacity: Object.keys(this.viewState.trainSelections).length > 0 ? this.viewConfig.unselectedTrainPathOpacity : 1,
       strokeWidth: this.diagram.config.trainPathWidth,
@@ -52,20 +52,7 @@ export default class TrainPathGroup extends Vue {
   }
 
   get regularTrainPathNodes(): TrainPathNode[] {
-    const result: TrainPathNode[] = [];
-    for (const n of this.trainPathNodes) {
-      const time = n.time + (this.selectedTrainPathEnabled && n.selected && this.viewState.trainPathDragState && !this.viewState.controlKeyPressed ? this.viewState.trainPathDragState.timeShift : 0);
-      result.push({
-        train: n.train, 
-        stev: n.stev, 
-        vSide: n.vSide,
-        time, 
-        x: this.diagram.getXByTime(time),
-        y: n.y, 
-        selected: n.selected
-      });
-    }
-    return result;
+    return this.getTrainPathNodes("regular");
   }
 
   get selectedTrainPathEnabled(): boolean {
@@ -74,84 +61,54 @@ export default class TrainPathGroup extends Vue {
 
   get selectedTrainPathConfig(): unknown {
     return {
-      points: this.selectedTrainPathNodes.flatMap(n => [n.x, n.y]),
+      points: this.selectedTrainPathNodes.flatMap(n => [this.diagram.getXByTime(n.time), this.diagram.getYByRelY(n.relY)]),
       stroke: this.viewConfig.selectedTrainPathColor,
       strokeWidth: this.diagram.config.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale,
       hitStrokeWidth: Math.max(this.diagram.config.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale, this.viewConfig.minHitWidth * 2)
     };
   }
 
-  get selectedTrainPathNodes():TrainPathNode[] {
-    const result: TrainPathNode[] = [];
-    for (const n of this.trainPathNodes) {
-      if (n.selected) {
-        const time = n.time + (this.viewState.trainPathDragState?.timeShift ?? 0);
-        result.push({
-          train: n.train, 
-          stev: n.stev, 
-          vSide: n.vSide,
-          time, 
-          x: this.diagram.getXByTime(time),
-          y: n.y, 
-          selected: n.selected
-        });
-      }
-    }
-    return result;
+  get selectedTrainPathNodes(): TrainPathNode[] {
+    return this.getTrainPathNodes("selected");
   }
 
-  get trainPathNodes(): TrainPathNode[] {
+  getTrainPathNodes(mode: "regular" | "selected"): TrainPathNode[] {
+    const sel = this.viewState.trainSelections[this.train.id];
+    const stevs = mode == "selected" && sel.stevRange != null ? 
+      this.train.getStopEventsInRange(sel.stevRange) : this.train.stevs;
+
+    const shiftEnabled = this.viewState.trainPathDragState?.targets[this.train.id] && (mode == "selected" || !this.viewState.controlKeyPressed);
+    const shiftTime = this.viewState.trainPathDragState?.timeShift ?? 0;
+    const shiftRange = this.viewState.trainPathDragState?.targets[this.train.id]?.stevRange;
+    let inShiftRange = shiftEnabled && !shiftRange;
+
     const result: TrainPathNode[] = [];
-    const selectedStevRange = this.viewState.trainSelections[this.train.id]?.stevRange;
-    let inRange = selectedStevRange === null;
-    for (const stev of this.train.stevs) {
-      if (selectedStevRange && selectedStevRange.from == stev) {
-        inRange = true;
-      }
-      const time = stev.time;
-      const x = this.diagram.getXByTime(time);
-      if (stev.station.expanded) {
-        if (stev.prev && stev.prev.station != stev.station) {
-          result.push({ 
-            train: this.train, 
-            stev, 
-            vSide: stev.prev.station.mileage < stev.station.mileage ? "top" : "bottom", 
-            time, x, 
-            y: this.diagram.getYByRelY(stev.prev.station.mileage < stev.station.mileage ? stev.station.topRelY : stev.station.bottomRelY),
-            selected: inRange,
-          });
-        }
-        result.push({
-          train: this.train, 
-          stev, 
-          vSide: "track", 
-          time, x,
-          y: this.diagram.getYByRelY(stev.track.relY),
-          selected: inRange,
-        });
-        if (stev.next && stev.next.station != stev.station) {
-          result.push({
-            train: this.train, 
-            stev, 
-            vSide: stev.next.station.mileage > stev.station.mileage ? "bottom" : "top",
-            time, x,
-            y: this.diagram.getYByRelY(stev.next.station.mileage > stev.station.mileage ? stev.station.bottomRelY : stev.station.topRelY),
-            selected: inRange,
-          });
-        }
-      } else {
+    for (const stev of stevs) {
+      if (shiftEnabled && stev == shiftRange?.from) inShiftRange = true;
+      const time = inShiftRange ? stev.time + shiftTime : stev.time;
+      if (stev.station.expanded && stev.prev && stev.prev.station != stev.station) {
         result.push({ 
-          train: this.train, 
-          stev,
-          vSide: "top", 
-          time, x, 
-          y: this.diagram.getYByRelY(stev.station.topRelY),
-          selected: inRange,
-        });        
+          stev, 
+          line: "station", 
+          time, 
+          relY: stev.prev.station.mileage < stev.station.mileage ? stev.station.topRelY : stev.station.bottomRelY
+        });
       }
-      if (selectedStevRange && selectedStevRange.to == stev) {
-        inRange = false;
+      result.push({
+        stev,
+        line: stev.station.expanded ? "track" : "station",
+        time,
+        relY: stev.track.relY
+      });
+      if (stev.station.expanded && stev.next && stev.next.station != stev.station) {
+        result.push({ 
+          stev, 
+          line: "station", 
+          time, 
+          relY: stev.next.station.mileage < stev.station.mileage ? stev.station.topRelY : stev.station.bottomRelY
+        });
       }
+      if (shiftEnabled && stev == shiftRange?.to) inShiftRange = false;
     }
     return result;
   }
@@ -307,7 +264,7 @@ export default class TrainPathGroup extends Vue {
     this.dragState = { 
       t0: firstNode.time, 
       sx0: konvaEvent.evt.screenX, 
-      y0: firstNode.y,
+      y0: this.diagram.getYByRelY(firstNode.relY),
       minTimeShift: minTimeShift,
       maxTimeShift: maxTimeShift,
       changeTimeTargets: null,
@@ -315,6 +272,7 @@ export default class TrainPathGroup extends Vue {
     };
     this.viewState.trainPathDragState = {
       dragging: false,
+      targets: this.viewState.trainSelections,
       timeShift: 0
     };
     window.addEventListener("mousemove", this.onWindowMouseMove);
@@ -329,7 +287,7 @@ export default class TrainPathGroup extends Vue {
     this.dragState = {
       t0: node.time,
       sx0: konvaEvent.evt.screenX,
-      y0: node.y,
+      y0: this.diagram.getYByRelY(node.relY),
       minTimeShift: node.stev.prev ? node.stev.prev.time - node.time : -86400,
       maxTimeShift: node.stev.next ? node.stev.next.time - node.time : 86400,
       changeTimeTargets: [ node.stev ],
@@ -337,6 +295,7 @@ export default class TrainPathGroup extends Vue {
     };
     this.viewState.trainPathDragState = {
       dragging: false,
+      targets: { [node.stev.train.id]: { trainId: node.stev.train.id, stevRange: { from: node.stev, to: node.stev } } },
       timeShift: 0
     };
     window.addEventListener("mousemove", this.onWindowMouseMove);

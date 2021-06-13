@@ -111,8 +111,7 @@ export default class Stage extends Vue {
       const pointerTargetLine = event.clientX >= this.diagram.config.leftPaneWidth ?
         this.findPointerTargetLine(event.clientY) : undefined;
       if (pointerTargetLine) {
-        const targetTrack = pointerTargetLine.track == "top" || pointerTargetLine.track == "bottom" ?
-          pointerTargetLine.station.tracks[0] : pointerTargetLine.track;
+        const targetTrack = pointerTargetLine.track ?? pointerTargetLine.station.tracks[0];
         const newStev = drawingState.train.addNewStopEvent(
           targetTrack, 
           this.viewState.pointerTime,
@@ -123,17 +122,17 @@ export default class Stage extends Vue {
     }
   }
 
-  findPointerTargetLine(y: number): { station: Station, track: "top" | "bottom" | Track, relY: number } | undefined {
+  findPointerTargetLine(y: number): { station: Station, track: Track | null, relY: number } | undefined {
     const stationPointedOnTop = this.stationsInMileageOrder.find(s => 
       Math.abs(this.diagram.getYByRelY(s.topRelY) - y) < Math.max(this.diagram.config.stationLineWidth * 0.5, this.viewConfig.minHitWidth));
     if (stationPointedOnTop) {
-      return { station: stationPointedOnTop, track: "top", relY: stationPointedOnTop.topRelY };
+      return { station: stationPointedOnTop, track: null, relY: stationPointedOnTop.topRelY };
     }
 
     const stationPointedOnBottom = this.stationsInMileageOrder.find(s =>
       Math.abs(this.diagram.getYByRelY(s.bottomRelY) - y) < Math.max(this.diagram.config.stationLineWidth * 0.5, this.viewConfig.minHitWidth));
     if (stationPointedOnBottom) {
-      return { station: stationPointedOnBottom, track: "bottom", relY: stationPointedOnBottom.bottomRelY };
+      return { station: stationPointedOnBottom, track: null, relY: stationPointedOnBottom.bottomRelY };
     }
 
     const station = this.stationsInMileageOrder.find(s => 
@@ -205,7 +204,7 @@ export default class Stage extends Vue {
       if (konvaEvent.evt.clientX >= this.diagram.config.leftPaneWidth) {
         const targetLine = this.viewState.pointerTargetLine;
         if (targetLine && (targetLine.track || !targetLine.station.expanded)) {
-          const track = targetLine.track == "top" || targetLine.track == "bottom" ? targetLine.station.tracks[0] : targetLine.track;
+          const track = targetLine.track ?? targetLine.station.tracks[0];
           const train = this.diagram.addNewTrain(this.diagram.genId(), "");
           train.addNewStopEvent(track, this.viewState.pointerTime);
           this.viewState.trainSelections = { [train.id]: { trainId: train.id, stevRange: null } };
