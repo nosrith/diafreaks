@@ -163,6 +163,9 @@ export default class Stage extends Vue {
       }
       if (konvaEvent.evt.button == 2) {
         if (drawingState.lastStev == drawingState.stableEnd) {
+          if (drawingState.floating) {
+            drawingState.train.stevs.splice(drawingState.train.stevs.indexOf(drawingState.floating), 1);
+          }
           this.viewState.drawingState = null;
         } else {
           const newLastStev = drawingState.direction > 0 ? drawingState.lastStev.prev : drawingState.lastStev.next;
