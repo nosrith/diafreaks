@@ -15,6 +15,7 @@ export default class ViewState {
     pointerScreenX = 0;
     pointerTime = 0;
     pointerY = 0;
+    pointerTargetTrainPath: { train: Train, stevRange: StopEventRange } | null = null;
     pointerTargetLine: { station: Station, track: Track | null, relY: number } | null = null;
     pointerPreciseState: { sx0: number, t0: number } | null = null;
     drawingState: {

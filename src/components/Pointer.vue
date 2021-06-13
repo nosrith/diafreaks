@@ -19,7 +19,8 @@ export default class TrainPathGroup extends Vue {
   @InjectReactive() diagram!: Diagram;
 
   get pointerEnabled(): unknown {
-    return this.viewState.pointerTargetLine != null && this.viewState.trainPathDragState == null && this.viewState.drawingState == null;
+    return this.viewState.pointerTargetLine && !this.viewState.pointerTargetTrainPath &&
+      !this.viewState.trainPathDragState && !this.viewState.drawingState;
   }
 
   get rectConfig(): unknown {

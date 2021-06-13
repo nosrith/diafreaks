@@ -7,7 +7,6 @@
 
 <script lang="ts">
 import { Component, InjectReactive, Prop, Vue } from "vue-property-decorator";
-import { KonvaEventObject } from "konva/types/Node";
 import { getTimeText } from "@/utils";
 import Diagram from "@/data/Diagram";
 import ViewConfig from "@/data/ViewConfig";
@@ -76,18 +75,11 @@ export default class TrainPathMarker extends Vue {
     };
   }
 
-  onRectMouseMove(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    const event = konvaEvent.evt;
-    if (!this.viewState.pointerPreciseState && !this.viewState.trainPathDragState?.dragging && !this.viewState.drawingState) {
-      this.viewState.pointerTargetLine = { 
-        station: this.trainPathNode.stev.station, 
-        track: this.trainPathNode.line == "track" ? this.trainPathNode.stev.track : null, 
-        relY: this.trainPathNode.relY 
-      };
-      this.viewState.pointerScreenX = event.screenX;
-      this.viewState.pointerTime = this.trainPathNode.time;
-      this.viewState.pointerY = this.diagram.getYByRelY(this.trainPathNode.relY);
-    }
+  onRectMouseMove(): void {
+    this.viewState.pointerTargetTrainPath = {
+      train: this.trainPathNode.stev.train,
+      stevRange: { from: this.trainPathNode.stev, to: this.trainPathNode.stev }
+    };
   }
 
   onRectDoubleClick(): void {

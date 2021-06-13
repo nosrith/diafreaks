@@ -61,21 +61,10 @@ export default class Stage extends Vue {
     document.removeEventListener("keyup", this.onKeyUp);
   }
 
-  onStageMouseDown(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    if (konvaEvent.target == konvaEvent.currentTarget) {
-      const event = konvaEvent.evt;
-      this.stageDragState = {
-        scrollX0: this.diagram.config.scrollX,
-        scrollY0: this.diagram.config.scrollY,
-        screenX0: event.screenX,
-        screenY0: event.screenY,
-        dragging: false,
-      };
-    }
-  }
-
   onStageMouseMove(konvaEvent: KonvaEventObject<MouseEvent>): void {
     const event = konvaEvent.evt;
+
+    // Update pointer state
     this.viewState.pointerScreenX = event.screenX;
     if (this.viewState.pointerPreciseState) {
       const dUnit = Math.round((event.screenX - this.viewState.pointerPreciseState.sx0) / this.viewConfig.pointerPrecisePixelPerTimeUnit);
@@ -94,7 +83,11 @@ export default class Stage extends Vue {
         this.viewState.pointerTargetLine = null;
       }
     }
+    if (konvaEvent.target == konvaEvent.currentTarget) {
+      this.viewState.pointerTargetTrainPath = null;
+    }
 
+    // Update drawing floating
     const drawingState = this.viewState.drawingState;
     if (drawingState) {
       if (drawingState.direction > 0) {
@@ -234,6 +227,19 @@ export default class Stage extends Vue {
         this.viewState.stationNameInputTarget = { stationId: station.id };
         this.$emit("stationNameInputStart");
       }
+    }
+  }
+
+  onStageMouseDown(konvaEvent: KonvaEventObject<MouseEvent>): void {
+    if (konvaEvent.target == konvaEvent.currentTarget) {
+      const event = konvaEvent.evt;
+      this.stageDragState = {
+        scrollX0: this.diagram.config.scrollX,
+        scrollY0: this.diagram.config.scrollY,
+        screenX0: event.screenX,
+        screenY0: event.screenY,
+        dragging: false,
+      };
     }
   }
 

@@ -1,8 +1,8 @@
 <template>
   <v-group>
-    <v-line :config="regularTrainPathConfig" @click="onTrainPathClick"></v-line>
+    <v-line :config="regularTrainPathConfig" @click="onTrainPathClick" @mousemove="onTrainPathMouseMove"></v-line>
     <template v-if="selectedTrainPathEnabled">
-      <v-line :config="selectedTrainPathConfig" @click="onSelectedTrainPathClick" @dblclick="onSelectedTrainPathDoubleClick" @mousedown="onSelectedTrainPathMouseDown"></v-line>
+      <v-line :config="selectedTrainPathConfig" @click="onSelectedTrainPathClick" @dblclick="onSelectedTrainPathDoubleClick" @mousedown="onSelectedTrainPathMouseDown" @mousemove="onSelectedTrainPathMouseMove"></v-line>
       <train-path-marker v-for="(n, i) in selectedTrainPathNodes" :key="`marker-${train.id}-${i}-${n.vSide}`" :trainPathNode="n" @click="onMarkerClick" @mousedown="onMarkerMouseDown"></train-path-marker>
     </template>
   </v-group>
@@ -113,13 +113,24 @@ export default class TrainPathGroup extends Vue {
     return result;
   }
 
+  onTrainPathMouseMove(): void {
+    this.viewState.pointerTargetTrainPath = null;
+  }
+
+  onSelectedTrainPathMouseMove(konvaEvent: KonvaEventObject<MouseEvent>): void {
+    this.viewState.pointerTargetTrainPath = { 
+      train: this.train, 
+      stevRange: this.getPointedStevRange(konvaEvent.evt.clientX, konvaEvent.evt.clientY)
+    };
+  }
+
   onTrainPathClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    const clickedStopRange = this.getClickedStevRange(konvaEvent.evt.clientX, konvaEvent.evt.clientY);
+    const clickedStopRange = this.getPointedStevRange(konvaEvent.evt.clientX, konvaEvent.evt.clientY);
     this.changeTrainSelections(konvaEvent, clickedStopRange, false);
   }
 
   onSelectedTrainPathClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    const clickedStopRange = this.getClickedStevRange(konvaEvent.evt.clientX, konvaEvent.evt.clientY);
+    const clickedStopRange = this.getPointedStevRange(konvaEvent.evt.clientX, konvaEvent.evt.clientY);
     this.changeTrainSelections(konvaEvent, clickedStopRange, true);
   }
 
@@ -167,7 +178,7 @@ export default class TrainPathGroup extends Vue {
     }
   }
 
-  getClickedStevRange(x: number, y: number): StopEventRange {
+  getPointedStevRange(x: number, y: number): StopEventRange {
     if (this.train.stevs.length <= 2) {
       return { from: this.train.stevs[0], to: this.train.stevs[this.train.stevs.length - 1] };
     }
@@ -254,7 +265,7 @@ export default class TrainPathGroup extends Vue {
       }
     }
 
-    const clickedStevRange = this.getClickedStevRange(konvaEvent.evt.clientX, konvaEvent.evt.clientY);
+    const clickedStevRange = this.getPointedStevRange(konvaEvent.evt.clientX, konvaEvent.evt.clientY);
     const changeTrackTargets = 
       clickedStevRange.from == clickedStevRange.to ? [ clickedStevRange.from ] : 
       clickedStevRange.from.track == clickedStevRange.to.track ? [ clickedStevRange.from, clickedStevRange.to ] :
