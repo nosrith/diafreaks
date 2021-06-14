@@ -359,40 +359,44 @@ export default class TrainPathGroup extends Vue {
           const targets = this.dragState.changeTrackTargets;
           const track0 = this.dragState.track0;
           const track1 = this.dragState.changeTrackTargets[0].track;
-          this.historyManager.push({
-            undo: () => { targets.forEach(stev => stev.track = track0); },
-            redo: () => { targets.forEach(stev => stev.track = track1); }
-          });
+          if (track0 != track1) {
+            this.historyManager.push({
+              undo: () => { targets.forEach(stev => stev.track = track0); },
+              redo: () => { targets.forEach(stev => stev.track = track1); }
+            });
+          }
         }
 
         const timeShift = this.viewState.trainPathDragState.timeShift;
-        if (!this.viewState.controlKeyPressed) {
-          const targets = 
-            this.dragState.changeTimeTargets ??
-            Object.values(this.viewState.trainSelections).flatMap(sel => {
-              return sel.stevRange ? sel.train.getStopEventsInRange(sel.stevRange) : sel.train.stevs;
+        if (timeShift != 0) {
+          if (!this.viewState.controlKeyPressed) {
+            const targets = 
+              this.dragState.changeTimeTargets ??
+              Object.values(this.viewState.trainSelections).flatMap(sel => {
+                return sel.stevRange ? sel.train.getStopEventsInRange(sel.stevRange) : sel.train.stevs;
+              });
+            targets.forEach(stev => stev.time += timeShift);
+            this.historyManager.push({
+              undo: () => { targets.forEach(stev => stev.time -= timeShift); },
+              redo: () => { targets.forEach(stev => stev.time += timeShift); }
             });
-          targets.forEach(stev => stev.time += timeShift);
-          this.historyManager.push({
-            undo: () => { targets.forEach(stev => stev.time -= timeShift); },
-            redo: () => { targets.forEach(stev => stev.time += timeShift); }
-          });
-        } else {
-          const newTrains = Object.values(this.viewState.trainSelections).map(sel => {
-            const srcTrain = sel.train;
-            const srcStevs = sel.stevRange ? srcTrain.getStopEventsInRange(sel.stevRange) : srcTrain.stevs;
-            const newTrain = this.diagram.addNewTrain(new Train(this.diagram.genId(), ""));
-            for (const srcStev of srcStevs) {
-              newTrain.addNewStopEvent(new StopEvent(newTrain, srcStev.track, srcStev.time + timeShift));
-            }
-            this.$delete(this.viewState.trainSelections, sel.train.id);
-            this.$set(this.viewState.trainSelections, newTrain.id, { trainId: newTrain.id, stevRange: null });
-            return newTrain;
-          });
-          this.historyManager.push({
-            undo: () => { newTrains.forEach(train => this.diagram.removeTrain(train)); },
-            redo: () => { newTrains.forEach(train => this.diagram.addNewTrain(train)); }
-          });
+          } else {
+            const newTrains = Object.values(this.viewState.trainSelections).map(sel => {
+              const srcTrain = sel.train;
+              const srcStevs = sel.stevRange ? srcTrain.getStopEventsInRange(sel.stevRange) : srcTrain.stevs;
+              const newTrain = this.diagram.addNewTrain(new Train(this.diagram.genId(), ""));
+              for (const srcStev of srcStevs) {
+                newTrain.addNewStopEvent(new StopEvent(newTrain, srcStev.track, srcStev.time + timeShift));
+              }
+              this.$delete(this.viewState.trainSelections, sel.train.id);
+              this.$set(this.viewState.trainSelections, newTrain.id, { trainId: newTrain.id, stevRange: null });
+              return newTrain;
+            });
+            this.historyManager.push({
+              undo: () => { newTrains.forEach(train => this.diagram.removeTrain(train)); },
+              redo: () => { newTrains.forEach(train => this.diagram.addNewTrain(train)); }
+            });
+          }
         }
       }
       this.viewState.trainPathDragState = null;

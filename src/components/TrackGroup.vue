@@ -102,22 +102,26 @@ export default class TrackGroup extends Vue {
   }
 
   onWindowMouseUp(event: MouseEvent): void {
-    if (this.dragState && this.dragState.dragging) {
+    if (this.dragState) {
       window.removeEventListener("mousemove", this.onWindowMouseMove);
       window.removeEventListener("mouseup", this.onWindowMouseUp);
       this.onWindowMouseMove(event);
+
       const index0 = this.dragState.index0;
       const index1 = this.station.tracks.indexOf(this.track);
-      this.historyManager.push({
-        undo: () => { 
-          this.station.removeTrack(this.track); 
-          this.station.addNewTrack(this.track, index0); 
-        },
-        redo: () => {
-          this.station.removeTrack(this.track); 
-          this.station.addNewTrack(this.track, index1); 
-        }
-      });
+      if (index0 != index1) {
+        this.historyManager.push({
+          undo: () => { 
+            this.station.removeTrack(this.track); 
+            this.station.addNewTrack(this.track, index0); 
+          },
+          redo: () => {
+            this.station.removeTrack(this.track); 
+            this.station.addNewTrack(this.track, index1); 
+          }
+        });
+      }
+
       this.dragState = null;
     }
   }

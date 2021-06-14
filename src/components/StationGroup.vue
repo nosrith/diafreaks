@@ -142,12 +142,14 @@ export default class StationGroup extends Vue {
       window.removeEventListener("mouseup", this.onWindowMouseUp);
       this.onWindowMouseMove(event);
 
-      const mileage0 = this.dragState.mileage0;
-      const mileage1 = this.station.mileage;
-      this.historyManager.push({
-        undo: () => { this.station.mileage = mileage0; },
-        redo: () => { this.station.mileage = mileage1; }
-      });
+      if (this.dragState.dragging) {
+        const mileage0 = this.dragState.mileage0;
+        const mileage1 = this.station.mileage;
+        this.historyManager.push({
+          undo: () => { this.station.mileage = mileage0; },
+          redo: () => { this.station.mileage = mileage1; }
+        });
+      }
 
       this.dragState = null;
     }
