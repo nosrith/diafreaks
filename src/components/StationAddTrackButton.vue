@@ -3,9 +3,11 @@
 </template>
 
 <script lang="ts">
-import { Component, InjectReactive, Prop, Vue } from "vue-property-decorator";
+import { Component, Inject, InjectReactive, Prop, Vue } from "vue-property-decorator";
+import HistoryManager from "@/HistoryManager";
 import Diagram from "@/data/Diagram";
 import Station from "@/data/Station";
+import Track from "@/data/Track";
 import ViewConfig from "@/data/ViewConfig";
 import ViewState from "@/data/ViewState";
 
@@ -14,6 +16,7 @@ export default class StationAddTrackButton extends Vue {
   @InjectReactive() viewConfig!: ViewConfig;
   @InjectReactive() viewState!: ViewState;
   @InjectReactive() diagram!: Diagram;
+  @Inject() historyManager!: HistoryManager;
   @Prop() station!: Station;
 
   get style(): unknown {
@@ -31,10 +34,14 @@ export default class StationAddTrackButton extends Vue {
 
   onClick(): void {
     if (!this.viewState.isInputEnabled) {
-      const newTrack = this.station.addNewTrack(this.diagram.genId(), "");
+      const newTrack = this.station.addNewTrack(new Track(this.station, this.diagram.genId(), ""));
+      this.historyManager.push({
+        undo: () => { this.station.removeTrack(newTrack); },
+        redo: () => { this.station.addNewTrack(newTrack); }
+      });
       this.$emit("updateY");
 
-      this.viewState.trackNameInputTarget = { stationId: this.station.id, trackId: newTrack.id };
+      this.viewState.trackNameInputTarget = newTrack;
       this.$emit("trackNameInputStart");
     }
   }

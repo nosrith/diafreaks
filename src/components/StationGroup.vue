@@ -13,7 +13,8 @@
 </template>
 
 <script lang="ts">
-import { Component, InjectReactive, Prop, Vue } from "vue-property-decorator";
+import { Component, Inject, InjectReactive, Prop, Vue } from "vue-property-decorator";
+import HistoryManager from "@/HistoryManager";
 import Diagram from "@/data/Diagram";
 import Station from "@/data/Station";
 import ViewConfig from "@/data/ViewConfig";
@@ -30,6 +31,7 @@ export default class StationGroup extends Vue {
   @InjectReactive() viewConfig!: ViewConfig;
   @InjectReactive() viewState!: ViewState;
   @InjectReactive() diagram!: Diagram;
+  @Inject() historyManager!: HistoryManager;
   @Prop() station!: Station;
 
   dragState: { sy0: number, mileage0: number, dragging: boolean } | null = null;
@@ -105,7 +107,7 @@ export default class StationGroup extends Vue {
 
   onStationLabelClick(): void {
     if (this.viewConfig.editMode && !this.viewState.isInputEnabled && !this.dragState?.dragging) {
-      this.viewState.stationNameInputTarget = { stationId: this.station.id };
+      this.viewState.stationNameInputTarget = this.station;
       this.$emit("stationNameInputStart");
     }
   }
@@ -139,6 +141,14 @@ export default class StationGroup extends Vue {
       window.removeEventListener("mousemove", this.onWindowMouseMove);
       window.removeEventListener("mouseup", this.onWindowMouseUp);
       this.onWindowMouseMove(event);
+
+      const mileage0 = this.dragState.mileage0;
+      const mileage1 = this.station.mileage;
+      this.historyManager.push({
+        undo: () => { this.station.mileage = mileage0; },
+        redo: () => { this.station.mileage = mileage1; }
+      });
+
       this.dragState = null;
     }
   }

@@ -1,9 +1,10 @@
 <template>
-  <input v-model="targetStation.name" v-show="viewState.stationNameInputTarget" :style="style" @keypress.enter="onComplete" @blur="onComplete">
+  <input :value="targetStation.name" v-show="viewState.stationNameInputTarget" :style="style" @keypress.enter="onComplete" @blur="onComplete">
 </template>
 
 <script lang="ts">
-import { Component, InjectReactive, Vue } from "vue-property-decorator";
+import { Component, Inject, InjectReactive, Vue } from "vue-property-decorator";
+import HistoryManager from "@/HistoryManager";
 import Diagram from "@/data/Diagram";
 import Station from "@/data/Station";
 import ViewState from "@/data/ViewState";
@@ -12,9 +13,10 @@ import ViewState from "@/data/ViewState";
 export default class StationNameInput extends Vue {
   @InjectReactive() viewState!: ViewState;
   @InjectReactive() diagram!: Diagram;
+  @Inject() historyManager!: HistoryManager;
 
   get targetStation(): Station | Record<string, never> {
-    return this.viewState.stationNameInputTarget ? this.diagram.stations[this.viewState.stationNameInputTarget.stationId] : {};
+    return this.viewState.stationNameInputTarget ?? {};
   }
 
   get style(): unknown {
@@ -31,6 +33,14 @@ export default class StationNameInput extends Vue {
   }
 
   onComplete(): void {
+    const targetStation = this.targetStation;
+    const name0 = this.targetStation.name;
+    const name1 = (this.$el as HTMLInputElement).value;
+    targetStation.name = name1;
+    this.historyManager.push({
+      undo: () => { targetStation.name = name0; },
+      redo: () => { targetStation.name = name1; }
+    });
     this.viewState.stationNameInputTarget = null;
   }
 }

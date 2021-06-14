@@ -13,11 +13,14 @@
 </template>
 
 <script lang="ts">
-import { Component, InjectReactive, Vue } from "vue-property-decorator";
+import { Component, Inject, InjectReactive, Vue } from "vue-property-decorator";
 import { KonvaEventObject } from "konva/types/Node";
+import HistoryManager from "@/HistoryManager";
 import Diagram from "@/data/Diagram";
 import Station from "@/data/Station";
+import StopEvent from "@/data/StopEvent";
 import Track from "@/data/Track";
+import Train from "@/data/Train";
 import ViewConfig from "@/data/ViewConfig";
 import ViewState from "@/data/ViewState";
 import BackLayer from "./BackLayer.vue";
@@ -33,6 +36,7 @@ export default class Stage extends Vue {
   @InjectReactive() viewConfig!: ViewConfig;
   @InjectReactive() viewState!: ViewState;
   @InjectReactive() diagram!: Diagram;
+  @Inject() historyManager!: HistoryManager;
 
   stageDragState: { scrollX0: number, scrollY0: number, screenX0: number, screenY0: number, dragging: boolean } | null = null;
 
@@ -106,8 +110,11 @@ export default class Stage extends Vue {
       if (pointerTargetLine) {
         const targetTrack = pointerTargetLine.track ?? pointerTargetLine.station.tracks[0];
         const newStev = drawingState.train.addNewStopEvent(
-          targetTrack, 
-          this.viewState.pointerTime,
+          new StopEvent(
+            drawingState.train,
+            targetTrack,
+            this.viewState.pointerTime
+          ),
           drawingState.direction > 0 || (drawingState.direction == 0 && this.viewState.pointerTime >= drawingState.lastStev.time) ? undefined : 0
         );
         drawingState.floating = newStev;
@@ -195,8 +202,31 @@ export default class Stage extends Vue {
       if (drawingState.floating) {
         drawingState.train.stevs.splice(drawingState.train.stevs.indexOf(drawingState.floating), 1);
       }
-      if (drawingState.train.stevs.length == 0) {
-        this.$delete(this.diagram.trains, this.viewState.drawingState.train.id);
+      if (drawingState.train.stevs.length <= 1) {
+        this.$delete(this.diagram.trains, drawingState.train.id);
+      } else {
+        const stableEnd = drawingState.stableEnd;
+        if (stableEnd) {
+          const stableIndex = drawingState.train.stevs.indexOf(stableEnd);
+          const addedStevs = drawingState.direction > 0 ? 
+            drawingState.train.stevs.filter((e, i) => i > stableIndex) : drawingState.train.stevs.filter((e, i) => i < stableIndex);
+          if (drawingState.direction > 0) {
+            this.historyManager.push({
+              undo: () => { drawingState.train.stevs.splice(stableIndex + 1); },
+              redo: () => { addedStevs.forEach(stev => drawingState.train.stevs.push(stev)); }
+            });
+          } else {
+            this.historyManager.push({
+              undo: () => { drawingState.train.stevs.splice(0, stableIndex); },
+              redo: () => { drawingState.train.stevs = addedStevs.concat(drawingState.train.stevs); }
+            });
+          }
+        } else {
+          this.historyManager.push({
+            undo: () => { this.$delete(this.diagram.trains, drawingState.train.id); },
+            redo: () => { this.$set(this.diagram.trains, drawingState.train.id, drawingState.train) }
+          });
+        }
       }
       this.viewState.drawingState = null;
       this.viewState.trainSelections = {};
@@ -205,9 +235,9 @@ export default class Stage extends Vue {
         const targetLine = this.viewState.pointerTargetLine;
         if (targetLine && (targetLine.track || !targetLine.station.expanded)) {
           const track = targetLine.track ?? targetLine.station.tracks[0];
-          const train = this.diagram.addNewTrain(this.diagram.genId(), "");
-          train.addNewStopEvent(track, this.viewState.pointerTime);
-          this.viewState.trainSelections = { [train.id]: { trainId: train.id, stevRange: null } };
+          const train = this.diagram.addNewTrain(new Train(this.diagram.genId(), ""));
+          train.addNewStopEvent(new StopEvent(train, track, this.viewState.pointerTime));
+          this.viewState.trainSelections = { [train.id]: { train: train, stevRange: null } };
           this.viewState.drawingState = {
             train: this.diagram.trains[train.id],
             lastStev: this.diagram.trains[train.id].stevs[0],
@@ -229,9 +259,13 @@ export default class Stage extends Vue {
           tracks: [ { id: this.diagram.genId(), name: "" } ],
         });
         this.$set(this.diagram.stations, station.id, station);
+        this.historyManager.push({
+          undo: () => { this.$delete(this.diagram.stations, station.id) },
+          redo: () => { this.$set(this.diagram.stations, station.id, station) }
+        });
         this.$emit("updateY");
 
-        this.viewState.stationNameInputTarget = { stationId: station.id };
+        this.viewState.stationNameInputTarget = station;
         this.$emit("stationNameInputStart");
       }
     }
@@ -296,22 +330,36 @@ export default class Stage extends Vue {
         this.viewState.controlKeyPressed = true;
       }
       if (event.key == "Delete") {
+        const deletingTrains: Train[] = [];
+        const deletingStevs: { stev: StopEvent, index: number }[] = [];
         for (const sel of Object.values(this.viewState.trainSelections)) {
           if (!sel.stevRange) {
-            this.$delete(this.diagram.trains, sel.trainId);
+            deletingTrains.push(sel.train);
           } else {
-            const train = this.diagram.trains[sel.trainId];
-            const fromIndex = train.stevs.indexOf(sel.stevRange.from);
-            const toIndex = train.stevs.indexOf(sel.stevRange.to);
+            const fromIndex = sel.train.stevs.indexOf(sel.stevRange.from);
+            const toIndex = sel.train.stevs.indexOf(sel.stevRange.to);
             const size = toIndex - fromIndex + 1;
-            if (size >= train.stevs.length - 1) {
-              this.$delete(this.diagram.trains, sel.trainId);
+            if (size >= sel.train.stevs.length - 1) {
+              deletingTrains.push(sel.train);
             } else {
-              train.stevs.splice(fromIndex, size);
+              for (let i = fromIndex; i <= toIndex; ++i) {
+                deletingStevs.push({ stev: sel.train.stevs[i], index: i });
+              }
             }
           }
-          this.$delete(this.viewState.trainSelections, sel.trainId);
         }
+        deletingTrains.forEach(train => this.$delete(this.diagram.trains, train.id));
+        deletingStevs.forEach(e => e.stev.train.removeStopEvent(e.stev));
+        this.historyManager.push({
+          undo: () => {
+            deletingStevs.forEach(e => e.stev.train.addNewStopEvent(e.stev, e.index));
+            deletingTrains.forEach(train => this.$set(this.diagram.trains, train.id, train));
+          },
+          redo: () => {
+            deletingTrains.forEach(train => this.$delete(this.diagram.trains, train.id));
+            deletingStevs.forEach(e => e.stev.train.removeStopEvent(e.stev));
+          }
+        });
       }
     }
   }

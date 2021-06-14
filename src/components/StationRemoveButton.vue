@@ -3,9 +3,12 @@
 </template>
 
 <script lang="ts">
-import { Component, InjectReactive, Prop, Vue } from "vue-property-decorator";
+import { Component, Inject, InjectReactive, Prop, Vue } from "vue-property-decorator";
+import HistoryManager from "@/HistoryManager";
 import Diagram from "@/data/Diagram";
 import Station from "@/data/Station";
+import StopEvent from "@/data/StopEvent";
+import Train from "@/data/Train";
 import ViewConfig from "@/data/ViewConfig";
 import ViewState from "@/data/ViewState";
 
@@ -14,6 +17,7 @@ export default class StationRemoveButton extends Vue {
   @InjectReactive() viewConfig!: ViewConfig;
   @InjectReactive() viewState!: ViewState;
   @InjectReactive() diagram!: Diagram;
+  @Inject() historyManager!: HistoryManager;
   @Prop() station!: Station;
 
   get style(): unknown {
@@ -35,20 +39,46 @@ export default class StationRemoveButton extends Vue {
       if (refered) {
         this.$buefy.dialog.confirm({
           message: this.$t("message.confirmRemoveStationRefered").toString(),
-          onConfirm: () => {
-            Object.values(this.diagram.trains).forEach(t => {
-              t.stevs.filter(stev => stev.station == this.station)
-                .forEach(stev => stev.train.removeStopEvent(stev))
-            });
-            this.$delete(this.diagram.stations, this.station.id);
-            this.$emit("updateY");
-          },
+          onConfirm: () => { this.doRemove(); },
         });
       } else {
-        this.$delete(this.diagram.stations, this.station.id);
-        this.$emit("updateY");
+        this.doRemove();
       }
     }
+  }
+
+  doRemove(): void {
+    const removingTrains: Train[] = [];
+    const removingStevs: { stev: StopEvent, index: number }[] = [];
+    for (const train of Object.values(this.diagram.trains)) {
+      for (let i = train.stevs.length - 1; i >= 0; --i) {
+        const stev = train.stevs[i];
+        if (stev.station == this.station) {
+          train.removeStopEvent(stev);
+          removingStevs.push({ stev, index: i });
+          if (train.stevs.length <= 1) {
+            this.diagram.removeTrain(train);
+            removingTrains.push(train);
+          }
+        }
+      }
+    }
+
+    this.$delete(this.diagram.stations, this.station.id);
+
+    this.historyManager.push({
+      undo: () => { 
+        this.$set(this.diagram.stations, this.station.id, this.station);
+        removingTrains.forEach(train => this.diagram.addNewTrain(train)); 
+        removingStevs.forEach(e => e.stev.train.addNewStopEvent(e.stev, e.index));
+      },
+      redo: () => { 
+        removingStevs.forEach(e => e.stev.train.removeStopEvent(e.stev));
+        removingTrains.forEach(train => this.diagram.removeTrain(train)); 
+        this.$delete(this.diagram.stations, this.station.id); 
+      }
+    });
+    this.$emit("updateY");
   }
 }
 </script>

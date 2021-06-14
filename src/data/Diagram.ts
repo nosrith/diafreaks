@@ -64,16 +64,14 @@ export default class Diagram {
         if (id == this.maxId) --this.maxId;
     }
 
-    addNewStation(id: number, name: string, mileage: number): Station {
-        Vue.set(this.stations, id, new Station(id, name, mileage));
-        return this.stations[id];
+    addNewStation(station: Station): Station {
+        return Vue.set(this.stations, station.id, station);
     }
     removeStation(station: Station): void {
         Vue.delete(this.stations, station.id);
     }
-    addNewTrain(id: number, name: string): Train {
-        Vue.set(this.trains, id, new Train(id, name));
-        return this.trains[id];
+    addNewTrain(train: Train): Train {
+        return Vue.set(this.trains, train.id, train);
     }
     removeTrain(train: Train): void {
         Vue.delete(this.trains, train.id);

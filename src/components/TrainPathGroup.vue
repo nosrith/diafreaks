@@ -9,11 +9,13 @@
 </template>
 
 <script lang="ts">
-import { Component, InjectReactive, Prop, Vue } from "vue-property-decorator";
+import { Component, Inject, InjectReactive, Prop, Vue } from "vue-property-decorator";
 import { KonvaEventObject } from "konva/types/Node";
+import HistoryManager from "@/HistoryManager";
 import Diagram from "@/data/Diagram";
 import Station from "@/data/Station";
 import StopEvent, { StopEventRange } from "@/data/StopEvent";
+import Track from "@/data/Track";
 import TrainPathNode from "@/data/TrainPathNode";
 import Train from "@/data/Train";
 import ViewConfig from "@/data/ViewConfig";
@@ -29,6 +31,7 @@ export default class TrainPathGroup extends Vue {
   @InjectReactive() viewConfig!: ViewConfig;
   @InjectReactive() viewState!: ViewState;
   @InjectReactive() diagram!: Diagram;
+  @Inject() historyManager!: HistoryManager;
   @Prop() train!: Train;
 
   dragState: { 
@@ -36,6 +39,7 @@ export default class TrainPathGroup extends Vue {
     y0: number,
     sx0: number, 
     sy0: number,
+    track0: Track | null,
     minTimeShift: number,
     maxTimeShift: number,
     changeTimeTargets: StopEvent[] | null,
@@ -150,7 +154,7 @@ export default class TrainPathGroup extends Vue {
       }
 
       if (!sel) {
-        this.$set(this.viewState.trainSelections, this.train.id, { trainId: this.train.id, stevRange: null });
+        this.$set(this.viewState.trainSelections, this.train.id, { train: this.train, stevRange: null });
       } else {
         const selectedStevRange = sel.stevRange;
         if (!selectedStevRange) {
@@ -206,10 +210,10 @@ export default class TrainPathGroup extends Vue {
       const nearestStev = this.getNearestStopEvent(targetTime);
       if (!(nearestStation == nearestStev.station && (nearestStev.prev?.track == nearestStev.track || nearestStev.next?.track == nearestStev.track))) {
         const index = this.train.stevs.findIndex(s => s.time > targetTime);
-        const newStev = this.train.addNewStopEvent(nearestStation.tracks[0], targetTime, index);
+        const newStev = this.train.addNewStopEvent(new StopEvent(this.train, nearestStation.tracks[0], targetTime), index);
         this.viewState.trainSelections = { 
           [this.train.id]: {
-            trainId: this.train.id,
+            train: this.train,
             stevRange: { from: newStev, to: newStev }
           } 
         };
@@ -278,6 +282,7 @@ export default class TrainPathGroup extends Vue {
       y0: this.diagram.getYByRelY(firstNode.relY),
       sx0: konvaEvent.evt.screenX, 
       sy0: konvaEvent.evt.screenY,
+      track0: changeTrackTargets ? changeTrackTargets[0].track : null,
       minTimeShift: minTimeShift,
       maxTimeShift: maxTimeShift,
       changeTimeTargets: null,
@@ -300,6 +305,7 @@ export default class TrainPathGroup extends Vue {
     this.dragState = {
       t0: node.time,
       y0: this.diagram.getYByRelY(node.relY),
+      track0: node.stev.track,
       sx0: konvaEvent.evt.screenX,
       sy0: konvaEvent.evt.screenY,
       minTimeShift: node.stev.prev ? node.stev.prev.time - node.time : -86400,
@@ -309,7 +315,7 @@ export default class TrainPathGroup extends Vue {
     };
     this.viewState.trainPathDragState = {
       dragging: false,
-      targets: { [node.stev.train.id]: { trainId: node.stev.train.id, stevRange: { from: node.stev, to: node.stev } } },
+      targets: { [node.stev.train.id]: { train: node.stev.train, stevRange: { from: node.stev, to: node.stev } } },
       timeShift: 0
     };
     window.addEventListener("mousemove", this.onWindowMouseMove);
@@ -349,27 +355,44 @@ export default class TrainPathGroup extends Vue {
       window.removeEventListener("mousemove", this.onWindowMouseMove);
       window.removeEventListener("mouseup", this.onWindowMouseUp);
       if (this.viewState.trainPathDragState.dragging) {
+        if (this.dragState.changeTrackTargets && this.dragState.track0) {
+          const targets = this.dragState.changeTrackTargets;
+          const track0 = this.dragState.track0;
+          const track1 = this.dragState.changeTrackTargets[0].track;
+          this.historyManager.push({
+            undo: () => { targets.forEach(stev => stev.track = track0); },
+            redo: () => { targets.forEach(stev => stev.track = track1); }
+          });
+        }
+
+        const timeShift = this.viewState.trainPathDragState.timeShift;
         if (!this.viewState.controlKeyPressed) {
           const targets = 
             this.dragState.changeTimeTargets ??
             Object.values(this.viewState.trainSelections).flatMap(sel => {
-              const train = this.diagram.trains[sel.trainId];
-              return sel.stevRange ? train.getStopEventsInRange(sel.stevRange) : train.stevs;
+              return sel.stevRange ? sel.train.getStopEventsInRange(sel.stevRange) : sel.train.stevs;
             });
-          for (const stev of targets) {
-            stev.time += this.viewState.trainPathDragState.timeShift;
-          }
+          targets.forEach(stev => stev.time += timeShift);
+          this.historyManager.push({
+            undo: () => { targets.forEach(stev => stev.time -= timeShift); },
+            redo: () => { targets.forEach(stev => stev.time += timeShift); }
+          });
         } else {
-          for (const sel of Object.values(this.viewState.trainSelections)) {
-            const srcTrain = this.diagram.trains[sel.trainId];
+          const newTrains = Object.values(this.viewState.trainSelections).map(sel => {
+            const srcTrain = sel.train;
             const srcStevs = sel.stevRange ? srcTrain.getStopEventsInRange(sel.stevRange) : srcTrain.stevs;
-            const newTrain = this.diagram.addNewTrain(this.diagram.genId(), "");
+            const newTrain = this.diagram.addNewTrain(new Train(this.diagram.genId(), ""));
             for (const srcStev of srcStevs) {
-              newTrain.addNewStopEvent(srcStev.track, srcStev.time + this.viewState.trainPathDragState.timeShift);
+              newTrain.addNewStopEvent(new StopEvent(newTrain, srcStev.track, srcStev.time + timeShift));
             }
-            this.$delete(this.viewState.trainSelections, sel.trainId);
+            this.$delete(this.viewState.trainSelections, sel.train.id);
             this.$set(this.viewState.trainSelections, newTrain.id, { trainId: newTrain.id, stevRange: null });
-          }
+            return newTrain;
+          });
+          this.historyManager.push({
+            undo: () => { newTrains.forEach(train => this.diagram.removeTrain(train)); },
+            redo: () => { newTrains.forEach(train => this.diagram.addNewTrain(train)); }
+          });
         }
       }
       this.viewState.trainPathDragState = null;

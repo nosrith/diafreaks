@@ -4,7 +4,7 @@ import Track from "./Track";
 import Train from "./Train";
 
 export interface TrainSelectionState {
-    trainId: number;
+    train: Train;
     stevRange: StopEventRange | null;
 }
 
@@ -30,8 +30,8 @@ export default class ViewState {
         targets: { [trainId: number]: TrainSelectionState },
         timeShift: number 
     } | null = null;
-    stationNameInputTarget: { stationId: number } | null = null;
-    trackNameInputTarget: { stationId: number, trackId: number } | null = null;
+    stationNameInputTarget: Station | null = null;
+    trackNameInputTarget: Track | null = null;
     controlKeyPressed = false;
 
     get isInputEnabled(): boolean {

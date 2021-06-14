@@ -6,7 +6,8 @@
 </template>
 
 <script lang="ts">
-import { Component, InjectReactive, Prop, Vue } from "vue-property-decorator";
+import { Component, Inject, InjectReactive, Prop, Vue } from "vue-property-decorator";
+import HistoryManager from "@/HistoryManager";
 import Diagram from "@/data/Diagram";
 import ViewConfig from "@/data/ViewConfig";
 import ViewState from "@/data/ViewState";
@@ -19,10 +20,11 @@ export default class TrackGroup extends Vue {
   @InjectReactive() viewConfig!: ViewConfig;
   @InjectReactive() viewState!: ViewState;
   @InjectReactive() diagram!: Diagram;
+  @Inject() historyManager!: HistoryManager;
   @Prop() station!: Station;
   @Prop() track!: Track;
 
-  dragState: { sy0: number, dragging: boolean } | null = null;
+  dragState: { sy0: number, index0: number, dragging: boolean } | null = null;
 
   get lineConfig(): unknown {
     return {
@@ -61,14 +63,18 @@ export default class TrackGroup extends Vue {
 
   onLabelClick(): void {
     if (this.viewConfig.editMode && !this.viewState.isInputEnabled) {
-      this.viewState.trackNameInputTarget = { stationId: this.station.id, trackId: this.track.id };
+      this.viewState.trackNameInputTarget = this.track;
       this.$emit("trackNameInputStart");
     }
   }
 
   onLabelMouseDown(konvaEvent: KonvaEventObject<MouseEvent>): void {
     if (this.viewConfig.editMode) {
-      this.dragState = { sy0: konvaEvent.evt.screenY, dragging: false };
+      this.dragState = { 
+        sy0: konvaEvent.evt.screenY, 
+        index0: this.station.tracks.indexOf(this.track), 
+        dragging: false 
+      };
       window.addEventListener("mousemove", this.onWindowMouseMove);
       window.addEventListener("mouseup", this.onWindowMouseUp);
     }
@@ -100,6 +106,18 @@ export default class TrackGroup extends Vue {
       window.removeEventListener("mousemove", this.onWindowMouseMove);
       window.removeEventListener("mouseup", this.onWindowMouseUp);
       this.onWindowMouseMove(event);
+      const index0 = this.dragState.index0;
+      const index1 = this.station.tracks.indexOf(this.track);
+      this.historyManager.push({
+        undo: () => { 
+          this.station.removeTrack(this.track); 
+          this.station.addNewTrack(this.track, index0); 
+        },
+        redo: () => {
+          this.station.removeTrack(this.track); 
+          this.station.addNewTrack(this.track, index1); 
+        }
+      });
       this.dragState = null;
     }
   }

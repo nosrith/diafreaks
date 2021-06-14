@@ -1,9 +1,10 @@
 <template>
-  <input v-model="targetTrack.name" v-show="viewState.trackNameInputTarget" :style="style" @keypress.enter="onComplete" @blur="onComplete">
+  <input :value="targetTrack.name" v-show="viewState.trackNameInputTarget" :style="style" @keypress.enter="onComplete" @blur="onComplete">
 </template>
 
 <script lang="ts">
-import { Component, InjectReactive, Vue } from "vue-property-decorator";
+import { Component, Inject, InjectReactive, Vue } from "vue-property-decorator";
+import HistoryManager from "@/HistoryManager";
 import Diagram from "@/data/Diagram";
 import Track from "@/data/Track";
 import ViewState from "@/data/ViewState";
@@ -12,10 +13,10 @@ import ViewState from "@/data/ViewState";
 export default class TrackNameInput extends Vue {
   @InjectReactive() viewState!: ViewState;
   @InjectReactive() diagram!: Diagram;
+  @Inject() historyManager!: HistoryManager;
 
   get targetTrack(): Track | Record<string, never> {
-    const tar = this.viewState.trackNameInputTarget;
-    return tar ? (this.diagram.stations[tar.stationId].tracks.find(t => t.id == tar.trackId) ?? {}) : {};
+    return this.viewState.trackNameInputTarget ?? {};
   }
 
   get style(): unknown {
@@ -33,6 +34,14 @@ export default class TrackNameInput extends Vue {
   }
 
   onComplete(): void {
+    const targetTrack = this.targetTrack;
+    const name0 = targetTrack.name;
+    const name1 = (this.$el as HTMLInputElement).value;
+    targetTrack.name = name1;
+    this.historyManager.push({
+      undo: () => { targetTrack.name = name0; },
+      redo: () => { targetTrack.name = name1; }
+    });
     this.viewState.trackNameInputTarget = null;
   }
 }

@@ -27,7 +27,8 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, ProvideReactive, Vue } from "vue-property-decorator";
+import { Component, Prop, Provide, ProvideReactive, Vue } from "vue-property-decorator";
+import HistoryManager from "@/HistoryManager";
 import Diagram from "@/data/Diagram";
 import ViewConfig from "@/data/ViewConfig";
 import ViewState from "@/data/ViewState";
@@ -47,6 +48,7 @@ import TrackNameInput from "./TrackNameInput.vue";
 export default class DiagramView extends Vue {
   @Prop({ default: () => Diagram.fromJSON({ stations: [], trains: [] }) }) @ProvideReactive() diagram!: Diagram;
   @Prop({ default: new ViewConfig() }) @ProvideReactive() viewConfig!: ViewConfig;
+  @Prop() @Provide() historyManager!: HistoryManager;
   @ProvideReactive() viewState = new ViewState();
 
   mounted(): void {

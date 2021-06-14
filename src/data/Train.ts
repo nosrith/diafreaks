@@ -1,6 +1,5 @@
 import Station from "./Station";
 import StopEvent, { StopEventRange } from "./StopEvent";
-import Track from "./Track";
 
 export default class Train {
     constructor(
@@ -9,8 +8,8 @@ export default class Train {
     ) {}
     stevs: StopEvent[] = [];
 
-    addNewStopEvent(track: Track, time: number, index: number = this.stevs.length): StopEvent {
-        this.stevs.splice(index, 0, new StopEvent(this, track, time));
+    addNewStopEvent(stev: StopEvent, index: number = this.stevs.length): StopEvent {
+        this.stevs.splice(index, 0, stev);
         return this.stevs[index];
     }
 

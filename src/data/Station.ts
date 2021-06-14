@@ -11,8 +11,8 @@ export default class Station {
     ) {}
     readonly tracks: Track[] = [];
 
-    addNewTrack(id: number, name: string, index: number = this.tracks.length): Track {
-        this.tracks.splice(index, 0, new Track(this, id, name));
+    addNewTrack(track: Track, index: number = this.tracks.length): Track {
+        this.tracks.splice(index, 0, track);
         return this.tracks[index];
     }
 

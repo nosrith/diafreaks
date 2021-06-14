@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <diagram-view id="diagram-view" :diagram="diagram" :viewConfig="viewConfig" :editMode="viewConfig.editMode"></diagram-view>
+    <diagram-view id="diagram-view" :diagram="diagram" :viewConfig="viewConfig" :historyManager="historyManager"></diagram-view>
     <help-pane id="help-pane" v-if="helpPaneVisible"></help-pane>
     <div id="nav-pane">
       <span id="nav-pane-logo" class="nav-pane-item">
@@ -11,6 +11,16 @@
           <span class="nav-pane-item">
             <b-tooltip :label="$t('message.editButtonTooltip')" type="is-light">
               <b-button icon-left="pencil-outline" size="medium" :class="viewConfig.editMode ? 'is-selected': ''" @click="onEditButtonClick"></b-button>
+            </b-tooltip>
+          </span>
+          <span class="nav-pane-item">
+            <b-tooltip :label="$t('message.undoButtonTooltip')" type="is-light">
+              <b-button icon-left="undo" size="medium" :disabled="!historyManager.undoable" @click="onUndoButtonClick"></b-button>
+            </b-tooltip>
+          </span>
+          <span class="nav-pane-item">
+            <b-tooltip :label="$t('message.redoButtonTooltip')" type="is-light">
+              <b-button icon-left="redo" size="medium" :disabled="!historyManager.redoable" @click="onRedoButtonClick"></b-button>
             </b-tooltip>
           </span>
           <span class="nav-pane-item">
@@ -44,6 +54,7 @@
 
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
+import HistoryManager from "./HistoryManager";
 import Diagram from "./data/Diagram";
 import ViewConfig from "./data/ViewConfig";
 import DiagramView from "./components/DiagramView.vue";
@@ -58,6 +69,7 @@ export default class App extends Vue {
   diagramFileName = "diagram.json";
   diagram = Diagram.fromJSON({ stations: [], trains: [] });
   viewConfig = new ViewConfig();
+  historyManager = new HistoryManager(100);
   helpPaneVisible = false;
 
   mounted(): void {
@@ -70,6 +82,14 @@ export default class App extends Vue {
 
   onEditButtonClick(): void {
     this.viewConfig.editMode = !this.viewConfig.editMode;
+  }
+
+  onUndoButtonClick(): void {
+    this.historyManager.undo();
+  }
+
+  onRedoButtonClick(): void {
+    this.historyManager.redo();
   }
 
   onVanishButtonClick(): void {
@@ -96,6 +116,7 @@ export default class App extends Vue {
               const data = JSON.parse(reader.result);
               this.diagram = Diagram.fromJSON(data);
               this.diagramFileName = file.name;
+              this.historyManager.clear();
             } catch (e) {
               this.$buefy.notification.open({
                 type: "is-danger",
