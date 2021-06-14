@@ -329,7 +329,7 @@ export default class Stage extends Vue {
       if (event.key == "Control") {
         this.viewState.controlKeyPressed = true;
       }
-      if (event.key == "Delete") {
+      if (event.key == "Delete" && this.viewConfig.editMode) {
         const deletingTrains: Train[] = [];
         const deletingStevs: { stev: StopEvent, index: number }[] = [];
         for (const sel of Object.values(this.viewState.trainSelections)) {
@@ -360,6 +360,7 @@ export default class Stage extends Vue {
             deletingStevs.forEach(e => e.stev.train.removeStopEvent(e.stev));
           }
         });
+        this.viewState.trainSelections = {};
       }
     }
   }
