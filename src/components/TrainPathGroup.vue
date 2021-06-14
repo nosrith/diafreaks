@@ -3,7 +3,7 @@
     <v-line :config="regularTrainPathConfig" @click="onTrainPathClick" @mousemove="onTrainPathMouseMove"></v-line>
     <template v-if="selectedTrainPathEnabled">
       <v-line :config="selectedTrainPathConfig" @click="onSelectedTrainPathClick" @dblclick="onSelectedTrainPathDoubleClick" @mousedown="onSelectedTrainPathMouseDown" @mousemove="onSelectedTrainPathMouseMove"></v-line>
-      <train-path-marker v-for="n in selectedTrainPathNodes" :key="`marker-${train.id}-${n.stev.privateId}-${n.line}`" :trainPathNode="n" @click="onMarkerClick" @mousedown="onMarkerMouseDown"></train-path-marker>
+      <train-path-marker v-for="n in selectedTrainPathNodes" :key="`marker-${train.id}-${n.stev.privateId}-${n.phase}`" :trainPathNode="n" @click="onMarkerClick" @mousedown="onMarkerMouseDown"></train-path-marker>
     </template>
   </v-group>
 </template>
@@ -94,21 +94,21 @@ export default class TrainPathGroup extends Vue {
       if (stev.station.expanded && stev.prev && stev.prev.station != stev.station) {
         result.push({ 
           stev, 
-          line: "station", 
+          phase: "arr",
           time, 
           relY: stev.prev.station.mileage < stev.station.mileage ? stev.station.topRelY : stev.station.bottomRelY
         });
       }
       result.push({
         stev,
-        line: stev.station.expanded ? "track" : "station",
+        phase: "track",
         time,
         relY: stev.track.relY
       });
       if (stev.station.expanded && stev.next && stev.next.station != stev.station) {
         result.push({ 
           stev, 
-          line: "station", 
+          phase: "dep",
           time, 
           relY: stev.next.station.mileage < stev.station.mileage ? stev.station.topRelY : stev.station.bottomRelY
         });

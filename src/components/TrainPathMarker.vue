@@ -31,8 +31,7 @@ export default class TrainPathMarker extends Vue {
   }
 
   get labelEnabled(): boolean {
-    const n = this.trainPathNode;
-    return n.stev.station.expanded ? n.line == "track" : n.line != "track";
+    return this.trainPathNode.phase == "track";
   }
 
   get labelConfig(): unknown {

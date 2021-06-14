@@ -2,7 +2,7 @@ import StopEvent from "./StopEvent";
 
 export default interface TrainPathNode {
     stev: StopEvent;
-    line: "station" | "track";
+    phase: "arr" | "track" | "dep";
     time: number;
     relY: number;
 }
