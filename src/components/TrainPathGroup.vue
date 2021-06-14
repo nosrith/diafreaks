@@ -33,8 +33,9 @@ export default class TrainPathGroup extends Vue {
 
   dragState: { 
     t0: number, 
-    sx0: number, 
     y0: number,
+    sx0: number, 
+    sy0: number,
     minTimeShift: number,
     maxTimeShift: number,
     changeTimeTargets: StopEvent[] | null,
@@ -274,8 +275,9 @@ export default class TrainPathGroup extends Vue {
     const firstNode = this.selectedTrainPathNodes[0];
     this.dragState = { 
       t0: firstNode.time, 
-      sx0: konvaEvent.evt.screenX, 
       y0: this.diagram.getYByRelY(firstNode.relY),
+      sx0: konvaEvent.evt.screenX, 
+      sy0: konvaEvent.evt.screenY,
       minTimeShift: minTimeShift,
       maxTimeShift: maxTimeShift,
       changeTimeTargets: null,
@@ -297,8 +299,9 @@ export default class TrainPathGroup extends Vue {
 
     this.dragState = {
       t0: node.time,
-      sx0: konvaEvent.evt.screenX,
       y0: this.diagram.getYByRelY(node.relY),
+      sx0: konvaEvent.evt.screenX,
+      sy0: konvaEvent.evt.screenY,
       minTimeShift: node.stev.prev ? node.stev.prev.time - node.time : -86400,
       maxTimeShift: node.stev.next ? node.stev.next.time - node.time : 86400,
       changeTimeTargets: [ node.stev ],
@@ -315,24 +318,26 @@ export default class TrainPathGroup extends Vue {
 
   onWindowMouseMove(event: MouseEvent): void {
     if (this.dragState && this.viewState.trainPathDragState) {
-      if (!this.viewState.trainPathDragState.dragging) {
+      if (!this.viewState.trainPathDragState.dragging && Math.hypot(event.clientX - this.dragState.sx0, event.clientY - this.dragState.sy0) > 1) {
         this.viewState.trainPathDragState.dragging = true;
         this.viewState.pointerY = this.dragState.y0;
       }
-      if (!this.viewState.pointerPreciseState) {
-        this.viewState.pointerTime = this.dragState.t0 + Math.floor((event.screenX - this.dragState.sx0) / this.diagram.config.xScale / 60) * 60;
-      }
-      this.viewState.trainPathDragState.timeShift = 
-        !this.viewState.controlKeyPressed ?
-          Math.min(this.dragState.maxTimeShift, Math.max(this.dragState.minTimeShift, this.viewState.pointerTime - this.dragState.t0)) :
-          this.viewState.pointerTime - this.dragState.t0;
-      if (this.dragState.changeTrackTargets) {
-        const mouseRelY = this.diagram.getRelYByY(event.clientY);
-        const targetStation = this.dragState.changeTrackTargets[0].station;
-        const mouseTrack = targetStation.tracks.find(t => Math.abs(t.relY - mouseRelY) < this.viewConfig.minHitWidth);
-        if (mouseTrack) {
-          for (const stev of this.dragState.changeTrackTargets) {
-            stev.track = mouseTrack;
+      if (this.viewState.trainPathDragState.dragging) {
+        if (!this.viewState.pointerPreciseState) {
+          this.viewState.pointerTime = this.dragState.t0 + Math.floor((event.screenX - this.dragState.sx0) / this.diagram.config.xScale / 60) * 60;
+        }
+        this.viewState.trainPathDragState.timeShift = 
+          !this.viewState.controlKeyPressed ?
+            Math.min(this.dragState.maxTimeShift, Math.max(this.dragState.minTimeShift, this.viewState.pointerTime - this.dragState.t0)) :
+            this.viewState.pointerTime - this.dragState.t0;
+        if (this.dragState.changeTrackTargets) {
+          const mouseRelY = this.diagram.getRelYByY(event.clientY);
+          const targetStation = this.dragState.changeTrackTargets[0].station;
+          const mouseTrack = targetStation.tracks.find(t => Math.abs(t.relY - mouseRelY) < this.viewConfig.minHitWidth);
+          if (mouseTrack) {
+            for (const stev of this.dragState.changeTrackTargets) {
+              stev.track = mouseTrack;
+            }
           }
         }
       }
@@ -343,26 +348,28 @@ export default class TrainPathGroup extends Vue {
     if (this.dragState && this.viewState.trainPathDragState) {
       window.removeEventListener("mousemove", this.onWindowMouseMove);
       window.removeEventListener("mouseup", this.onWindowMouseUp);
-      if (!this.viewState.controlKeyPressed) {
-        const targets = 
-          this.dragState.changeTimeTargets ??
-          Object.values(this.viewState.trainSelections).flatMap(sel => {
-            const train = this.diagram.trains[sel.trainId];
-            return sel.stevRange ? train.getStopEventsInRange(sel.stevRange) : train.stevs;
-          });
-        for (const stev of targets) {
-          stev.time += this.viewState.trainPathDragState.timeShift;
-        }
-      } else {
-        for (const sel of Object.values(this.viewState.trainSelections)) {
-          const srcTrain = this.diagram.trains[sel.trainId];
-          const srcStevs = sel.stevRange ? srcTrain.getStopEventsInRange(sel.stevRange) : srcTrain.stevs;
-          const newTrain = this.diagram.addNewTrain(this.diagram.genId(), "");
-          for (const srcStev of srcStevs) {
-            newTrain.addNewStopEvent(srcStev.track, srcStev.time + this.viewState.trainPathDragState.timeShift);
+      if (this.viewState.trainPathDragState.dragging) {
+        if (!this.viewState.controlKeyPressed) {
+          const targets = 
+            this.dragState.changeTimeTargets ??
+            Object.values(this.viewState.trainSelections).flatMap(sel => {
+              const train = this.diagram.trains[sel.trainId];
+              return sel.stevRange ? train.getStopEventsInRange(sel.stevRange) : train.stevs;
+            });
+          for (const stev of targets) {
+            stev.time += this.viewState.trainPathDragState.timeShift;
           }
-          this.$delete(this.viewState.trainSelections, sel.trainId);
-          this.$set(this.viewState.trainSelections, newTrain.id, { trainId: newTrain.id, stevRange: null });
+        } else {
+          for (const sel of Object.values(this.viewState.trainSelections)) {
+            const srcTrain = this.diagram.trains[sel.trainId];
+            const srcStevs = sel.stevRange ? srcTrain.getStopEventsInRange(sel.stevRange) : srcTrain.stevs;
+            const newTrain = this.diagram.addNewTrain(this.diagram.genId(), "");
+            for (const srcStev of srcStevs) {
+              newTrain.addNewStopEvent(srcStev.track, srcStev.time + this.viewState.trainPathDragState.timeShift);
+            }
+            this.$delete(this.viewState.trainSelections, sel.trainId);
+            this.$set(this.viewState.trainSelections, newTrain.id, { trainId: newTrain.id, stevRange: null });
+          }
         }
       }
       this.viewState.trainPathDragState = null;
