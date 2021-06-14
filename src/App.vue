@@ -24,7 +24,7 @@
             </b-tooltip>
           </span>
           <span class="nav-pane-item">
-            <b-tooltip :label="$t('message.vanishButtonTooltip')" type="is-light">
+            <b-tooltip :label="Object.keys(diagram.trains).length > 0 ? $t('message.vanishTrainsButtonTooltip') : $t('message.vanishStationsButtonTooltip')" type="is-light">
               <b-button icon-left="vanish" size="medium" @click="onVanishButtonClick"></b-button>
             </b-tooltip>
           </span>
@@ -93,12 +93,21 @@ export default class App extends Vue {
   }
 
   onVanishButtonClick(): void {
-    this.$buefy.dialog.confirm({
-      message: this.$t("message.confirmVanish").toString(),
-      onConfirm: () => {
-        this.diagram = Diagram.fromJSON({ stations: {}, trains: {} });
-      },
-    });
+    if (Object.keys(this.diagram.trains).length > 0) {
+      const trains = this.diagram.trains;
+      this.historyManager.push({
+        undo: () => { this.diagram.trains = trains; },
+        redo: () => { this.diagram.trains = {}; }
+      });
+      this.diagram.trains = {}; 
+    } else {
+      const diagram = this.diagram;
+      this.historyManager.push({
+        undo: () => { this.diagram = diagram; },
+        redo: () => { this.diagram = Diagram.fromJSON({ stations: {}, trains: {} }); }
+      });
+      this.diagram = Diagram.fromJSON({ stations: {}, trains: {} }); 
+    }
   }
 
   onUploadButtonClick(): void {
