@@ -106,14 +106,14 @@ export default class StationGroup extends Vue {
   }
 
   onStationLabelClick(): void {
-    if (this.viewConfig.editMode && !this.viewState.isInputEnabled && !this.dragState?.dragging) {
+    if (this.viewConfig.editMode && !this.viewState.busy) {
       this.viewState.stationNameInputTarget = this.station;
       this.$emit("stationNameInputStart");
     }
   }
 
   onStationLabelMouseDown(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    if (this.viewConfig.editMode) {
+    if (this.viewConfig.editMode && !this.viewState.inputEnabled) {
       this.dragState = {
         sy0: konvaEvent.evt.screenY,
         mileage0: this.station.mileage,

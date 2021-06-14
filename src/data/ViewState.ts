@@ -34,7 +34,13 @@ export default class ViewState {
     trackNameInputTarget: Track | null = null;
     controlKeyPressed = false;
 
-    get isInputEnabled(): boolean {
+    get busy(): boolean {
+        return this.drawingState != null || 
+            this.trainPathDragState != null ||
+            this.inputEnabled;
+    }
+
+    get inputEnabled(): boolean {
         return this.stationNameInputTarget != null || this.trackNameInputTarget != null;
     }
 }

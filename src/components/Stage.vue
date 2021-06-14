@@ -329,7 +329,7 @@ export default class Stage extends Vue {
       if (event.key == "Control") {
         this.viewState.controlKeyPressed = true;
       }
-      if (event.key == "Delete" && this.viewConfig.editMode) {
+      if (event.key == "Delete" && this.viewConfig.editMode && !this.viewState.busy) {
         const deletingTrains: Train[] = [];
         const deletingStevs: { stev: StopEvent, index: number }[] = [];
         for (const sel of Object.values(this.viewState.trainSelections)) {

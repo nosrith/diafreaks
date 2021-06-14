@@ -34,51 +34,39 @@ export default class StationRemoveButton extends Vue {
   }
 
   onClick(): void {
-    if (!this.viewState.isInputEnabled) {
-      const refered = Object.values(this.diagram.trains).some(t => t.stevs.some(stev => stev.station == this.station));
-      if (refered) {
-        this.$buefy.dialog.confirm({
-          message: this.$t("message.confirmRemoveStationRefered").toString(),
-          onConfirm: () => { this.doRemove(); },
-        });
-      } else {
-        this.doRemove();
-      }
-    }
-  }
-
-  doRemove(): void {
-    const removingTrains: Train[] = [];
-    const removingStevs: { stev: StopEvent, index: number }[] = [];
-    for (const train of Object.values(this.diagram.trains)) {
-      for (let i = train.stevs.length - 1; i >= 0; --i) {
-        const stev = train.stevs[i];
-        if (stev.station == this.station) {
-          train.removeStopEvent(stev);
-          removingStevs.push({ stev, index: i });
-          if (train.stevs.length <= 1) {
-            this.diagram.removeTrain(train);
-            removingTrains.push(train);
+    if (!this.viewState.busy) {
+      const removingTrains: Train[] = [];
+      const removingStevs: { stev: StopEvent, index: number }[] = [];
+      for (const train of Object.values(this.diagram.trains)) {
+        for (let i = train.stevs.length - 1; i >= 0; --i) {
+          const stev = train.stevs[i];
+          if (stev.station == this.station) {
+            train.removeStopEvent(stev);
+            removingStevs.push({ stev, index: i });
+            if (train.stevs.length <= 1) {
+              this.diagram.removeTrain(train);
+              removingTrains.push(train);
+            }
           }
         }
       }
+
+      this.$delete(this.diagram.stations, this.station.id);
+
+      this.historyManager.push({
+        undo: () => { 
+          this.$set(this.diagram.stations, this.station.id, this.station);
+          removingTrains.forEach(train => this.diagram.addNewTrain(train)); 
+          removingStevs.forEach(e => e.stev.train.addNewStopEvent(e.stev, e.index));
+        },
+        redo: () => { 
+          removingStevs.forEach(e => e.stev.train.removeStopEvent(e.stev));
+          removingTrains.forEach(train => this.diagram.removeTrain(train)); 
+          this.$delete(this.diagram.stations, this.station.id); 
+        }
+      });
+      this.$emit("updateY");
     }
-
-    this.$delete(this.diagram.stations, this.station.id);
-
-    this.historyManager.push({
-      undo: () => { 
-        this.$set(this.diagram.stations, this.station.id, this.station);
-        removingTrains.forEach(train => this.diagram.addNewTrain(train)); 
-        removingStevs.forEach(e => e.stev.train.addNewStopEvent(e.stev, e.index));
-      },
-      redo: () => { 
-        removingStevs.forEach(e => e.stev.train.removeStopEvent(e.stev));
-        removingTrains.forEach(train => this.diagram.removeTrain(train)); 
-        this.$delete(this.diagram.stations, this.station.id); 
-      }
-    });
-    this.$emit("updateY");
   }
 }
 </script>
