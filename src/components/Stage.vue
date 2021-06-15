@@ -65,7 +65,7 @@ export default class Stage extends Vue {
 
     const hammer = new Hammer(this.$el);
     hammer.get("pan").set({ direction: Hammer.DIRECTION_ALL });
-    hammer.get("pinch").set({ enable: true, direction: Hammer.DIRECTION_ALL });
+    hammer.get("pinch").set({ enable: true });
     hammer.on("panstart", this.onPanStart);
     hammer.on("panmove", this.onPanMove);
     hammer.on("panend", this.onPanEnd);
@@ -371,6 +371,7 @@ export default class Stage extends Vue {
       this.diagram.config.xScale *= event.scale / this.pinchState.lastScale;
       this.diagram.config.yScale *= event.scale / this.pinchState.lastScale;
       this.pinchState.lastScale = event.scale;
+      this.$emit("updateY");
     }
   }
 
