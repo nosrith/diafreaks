@@ -312,16 +312,22 @@ export default class Stage extends Vue {
     this.endDrag(event.screenX, event.screenY);
   }
 
-  onPanStart(event: { center: { x: number, y: number } }): void {
-    this.startDrag(event.center.x, event.center.y);
+  onPanStart(event: { pointerType: string, center: { x: number, y: number } }): void {
+    if (event.pointerType != "mouse") {
+      this.startDrag(event.center.x, event.center.y);
+    }
   }
 
-  onPanMove(event: { center: { x: number, y: number } }): void {
-    this.moveDrag(event.center.x, event.center.y);
+  onPanMove(event: { pointerType: string, center: { x: number, y: number } }): void {
+    if (event.pointerType != "mouse") {
+      this.moveDrag(event.center.x, event.center.y);
+    }
   }
 
-  onPanEnd(event: { center: { x: number, y: number } }): void {
-    this.endDrag(event.center.x, event.center.y);
+  onPanEnd(event: { pointerType: string, center: { x: number, y: number } }): void {
+    if (event.pointerType != "mouse") {
+      this.endDrag(event.center.x, event.center.y);
+    }
   }
 
   startDrag(x: number, y: number): void {
