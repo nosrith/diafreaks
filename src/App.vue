@@ -13,17 +13,17 @@
               <b-button icon-left="pencil-outline" size="medium" :class="viewConfig.editMode ? 'is-selected': ''" @click="onEditButtonClick"></b-button>
             </b-tooltip>
           </span>
-          <span class="nav-pane-item">
+          <span class="nav-pane-item" v-show="viewConfig.editMode">
             <b-tooltip :label="$t('message.undoButtonTooltip')" type="is-light">
               <b-button icon-left="undo" size="medium" :disabled="!historyManager.undoable" @click="onUndoButtonClick"></b-button>
             </b-tooltip>
           </span>
-          <span class="nav-pane-item">
+          <span class="nav-pane-item" v-show="viewConfig.editMode">
             <b-tooltip :label="$t('message.redoButtonTooltip')" type="is-light">
               <b-button icon-left="redo" size="medium" :disabled="!historyManager.redoable" @click="onRedoButtonClick"></b-button>
             </b-tooltip>
           </span>
-          <span class="nav-pane-item">
+          <span class="nav-pane-item" v-show="viewConfig.editMode">
             <b-tooltip :label="Object.keys(diagram.trains).length > 0 ? $t('message.vanishTrainsButtonTooltip') : $t('message.vanishStationsButtonTooltip')" type="is-light">
               <b-button icon-left="vanish" size="medium" @click="onVanishButtonClick"></b-button>
             </b-tooltip>
@@ -73,6 +73,7 @@ export default class App extends Vue {
   helpPaneVisible = false;
 
   mounted(): void {
+    this.viewConfig.editMode = document.body.clientWidth >= 600;
     fetch("sample-diagram.json").then(async result => {
       const json = await result.json();
       this.diagram = Diagram.fromJSON(json);
@@ -178,6 +179,7 @@ html, body, #app {
   flex: 0 0 auto;
   display: flex;
   flex-flow: row wrap;
+  overflow: hidden;
 }
 #nav-pane-logo {
   flex: 0 0 auto;

@@ -1,9 +1,5 @@
 <template>
-  <div
-    v-hammer:panstart="onPanStart"
-    v-hammer:panmove="onPanMove"
-    v-hammer:panend="onPanEnd"
-  >
+  <div v-hammer:pan="onPan" v-hammer:pinch="onPinch">
     <v-stage v-if="diagram" :config="stageConfig" 
       @mousedown="onStageMouseDown" 
       @mousemove="onStageMouseMove" 
@@ -47,6 +43,11 @@ export default class Stage extends Vue {
   @Inject() historyManager!: HistoryManager;
 
   stageDragState: { scrollX0: number, scrollY0: number, x0: number, y0: number, dragging: boolean } | null = null;
+  pinchState: { scaleX0: number, scaleY0: number } | null = null;
+
+  onTap(): void { 
+    console.log('hello');    
+  }
 
   get stageConfig(): unknown {
     return {
@@ -285,8 +286,35 @@ export default class Stage extends Vue {
     }
   }
 
+  onWindowMouseMove(event: MouseEvent): void {
+    this.moveDrag(event.screenX, event.screenY);
+  }
+
+  onWindowMouseUp(event: MouseEvent): void {
+    this.endDrag(event.screenX, event.screenY);
+  }
+
+  onPan(event: { center: { x: number, y: number }, isLast: boolean }): void {
+    if (!this.stageDragState) {
+      this.onPanStart(event);
+    } else {
+      this.onPanMove(event);
+    }
+    if (event.isLast) {
+      this.onPanEnd(event);
+    }
+  }
+
   onPanStart(event: { center: { x: number, y: number } }): void {
     this.startDrag(event.center.x, event.center.y);
+  }
+
+  onPanMove(event: { center: { x: number, y: number } }): void {
+    this.moveDrag(event.center.x, event.center.y);
+  }
+
+  onPanEnd(event: { center: { x: number, y: number } }): void {
+    this.endDrag(event.center.x, event.center.y);
   }
 
   startDrag(x: number, y: number): void {
@@ -297,14 +325,6 @@ export default class Stage extends Vue {
       y0: y,
       dragging: false,
     };
-  }
-
-  onWindowMouseMove(event: MouseEvent): void {
-    this.moveDrag(event.screenX, event.screenY);
-  }
-
-  onPanMove(event: { center: { x: number, y: number } }): void {
-    this.moveDrag(event.center.x, event.center.y);
   }
 
   moveDrag(x: number, y: number): void {
@@ -320,14 +340,6 @@ export default class Stage extends Vue {
             this.stageDragState.scrollY0 - (y - this.stageDragState.y0)));
       }
     }
-  }
-
-  onWindowMouseUp(event: MouseEvent): void {
-    this.endDrag(event.screenX, event.screenY);
-  }
-
-  onPanEnd(event: { center: { x: number, y: number } }): void {
-    this.endDrag(event.center.x, event.center.y);
   }
 
   endDrag(x: number, y: number): void {
@@ -347,6 +359,21 @@ export default class Stage extends Vue {
     this.diagram.config.yScale *= f;
     this.$emit("updateY");
     konvaEvent.evt.preventDefault();
+  }
+
+  onPinch(event: { scale: number, isLast: boolean }): void {
+    if (!this.pinchState) {
+      this.pinchState = { 
+        scaleX0: this.diagram.config.xScale,
+        scaleY0: this.diagram.config.yScale
+      };
+    }
+    this.diagram.config.xScale = this.pinchState.scaleX0 * event.scale;
+    this.diagram.config.yScale = this.pinchState.scaleY0 * event.scale;
+    if (event.isLast) {
+      this.pinchState = null;
+    }
+    this.$emit("updateY");
   }
 
   onKeyDown(event: KeyboardEvent): void {
