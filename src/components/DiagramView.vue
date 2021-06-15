@@ -1,26 +1,24 @@
 <template>
   <div class="diagram-view">
-    <stage class="diagram-view-stage" @updateY="updateY" @stationNameInputStart="onStationNameInputStart" @trackNameInputStart="onTrackNameInputStart"></stage>
+    <stage class="diagram-view-stage" @stationNameInputStart="onStationNameInputStart" @trackNameInputStart="onTrackNameInputStart"></stage>
     <div class="diagram-view-ui">
       <station-name-input ref="stationNameInput"></station-name-input>
       <track-name-input ref="trackNameInput"></track-name-input>
       <station-expand-button
         v-for="s in Object.values(diagram.stations)" :key="`station-expand-button-${s.id}`" 
         :station="s" 
-        @updateY="updateY" @trackNameInputStart="onTrackNameInputStart"></station-expand-button>
+        @trackNameInputStart="onTrackNameInputStart"></station-expand-button>
       <station-remove-button
         v-for="s in Object.values(diagram.stations)" :key="`station-remove-button-${s.id}`"
-        :station="s"
-        @updateY="updateY"></station-remove-button>
+        :station="s"></station-remove-button>
       <station-add-track-button
         v-for="s in Object.values(diagram.stations)" :key="`station-add-track-button-${s.id}`" 
         :station="s" 
-        @updateY="updateY" @trackNameInputStart="onTrackNameInputStart"></station-add-track-button>
+        @trackNameInputStart="onTrackNameInputStart"></station-add-track-button>
       <template v-for="s in Object.values(diagram.stations)">
         <station-remove-track-button
           v-for="t in s.tracks" :key="`station-remove-track-button-${s.id}-${t.id}`"
-          :station="s" :track="t"
-          @updateY="updateY"></station-remove-track-button>
+          :station="s" :track="t"></station-remove-track-button>
       </template>
     </div>
   </div>
@@ -69,10 +67,6 @@ export default class DiagramView extends Vue {
       this.viewState.viewWidth = this.$el.clientWidth;
       this.viewState.viewHeight = this.$el.clientHeight;
     }
-  }
-
-  updateY(): void {
-    this.diagram.updateY();
   }
 }
 </script>

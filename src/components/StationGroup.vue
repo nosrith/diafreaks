@@ -131,7 +131,7 @@ export default class StationGroup extends Vue {
       }
       if (this.dragState.dragging) {
         this.station.mileage = this.dragState.mileage0 + (event.screenY - this.dragState.sy0) / this.diagram.config.yScale;
-        this.$emit("updateY");
+        this.diagram.updateY();
       }
     }
   }
@@ -146,6 +146,7 @@ export default class StationGroup extends Vue {
         const mileage0 = this.dragState.mileage0;
         const mileage1 = this.station.mileage;
         this.historyManager.push({
+          this: this,
           undo: () => { this.station.mileage = mileage0; },
           redo: () => { this.station.mileage = mileage1; }
         });

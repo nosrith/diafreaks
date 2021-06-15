@@ -39,6 +39,7 @@ export default class StationNameInput extends Vue {
     if (name0 != name1) {
       targetStation.name = name1;
       this.historyManager.push({
+        this: this,
         undo: () => { targetStation.name = name0; },
         redo: () => { targetStation.name = name1; }
       });

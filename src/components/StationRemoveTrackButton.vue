@@ -55,20 +55,21 @@ export default class StationRemoveTrackButton extends Vue {
       removingStevs.forEach(e => e.stev.train.removeStopEvent(e.stev));
       removingTrains.forEach(train => this.diagram.removeTrain(train)); 
       this.station.removeTrack(this.track);
-      this.$emit("updateY");
+      this.diagram.updateY();
 
       this.historyManager.push({
+        this: this,
         undo: () => { 
           this.station.addNewTrack(this.track, trackIndex); 
           removingTrains.forEach(train => this.diagram.addNewTrain(train)); 
           removingStevs.forEach(e => e.stev.train.addNewStopEvent(e.stev, e.index));
-          this.$emit("updateY");
+          this.diagram.updateY();
         },
         redo: () => { 
           removingStevs.forEach(e => e.stev.train.removeStopEvent(e.stev));
           removingTrains.forEach(train => this.diagram.removeTrain(train)); 
           this.station.removeTrack(this.track);
-          this.$emit("updateY");
+          this.diagram.updateY();
         }
       });
     }

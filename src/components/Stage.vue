@@ -228,17 +228,20 @@ export default class Stage extends Vue {
             drawingState.train.stevs.filter((e, i) => i > stableIndex) : drawingState.train.stevs.filter((e, i) => i < stableIndex);
           if (drawingState.direction > 0) {
             this.historyManager.push({
+              this: this,
               undo: () => { drawingState.train.stevs.splice(stableIndex + 1); },
               redo: () => { addedStevs.forEach(stev => drawingState.train.stevs.push(stev)); }
             });
           } else {
             this.historyManager.push({
+              this: this,
               undo: () => { drawingState.train.stevs.splice(0, stableIndex); },
               redo: () => { drawingState.train.stevs = addedStevs.concat(drawingState.train.stevs); }
             });
           }
         } else {
           this.historyManager.push({
+            this: this,
             undo: () => { this.$delete(this.diagram.trains, drawingState.train.id); },
             redo: () => { this.$set(this.diagram.trains, drawingState.train.id, drawingState.train) }
           });
@@ -275,16 +278,17 @@ export default class Stage extends Vue {
           tracks: [ { id: this.diagram.genId(), name: "" } ],
         });
         this.$set(this.diagram.stations, station.id, station);
-        this.$emit("updateY");
+        this.diagram.updateY();
 
         this.historyManager.push({
+          this: this,
           undo: () => { 
             this.$delete(this.diagram.stations, station.id);
-            this.$emit("updateY");
+            this.diagram.updateY();
           },
           redo: () => { 
             this.$set(this.diagram.stations, station.id, station);
-            this.$emit("updateY");
+            this.diagram.updateY();
           }
         });
 
@@ -361,7 +365,7 @@ export default class Stage extends Vue {
       this.diagram.config.scrollY + (f - 1) * (konvaEvent.evt.clientY - this.diagram.config.topPaneHeight + this.diagram.config.scrollY)));
     this.diagram.config.xScale *= f;
     this.diagram.config.yScale *= f;
-    this.$emit("updateY");
+    this.diagram.updateY();
     konvaEvent.evt.preventDefault();
   }
 
@@ -378,7 +382,7 @@ export default class Stage extends Vue {
       this.diagram.config.xScale *= event.scale / this.pinchState.lastScale;
       this.diagram.config.yScale *= event.scale / this.pinchState.lastScale;
       this.pinchState.lastScale = event.scale;
-      this.$emit("updateY");
+      this.diagram.updateY();
     }
   }
 
@@ -422,6 +426,7 @@ export default class Stage extends Vue {
         deletingTrains.forEach(train => this.$delete(this.diagram.trains, train.id));
         deletingStevs.forEach(e => e.stev.train.removeStopEvent(e.stev));
         this.historyManager.push({
+          this: this,
           undo: () => {
             deletingStevs.forEach(e => e.stev.train.addNewStopEvent(e.stev, e.index));
             deletingTrains.forEach(train => this.$set(this.diagram.trains, train.id, train));

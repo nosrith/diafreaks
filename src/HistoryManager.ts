@@ -1,4 +1,5 @@
 interface HistoryElement {
+    this: any;
     undo: () => void;
     redo: () => void;
 }
@@ -28,7 +29,7 @@ export default class HistoryManager {
         const elem = this.undos.pop();
         if (elem) {
             this.redos.push(elem);
-            elem.undo();
+            elem.undo.apply(elem.this);
         }
     }
 
@@ -36,7 +37,7 @@ export default class HistoryManager {
         const elem = this.redos.pop();
         if (elem) {
             this.undos.push(elem);
-            elem.redo();
+            elem.redo.apply(elem.this);
         }
     }
 }

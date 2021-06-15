@@ -97,6 +97,7 @@ export default class App extends Vue {
     if (Object.keys(this.diagram.trains).length > 0) {
       const trains = this.diagram.trains;
       this.historyManager.push({
+        this: this,
         undo: () => { this.diagram.trains = trains; },
         redo: () => { this.diagram.trains = {}; }
       });
@@ -104,6 +105,7 @@ export default class App extends Vue {
     } else {
       const diagram = this.diagram;
       this.historyManager.push({
+        this: this,
         undo: () => { this.diagram = diagram; },
         redo: () => { this.diagram = Diagram.fromJSON({ stations: {}, trains: {} }); }
       });

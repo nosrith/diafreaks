@@ -40,6 +40,7 @@ export default class TrackNameInput extends Vue {
     if (name0 != name1) {
       targetTrack.name = name1;
       this.historyManager.push({
+        this: this,
         undo: () => { targetTrack.name = name0; },
         redo: () => { targetTrack.name = name1; }
       });

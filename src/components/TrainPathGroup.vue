@@ -361,6 +361,7 @@ export default class TrainPathGroup extends Vue {
           const track1 = this.dragState.changeTrackTargets[0].track;
           if (track0 != track1) {
             this.historyManager.push({
+              this: this,
               undo: () => { targets.forEach(stev => stev.track = track0); },
               redo: () => { targets.forEach(stev => stev.track = track1); }
             });
@@ -377,6 +378,7 @@ export default class TrainPathGroup extends Vue {
               });
             targets.forEach(stev => stev.time += timeShift);
             this.historyManager.push({
+              this: this,
               undo: () => { targets.forEach(stev => stev.time -= timeShift); },
               redo: () => { targets.forEach(stev => stev.time += timeShift); }
             });
@@ -393,6 +395,7 @@ export default class TrainPathGroup extends Vue {
               return newTrain;
             });
             this.historyManager.push({
+              this: this,
               undo: () => { newTrains.forEach(train => this.diagram.removeTrain(train)); },
               redo: () => { newTrains.forEach(train => this.diagram.addNewTrain(train)); }
             });

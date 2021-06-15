@@ -96,7 +96,7 @@ export default class TrackGroup extends Vue {
         } else {
           this.station.tracks.splice(newIndex, 0, this.track);
         }
-        this.$emit("updateY");
+        this.diagram.updateY();
       }
     }
   }
@@ -111,6 +111,7 @@ export default class TrackGroup extends Vue {
       const index1 = this.station.tracks.indexOf(this.track);
       if (index0 != index1) {
         this.historyManager.push({
+          this: this,
           undo: () => { 
             this.station.removeTrack(this.track); 
             this.station.addNewTrack(this.track, index0); 

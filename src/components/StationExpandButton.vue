@@ -33,8 +33,8 @@ export default class StationExpandButton extends Vue {
 
   onClick(): void {
     if (!this.viewState.inputEnabled) {
-      this.$set(this.station, "expanded", !this.station.expanded);
-      this.$emit("updateY");
+      this.station.expanded = !this.station.expanded;
+      this.diagram.updateY();
     }
   }
 }

@@ -27,7 +27,7 @@ export default class Station {
         if (!(o && typeof o == "object" && o.id != null && o.name != null && o.mileage != null && Array.isArray(o.tracks))) {
             throw "Invalid JSON @ Station"
         }
-        const station = new Station(o.id, o.name, o.mileage, o.expanded);
+        const station = new Station(o.id, o.name, o.mileage, !!o.expanded);
         (o.tracks as any[]).map((t: any) => Track.fromJSON(t, station))
             .forEach(t => station.tracks.push(t));
         return station;
