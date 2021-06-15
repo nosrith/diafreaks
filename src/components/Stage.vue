@@ -117,7 +117,7 @@ export default class Stage extends Vue {
       }
 
       if (drawingState.floating) {
-        drawingState.train.stevs.splice(drawingState.train.stevs.indexOf(drawingState.floating), 1);
+        drawingState.train.removeStopEvent(drawingState.floating);
         drawingState.floating = null;
       }
 
@@ -177,7 +177,7 @@ export default class Stage extends Vue {
           );
           if (triple) {
             drawingState.lastStev.time = this.viewState.pointerTime;
-            drawingState.train.stevs.splice(drawingState.train.stevs.indexOf(drawingState.floating), 1);
+            drawingState.train.removeStopEvent(drawingState.floating);
           } else {
             drawingState.lastStev = drawingState.floating;
           }
@@ -187,13 +187,13 @@ export default class Stage extends Vue {
       if (konvaEvent.evt.button == 2) {
         if (drawingState.lastStev == drawingState.stableEnd) {
           if (drawingState.floating) {
-            drawingState.train.stevs.splice(drawingState.train.stevs.indexOf(drawingState.floating), 1);
+            drawingState.train.removeStopEvent(drawingState.floating);
           }
           this.viewState.drawingState = null;
         } else {
           const newLastStev = drawingState.direction > 0 ? drawingState.lastStev.prev : drawingState.lastStev.next;
           if (newLastStev) {
-            drawingState.train.stevs.splice(drawingState.train.stevs.indexOf(drawingState.lastStev), 1);
+            drawingState.train.removeStopEvent(drawingState.lastStev);
             drawingState.lastStev = newLastStev;
           } else {
             this.$delete(this.diagram.trains, drawingState.train.id);
@@ -216,7 +216,7 @@ export default class Stage extends Vue {
     if (konvaEvent.target == konvaEvent.currentTarget && this.viewState.drawingState) {
       const drawingState = this.viewState.drawingState;
       if (drawingState.floating) {
-        drawingState.train.stevs.splice(drawingState.train.stevs.indexOf(drawingState.floating), 1);
+        drawingState.train.removeStopEvent(drawingState.floating);
       }
       if (drawingState.train.stevs.length <= 1) {
         this.$delete(this.diagram.trains, drawingState.train.id);

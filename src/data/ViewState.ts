@@ -4,7 +4,7 @@ import Track from "./Track";
 import Train from "./Train";
 
 export interface TrainSelectionState {
-    train: Train;
+    readonly train: Train;
     stevRange: StopEventRange | null;
 }
 

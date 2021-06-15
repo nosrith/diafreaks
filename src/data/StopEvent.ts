@@ -3,13 +3,14 @@ import Track from "./Track";
 import Train from "./Train";
 
 export default class StopEvent {
+    static maxPrivateId = 0;
+
     constructor(
         public readonly train: Train,
         public track: Track,
         public time: number
     ) {}
-    privateId: number = ++StopEvent.maxPrivateId;
-    static maxPrivateId = 0;
+    readonly privateId: number = ++StopEvent.maxPrivateId;
 
     get station(): Station {
         return this.track.station;

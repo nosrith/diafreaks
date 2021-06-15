@@ -86,8 +86,7 @@ export default class TrackGroup extends Vue {
         this.dragState.dragging = true;
       }
       if (this.dragState.dragging) {
-        const currentIndex = this.station.tracks.findIndex(t => t.id == this.track.id);
-        this.station.tracks.splice(currentIndex, 1);
+        this.station.removeTrack(this.track);
 
         const mouseRelY = this.diagram.getRelYByY(event.clientY);
         const newIndex = this.station.tracks.findIndex(t => mouseRelY < t.relY);

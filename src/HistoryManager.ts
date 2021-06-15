@@ -1,5 +1,5 @@
 interface HistoryElement {
-    this: any;
+    this: unknown;
     undo: () => void;
     redo: () => void;
 }
