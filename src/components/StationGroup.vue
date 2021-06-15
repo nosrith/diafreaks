@@ -106,7 +106,7 @@ export default class StationGroup extends Vue {
   }
 
   onStationLabelClick(): void {
-    if (this.viewConfig.editMode && !this.viewState.busy) {
+    if (this.viewConfig.editMode && !this.viewState.busy && !this.dragState?.dragging) {
       this.viewState.stationNameInputTarget = this.station;
       this.$emit("stationNameInputStart");
     }

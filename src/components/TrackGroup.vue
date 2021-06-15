@@ -62,7 +62,7 @@ export default class TrackGroup extends Vue {
   }
 
   onLabelClick(): void {
-    if (this.viewConfig.editMode && !this.viewState.busy) {
+    if (this.viewConfig.editMode && !this.viewState.busy && !this.dragState?.dragging) {
       this.viewState.trackNameInputTarget = this.track;
       this.$emit("trackNameInputStart");
     }
