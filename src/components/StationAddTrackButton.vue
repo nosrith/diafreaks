@@ -35,11 +35,18 @@ export default class StationAddTrackButton extends Vue {
   onClick(): void {
     if (!this.viewState.inputEnabled) {
       const newTrack = this.station.addNewTrack(new Track(this.station, this.diagram.genId(), ""));
-      this.historyManager.push({
-        undo: () => { this.station.removeTrack(newTrack); },
-        redo: () => { this.station.addNewTrack(newTrack); }
-      });
       this.$emit("updateY");
+
+      this.historyManager.push({
+        undo: () => { 
+          this.station.removeTrack(newTrack); 
+          this.$emit("updateY");
+        },
+        redo: () => { 
+          this.station.addNewTrack(newTrack); 
+          this.$emit("updateY");
+        }
+      });
 
       this.viewState.trackNameInputTarget = newTrack;
       this.$emit("trackNameInputStart");

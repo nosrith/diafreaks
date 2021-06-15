@@ -37,11 +37,13 @@ export default class TrackNameInput extends Vue {
     const targetTrack = this.targetTrack;
     const name0 = targetTrack.name;
     const name1 = (this.$el as HTMLInputElement).value;
-    targetTrack.name = name1;
-    this.historyManager.push({
-      undo: () => { targetTrack.name = name0; },
-      redo: () => { targetTrack.name = name1; }
-    });
+    if (name0 != name1) {
+      targetTrack.name = name1;
+      this.historyManager.push({
+        undo: () => { targetTrack.name = name0; },
+        redo: () => { targetTrack.name = name1; }
+      });
+    }
     this.viewState.trackNameInputTarget = null;
   }
 }

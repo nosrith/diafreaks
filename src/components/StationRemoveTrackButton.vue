@@ -40,36 +40,37 @@ export default class StationRemoveTrackButton extends Vue {
       const removingTrains: Train[] = [];
       const removingStevs: { stev: StopEvent, index: number }[] = [];
       for (const train of Object.values(this.diagram.trains)) {
-        for (let i = train.stevs.length - 1; i >= 0; --i) {
+        for (let i = 0; i < train.stevs.length; ++i) {
           const stev = train.stevs[i];
           if (stev.track == this.track) {
-            train.removeStopEvent(stev);
             removingStevs.push({ stev, index: i });
             if (train.stevs.length <= 1) {
-              this.diagram.removeTrain(train);
               removingTrains.push(train);
             }
           }
         }
       }
-      removingStevs.reverse();
       const trackIndex = this.station.tracks.indexOf(this.track);
 
+      removingStevs.forEach(e => e.stev.train.removeStopEvent(e.stev));
+      removingTrains.forEach(train => this.diagram.removeTrain(train)); 
       this.station.removeTrack(this.track);
+      this.$emit("updateY");
 
       this.historyManager.push({
         undo: () => { 
           this.station.addNewTrack(this.track, trackIndex); 
           removingTrains.forEach(train => this.diagram.addNewTrain(train)); 
           removingStevs.forEach(e => e.stev.train.addNewStopEvent(e.stev, e.index));
+          this.$emit("updateY");
         },
         redo: () => { 
           removingStevs.forEach(e => e.stev.train.removeStopEvent(e.stev));
           removingTrains.forEach(train => this.diagram.removeTrain(train)); 
           this.station.removeTrack(this.track);
+          this.$emit("updateY");
         }
       });
-      this.$emit("updateY");
     }
   }
 }

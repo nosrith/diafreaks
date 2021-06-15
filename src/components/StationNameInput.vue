@@ -36,11 +36,13 @@ export default class StationNameInput extends Vue {
     const targetStation = this.targetStation;
     const name0 = this.targetStation.name;
     const name1 = (this.$el as HTMLInputElement).value;
-    targetStation.name = name1;
-    this.historyManager.push({
-      undo: () => { targetStation.name = name0; },
-      redo: () => { targetStation.name = name1; }
-    });
+    if (name0 != name1) {
+      targetStation.name = name1;
+      this.historyManager.push({
+        undo: () => { targetStation.name = name0; },
+        redo: () => { targetStation.name = name1; }
+      });
+    }
     this.viewState.stationNameInputTarget = null;
   }
 }

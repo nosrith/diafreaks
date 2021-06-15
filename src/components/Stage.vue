@@ -275,11 +275,18 @@ export default class Stage extends Vue {
           tracks: [ { id: this.diagram.genId(), name: "" } ],
         });
         this.$set(this.diagram.stations, station.id, station);
-        this.historyManager.push({
-          undo: () => { this.$delete(this.diagram.stations, station.id) },
-          redo: () => { this.$set(this.diagram.stations, station.id, station) }
-        });
         this.$emit("updateY");
+
+        this.historyManager.push({
+          undo: () => { 
+            this.$delete(this.diagram.stations, station.id);
+            this.$emit("updateY");
+          },
+          redo: () => { 
+            this.$set(this.diagram.stations, station.id, station);
+            this.$emit("updateY");
+          }
+        });
 
         this.viewState.stationNameInputTarget = station;
         this.$emit("stationNameInputStart");
