@@ -43,11 +43,7 @@ export default class Stage extends Vue {
   @Inject() historyManager!: HistoryManager;
 
   stageDragState: { scrollX0: number, scrollY0: number, x0: number, y0: number, dragging: boolean } | null = null;
-  pinchState: { scaleX0: number, scaleY0: number } | null = null;
-
-  onTap(): void { 
-    console.log('hello');    
-  }
+  pinchState: { xScale0: number, yScale0: number, lastScale: number } | null = null;
 
   get stageConfig(): unknown {
     return {
@@ -294,13 +290,13 @@ export default class Stage extends Vue {
     this.endDrag(event.screenX, event.screenY);
   }
 
-  onPan(event: { center: { x: number, y: number }, isLast: boolean }): void {
+  onPan(event: { center: { x: number, y: number }, isFinal: boolean }): void {
     if (!this.stageDragState) {
       this.onPanStart(event);
     } else {
       this.onPanMove(event);
     }
-    if (event.isLast) {
+    if (event.isFinal) {
       this.onPanEnd(event);
     }
   }
@@ -361,16 +357,22 @@ export default class Stage extends Vue {
     konvaEvent.evt.preventDefault();
   }
 
-  onPinch(event: { scale: number, isLast: boolean }): void {
+  onPinch(event: { center: { x: number, y: number }, scale: number, isFinal: boolean }): void {
     if (!this.pinchState) {
       this.pinchState = { 
-        scaleX0: this.diagram.config.xScale,
-        scaleY0: this.diagram.config.yScale
+        xScale0: this.diagram.config.xScale,
+        yScale0: this.diagram.config.yScale,
+        lastScale: 1
       };
     }
-    this.diagram.config.xScale = this.pinchState.scaleX0 * event.scale;
-    this.diagram.config.yScale = this.pinchState.scaleY0 * event.scale;
-    if (event.isLast) {
+    this.diagram.config.scrollX += (event.center.x - this.diagram.config.leftPaneWidth + this.diagram.config.scrollX) / this.pinchState.lastScale * (event.scale - 1);
+    this.diagram.config.scrollY = 
+      Math.max(0, Math.min(this.diagram.maxRelY + this.diagram.config.topPaneHeight - this.viewState.viewHeight,
+      this.diagram.config.scrollY + (event.center.y - this.diagram.config.topPaneHeight + this.diagram.config.scrollY) / this.pinchState.lastScale * (event.scale - 1)));
+    this.diagram.config.xScale = this.pinchState.xScale0 * event.scale;
+    this.diagram.config.yScale = this.pinchState.yScale0 * event.scale;
+    this.pinchState.lastScale = event.scale;
+    if (event.isFinal) {
       this.pinchState = null;
     }
     this.$emit("updateY");
