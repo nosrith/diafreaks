@@ -346,7 +346,8 @@ export default class Stage extends Vue {
   }
 
   onStageMouseWheel(konvaEvent: KonvaEventObject<WheelEvent>): void {
-    const f = Math.pow(2, -konvaEvent.evt.deltaY * this.viewConfig.wheelScale * 0.001);
+    // const f = Math.pow(2, -konvaEvent.evt.deltaY * this.viewConfig.wheelScale * 0.001);
+    const f = Math.pow(2, -Math.sign(konvaEvent.evt.deltaY) * this.viewConfig.wheelScale);
     this.diagram.config.scrollX += (f - 1) * (konvaEvent.evt.clientX - this.diagram.config.leftPaneWidth + this.diagram.config.scrollX);
     this.diagram.config.scrollY = 
       Math.max(0, Math.min(this.diagram.maxRelY + this.diagram.config.topPaneHeight - this.viewState.viewHeight,
