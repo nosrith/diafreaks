@@ -43,7 +43,7 @@ export default class Stage extends Vue {
   @Inject() historyManager!: HistoryManager;
 
   stageDragState: { scrollX0: number, scrollY0: number, x0: number, y0: number, dragging: boolean } | null = null;
-  pinchState: { xScale0: number, yScale0: number, lastScale: number } | null = null;
+  pinchState: { lastScale: number } | null = null;
 
   get stageConfig(): unknown {
     return {
@@ -358,19 +358,15 @@ export default class Stage extends Vue {
   }
 
   onPinch(event: { center: { x: number, y: number }, scale: number, isFinal: boolean }): void {
-    if (!this.pinchState) {
-      this.pinchState = { 
-        xScale0: this.diagram.config.xScale,
-        yScale0: this.diagram.config.yScale,
-        lastScale: 1
-      };
+    if (!this.pinchState || event.scale == 1) {
+      this.pinchState = { lastScale: 1 };
     }
-    this.diagram.config.scrollX += (event.center.x - this.diagram.config.leftPaneWidth + this.diagram.config.scrollX) / this.pinchState.lastScale * (event.scale - 1);
+    this.diagram.config.scrollX += (event.scale / this.pinchState.lastScale - 1) * (event.center.x - this.diagram.config.leftPaneWidth + this.diagram.config.scrollX);
     this.diagram.config.scrollY = 
       Math.max(0, Math.min(this.diagram.maxRelY + this.diagram.config.topPaneHeight - this.viewState.viewHeight,
-      this.diagram.config.scrollY + (event.center.y - this.diagram.config.topPaneHeight + this.diagram.config.scrollY) / this.pinchState.lastScale * (event.scale - 1)));
-    this.diagram.config.xScale = this.pinchState.xScale0 * event.scale;
-    this.diagram.config.yScale = this.pinchState.yScale0 * event.scale;
+      this.diagram.config.scrollY + (event.scale / this.pinchState.lastScale - 1) * (event.center.y - this.diagram.config.topPaneHeight + this.diagram.config.scrollY)));
+    this.diagram.config.xScale *= event.scale / this.pinchState.lastScale;
+    this.diagram.config.yScale *= event.scale / this.pinchState.lastScale;
     this.pinchState.lastScale = event.scale;
     if (event.isFinal) {
       this.pinchState = null;
