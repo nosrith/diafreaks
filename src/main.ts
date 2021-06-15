@@ -3,6 +3,7 @@ import Buefy from "buefy";
 import "buefy/dist/buefy.css";
 import VueI18n from "vue-i18n";
 import VueKonva from "vue-konva";
+import { VueHammer } from "vue2-hammer";
 import App from "./App.vue";
 import messages from "./messages";
 
@@ -13,6 +14,7 @@ Vue.use(Buefy, {
 });
 Vue.use(VueI18n);
 Vue.use(VueKonva);
+Vue.use(VueHammer);
 
 const i18n = new VueI18n({
   locale: "ja",

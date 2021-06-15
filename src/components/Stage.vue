@@ -1,15 +1,23 @@
 <template>
-  <v-stage v-if="diagram" :config="stageConfig" 
-    @mousedown="onStageMouseDown" @mousemove="onStageMouseMove" 
-    @click="onStageClick" @dblclick="onStageDoubleClick" 
-    @wheel="onStageMouseWheel"
-    @contextmenu="onContextMenu">
-    <back-layer v-on="$listeners"></back-layer>
-    <train-path-layer></train-path-layer>
-    <v-layer>
-      <pointer></pointer>
-    </v-layer>
-  </v-stage>
+  <div
+    v-hammer:panstart="onPanStart"
+    v-hammer:panmove="onPanMove"
+    v-hammer:panend="onPanEnd"
+  >
+    <v-stage v-if="diagram" :config="stageConfig" 
+      @mousedown="onStageMouseDown" 
+      @mousemove="onStageMouseMove" 
+      @click="onStageClick" 
+      @dblclick="onStageDoubleClick" 
+      @wheel="onStageMouseWheel"
+      @contextmenu="onContextMenu">
+      <back-layer v-on="$listeners"></back-layer>
+      <train-path-layer></train-path-layer>
+      <v-layer>
+        <pointer></pointer>
+      </v-layer>
+    </v-stage>
+  </div>
 </template>
 
 <script lang="ts">
@@ -38,7 +46,7 @@ export default class Stage extends Vue {
   @InjectReactive() diagram!: Diagram;
   @Inject() historyManager!: HistoryManager;
 
-  stageDragState: { scrollX0: number, scrollY0: number, screenX0: number, screenY0: number, dragging: boolean } | null = null;
+  stageDragState: { scrollX0: number, scrollY0: number, x0: number, y0: number, dragging: boolean } | null = null;
 
   get stageConfig(): unknown {
     return {
@@ -273,35 +281,58 @@ export default class Stage extends Vue {
 
   onStageMouseDown(konvaEvent: KonvaEventObject<MouseEvent>): void {
     if (konvaEvent.target == konvaEvent.currentTarget) {
-      const event = konvaEvent.evt;
-      this.stageDragState = {
-        scrollX0: this.diagram.config.scrollX,
-        scrollY0: this.diagram.config.scrollY,
-        screenX0: event.screenX,
-        screenY0: event.screenY,
-        dragging: false,
-      };
+      this.startDrag(konvaEvent.evt.screenX, konvaEvent.evt.screenY);
     }
   }
 
+  onPanStart(event: { center: { x: number, y: number } }): void {
+    this.startDrag(event.center.x, event.center.y);
+  }
+
+  startDrag(x: number, y: number): void {
+    this.stageDragState = {
+      scrollX0: this.diagram.config.scrollX,
+      scrollY0: this.diagram.config.scrollY,
+      x0: x,
+      y0: y,
+      dragging: false,
+    };
+  }
+
   onWindowMouseMove(event: MouseEvent): void {
+    this.moveDrag(event.screenX, event.screenY);
+  }
+
+  onPanMove(event: { center: { x: number, y: number } }): void {
+    this.moveDrag(event.center.x, event.center.y);
+  }
+
+  moveDrag(x: number, y: number): void {
     if (this.stageDragState) {
-      if (Math.hypot(event.screenX - this.stageDragState.screenX0, event.screenY - this.stageDragState.screenY0) > 1) {
+      if (Math.hypot(x - this.stageDragState.x0, y - this.stageDragState.y0) > 1) {
         this.stageDragState.dragging = true;
       }
       if (this.stageDragState.dragging) {
         this.stageDragState.dragging = true;
-        this.diagram.config.scrollX = this.stageDragState.scrollX0 - (event.screenX - this.stageDragState.screenX0);
+        this.diagram.config.scrollX = this.stageDragState.scrollX0 - (x - this.stageDragState.x0);
         this.diagram.config.scrollY = 
           Math.max(0, Math.min(this.diagram.maxRelY + this.diagram.config.topPaneHeight - this.viewState.viewHeight, 
-            this.stageDragState.scrollY0 - (event.screenY - this.stageDragState.screenY0)));
+            this.stageDragState.scrollY0 - (y - this.stageDragState.y0)));
       }
     }
   }
 
   onWindowMouseUp(event: MouseEvent): void {
+    this.endDrag(event.screenX, event.screenY);
+  }
+
+  onPanEnd(event: { center: { x: number, y: number } }): void {
+    this.endDrag(event.center.x, event.center.y);
+  }
+
+  endDrag(x: number, y: number): void {
     if (this.stageDragState) {
-      this.onWindowMouseMove(event);
+      this.moveDrag(x, y);
       this.stageDragState = null;
     }
   }
