@@ -395,7 +395,7 @@ export default class TrainPathGroup extends Vue {
                 newTrain.addNewStopEvent(new StopEvent(newTrain, srcStev.track, srcStev.time + timeShift));
               }
               this.$delete(this.viewState.trainSelections, sel.train.id);
-              this.$set(this.viewState.trainSelections, newTrain.id, { trainId: newTrain.id, stevRange: null });
+              this.$set(this.viewState.trainSelections, newTrain.id, { train: newTrain, stevRange: null });
               return newTrain;
             });
             this.historyManager.push({
