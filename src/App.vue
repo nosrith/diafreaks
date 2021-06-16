@@ -183,7 +183,6 @@ html, body, #app {
   flex: 0 0 auto;
   display: flex;
   flex-flow: row wrap;
-  overflow: hidden;
 }
 #nav-pane-logo {
   flex: 0 0 auto;
