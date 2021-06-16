@@ -64,6 +64,14 @@
         </div>
       </div>
     </b-carousel-item>
+    <b-carousel-item>
+      <div class="help-item">
+        <div class="help-desc content">
+          <h5 class="title is-5" v-html="$t('message.help.contactTitle')"></h5>
+          <p v-html="$t('message.help.contactBody')"></p>
+        </div>
+      </div>
+    </b-carousel-item>
   </b-carousel>
 </template>
 
@@ -82,6 +90,7 @@ export default class HelpPane extends Vue {
   align-items: center;
   justify-content: center;
   margin-top: 0.5rem;
+  min-height: 15rem;
 }
 .help-item .help-image {
   position: relative;
