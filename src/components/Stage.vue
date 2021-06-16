@@ -369,7 +369,7 @@ export default class Stage extends Vue {
             Math.min(this.diagram.config.maxPlotTime * this.diagram.config.xScale - (this.viewState.viewWidth - this.diagram.config.leftPaneWidth - this.diagram.config.plotPanePadding),
               this.stageDragState.scrollX0 - (x - this.stageDragState.x0)));
         this.diagram.config.scrollY = 
-          Math.max(0, Math.min(this.diagram.getYByRelY(this.diagram.maxRelY), 
+          Math.max(0, Math.min(this.diagram.maxRelY - (this.viewState.viewHeight - this.diagram.config.topPaneHeight - this.diagram.config.trackLineSpan), 
             this.stageDragState.scrollY0 - (y - this.stageDragState.y0)));
       }
     }
