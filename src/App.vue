@@ -1,10 +1,10 @@
 <template>
   <div id="app">
     <diagram-view id="diagram-view" :diagram="diagram" :viewConfig="viewConfig" :historyManager="historyManager"></diagram-view>
-    <help-pane id="help-pane" v-if="helpPaneVisible"></help-pane>
+    <help-view id="help-pane" v-if="subView == 'help'"></help-view>
     <div id="nav-pane">
       <span id="nav-pane-logo" class="nav-pane-item">
-        <img src="@/assets/logo.png">
+        <img src="@/assets/diafreaks_logo.png" style="height: 32px">
       </span>
       <span id="nav-pane-buttons">
         <span id="nav-pane-buttons-left">
@@ -43,7 +43,7 @@
         <span id="nav-pane-buttons-right">
           <span class="nav-pane-item">
             <b-tooltip :label="$t('message.helpButtonTooltip')" type="is-light">
-              <b-button icon-left="help" size="medium" :class="helpPaneVisible ? 'is-selected': ''" @click="onHelpButtonClick"></b-button>
+              <b-button icon-left="help" size="medium" :class="subView == 'help' ? 'is-selected': ''" @click="onHelpButtonClick"></b-button>
             </b-tooltip>
           </span>
         </span>
@@ -58,11 +58,11 @@ import HistoryManager from "./HistoryManager";
 import Diagram from "./data/Diagram";
 import ViewConfig from "./data/ViewConfig";
 import DiagramView from "./components/DiagramView.vue";
-import HelpPane from "./components/HelpPane.vue";
+import HelpView from "./components/HelpView.vue";
 
 @Component({
   components: {
-    DiagramView, HelpPane 
+    DiagramView, HelpView
   },
 })
 export default class App extends Vue {
@@ -72,7 +72,7 @@ export default class App extends Vue {
   historyManager = new HistoryManager(100);
 
   enableSwitchEditMode = window.screen.width >= 640;
-  helpPaneVisible = false;
+  subView: "none" | "help" = "none";
 
   mounted(): void {
     this.viewConfig.editMode = this.enableSwitchEditMode;
@@ -155,7 +155,7 @@ export default class App extends Vue {
   }
 
   onHelpButtonClick(): void {
-    this.helpPaneVisible = !this.helpPaneVisible;
+    this.subView = "help";
   }
 }
 </script>
