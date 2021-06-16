@@ -41,7 +41,7 @@
         </span>
         <span id="nav-pane-buttons-spacer"></span>
         <span id="nav-pane-buttons-right">
-          <span class="nav-pane-item">
+          <span class="nav-pane-item" v-if="enableSwitchEditMode">
             <b-tooltip :label="$t('message.helpButtonTooltip')" type="is-light">
               <b-button icon-left="help" size="medium" :class="subView == 'help' ? 'is-selected': ''" @click="onHelpButtonClick"></b-button>
             </b-tooltip>
