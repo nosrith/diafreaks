@@ -1,5 +1,7 @@
 export default class DiagramConfig {
     minimumTimeUnit = 5;
+    minPlotTime = 0;
+    maxPlotTime = 30 * 3600;
     fontFamily = "Verdana, sans-serif";
     topPaneHeight = 30;
     hourlyLabelBottomMargin = 4;
@@ -20,7 +22,7 @@ export default class DiagramConfig {
     stationLabelColor = "rgb(128, 192, 128)";
     stationLineWidth = 1;
     stationLineColor = "rgb(128, 192, 128)";
-    plotPaneVerticalPadding = 4;
+    plotPanePadding = 4;
     trackLabelLeftMargin = 10;
     trackLabelFontSize = 11;
     trackLabelColor = "rgb(128, 192, 128)";

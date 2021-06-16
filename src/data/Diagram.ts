@@ -90,7 +90,7 @@ export default class Diagram {
           s.mileage = s.mileage - initialMileage;
         }
     
-        let y = this.config.plotPaneVerticalPadding;
+        let y = this.config.plotPanePadding;
         let lastMileage = 0;
         for (const s of stations) {
           y += (s.mileage - lastMileage) * this.config.yScale;
@@ -108,7 +108,7 @@ export default class Diagram {
           lastMileage = s.mileage;
         }
     
-        this.maxRelY = stations[stations.length - 1].bottomRelY + this.config.plotPaneVerticalPadding;
+        this.maxRelY = stations[stations.length - 1].bottomRelY + this.config.plotPanePadding;
       }
     
     toJSON(): unknown {
