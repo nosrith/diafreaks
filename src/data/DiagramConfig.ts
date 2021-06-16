@@ -1,9 +1,9 @@
 export default class DiagramConfig {
     minimumTimeUnit = 5;
     fontFamily = "Verdana, sans-serif";
-    topPaneHeight = 32;
+    topPaneHeight = 30;
     hourlyLabelBottomMargin = 4;
-    hourlyLabelFontSize = 16;
+    hourlyLabelFontSize = 14;
     hourlyLabelColor = "rgb(128, 192, 128)";
     hourlyGridLineWidth = 2.25;
     hourlyGridLineColor = "rgb(128, 192, 128)";
@@ -13,16 +13,16 @@ export default class DiagramConfig {
     minorMinutelyGridLineSpan = 2 * 60;
     minorMinutelyGridLineWidth = 0.75;
     minorMinutelyGridLineColor = "rgb(128, 192, 128)";
-    leftPaneWidth = 160;
-    stationLabelLeftMargin = 16;
-    stationLabelRightMargin = 16;
-    stationLabelFontSize = 16;
+    leftPaneWidth = 140;
+    stationLabelLeftMargin = 14;
+    stationLabelRightMargin = 14;
+    stationLabelFontSize = 14;
     stationLabelColor = "rgb(128, 192, 128)";
     stationLineWidth = 1;
     stationLineColor = "rgb(128, 192, 128)";
     plotPaneVerticalPadding = 4;
     trackLabelLeftMargin = 10;
-    trackLabelFontSize = 12;
+    trackLabelFontSize = 11;
     trackLabelColor = "rgb(128, 192, 128)";
     trackLineWidth = 0.75;
     trackLineColor = "rgb(128, 192, 128)";
