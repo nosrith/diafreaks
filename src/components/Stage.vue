@@ -5,7 +5,8 @@
     @click="onStageClick" 
     @dblclick="onStageDoubleClick" 
     @wheel="onStageMouseWheel"
-    @contextmenu="onContextMenu">
+    @contextmenu="onContextMenu"
+    @touchend="onTouchEnd">
     <back-layer v-on="$listeners"></back-layer>
     <train-path-layer></train-path-layer>
     <v-layer>
@@ -213,6 +214,16 @@ export default class Stage extends Vue {
     }
   }
 
+  onTouchEnd(konvaEvent: KonvaEventObject<TouchEvent>): void {
+    if (konvaEvent.target == konvaEvent.currentTarget && 
+      !this.stageDragState?.dragging) { 
+      this.viewState.trainSelections = {};
+    }    
+    if (this.stageDragState) {
+      this.stageDragState = null;
+    }
+  }
+
   onStageDoubleClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
     if (konvaEvent.target == konvaEvent.currentTarget && this.viewState.drawingState) {
       const drawingState = this.viewState.drawingState;
@@ -310,7 +321,10 @@ export default class Stage extends Vue {
   }
 
   onWindowMouseUp(event: MouseEvent): void {
-    this.endDrag(event.screenX, event.screenY);
+    if (this.stageDragState) {
+      this.moveDrag(event.screenX, event.screenY);
+      this.stageDragState = null;
+    }
   }
 
   onPanStart(event: { pointerType: string, center: { x: number, y: number } }): void {
@@ -326,8 +340,9 @@ export default class Stage extends Vue {
   }
 
   onPanEnd(event: { pointerType: string, center: { x: number, y: number } }): void {
-    if (event.pointerType != "mouse") {
-      this.endDrag(event.center.x, event.center.y);
+    if (event.pointerType != "mouse" && this.stageDragState) {
+      this.moveDrag(event.center.x, event.center.y);
+      // this.stageDragState = null;  // do in touchEnd
     }
   }
 
@@ -357,13 +372,6 @@ export default class Stage extends Vue {
           Math.max(0, Math.min(this.diagram.getYByRelY(this.diagram.maxRelY), 
             this.stageDragState.scrollY0 - (y - this.stageDragState.y0)));
       }
-    }
-  }
-
-  endDrag(x: number, y: number): void {
-    if (this.stageDragState) {
-      this.moveDrag(x, y);
-      this.stageDragState = null;
     }
   }
 

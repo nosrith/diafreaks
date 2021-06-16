@@ -1,6 +1,6 @@
 <template>
   <v-group>
-    <v-line :config="regularTrainPathConfig" @click="onTrainPathClick" @mousemove="onTrainPathMouseMove"></v-line>
+    <v-line :config="regularTrainPathConfig" @click="onTrainPathClick" @mousemove="onTrainPathMouseMove" @tap="onTrainPathTap"></v-line>
     <template v-if="selectedTrainPathEnabled">
       <v-line :config="selectedTrainPathConfig" @click="onSelectedTrainPathClick" @dblclick="onSelectedTrainPathDoubleClick" @mousedown="onSelectedTrainPathMouseDown" @mousemove="onSelectedTrainPathMouseMove"></v-line>
       <train-path-marker v-for="n in selectedTrainPathNodes" :key="`marker-${train.id}-${n.stev.privateId}-${n.phase}`" :trainPathNode="n" @click="onMarkerClick" @mousedown="onMarkerMouseDown"></train-path-marker>
@@ -181,6 +181,10 @@ export default class TrainPathGroup extends Vue {
         }
       }
     }
+  }
+
+  onTrainPathTap(): void {
+    this.viewState.trainSelections = { [this.train.id]: { train: this.train, stevRange: null } };
   }
 
   getPointedStevRange(x: number, y: number): StopEventRange {
