@@ -155,7 +155,7 @@ export default class App extends Vue {
   }
 
   onHelpButtonClick(): void {
-    this.subView = "help";
+    this.subView = this.subView == "help" ? "none" : "help";
   }
 }
 </script>
