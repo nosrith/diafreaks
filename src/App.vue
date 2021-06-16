@@ -8,22 +8,22 @@
       </span>
       <span id="nav-pane-buttons">
         <span id="nav-pane-buttons-left">
-          <span class="nav-pane-item">
+          <span class="nav-pane-item" v-if="enableSwitchEditMode">
             <b-tooltip :label="$t('message.editButtonTooltip')" type="is-light">
               <b-button icon-left="pencil-outline" size="medium" :class="viewConfig.editMode ? 'is-selected': ''" @click="onEditButtonClick"></b-button>
             </b-tooltip>
           </span>
-          <span class="nav-pane-item" v-show="viewConfig.editMode">
+          <span class="nav-pane-item" v-if="viewConfig.editMode">
             <b-tooltip :label="$t('message.undoButtonTooltip')" type="is-light">
               <b-button icon-left="undo" size="medium" :disabled="!historyManager.undoable" @click="onUndoButtonClick"></b-button>
             </b-tooltip>
           </span>
-          <span class="nav-pane-item" v-show="viewConfig.editMode">
+          <span class="nav-pane-item" v-if="viewConfig.editMode">
             <b-tooltip :label="$t('message.redoButtonTooltip')" type="is-light">
               <b-button icon-left="redo" size="medium" :disabled="!historyManager.redoable" @click="onRedoButtonClick"></b-button>
             </b-tooltip>
           </span>
-          <span class="nav-pane-item" v-show="viewConfig.editMode">
+          <span class="nav-pane-item" v-if="viewConfig.editMode">
             <b-tooltip :label="Object.keys(diagram.trains).length > 0 ? $t('message.vanishTrainsButtonTooltip') : $t('message.vanishStationsButtonTooltip')" type="is-light">
               <b-button icon-left="vanish" size="medium" @click="onVanishButtonClick"></b-button>
             </b-tooltip>
@@ -70,10 +70,12 @@ export default class App extends Vue {
   diagram = Diagram.fromJSON({ stations: [], trains: [] });
   viewConfig = new ViewConfig();
   historyManager = new HistoryManager(100);
+
+  enableSwitchEditMode = window.screen.width >= 640;
   helpPaneVisible = false;
 
   mounted(): void {
-    this.viewConfig.editMode = document.body.clientWidth >= 600;
+    this.viewConfig.editMode = this.enableSwitchEditMode;
     fetch("sample-diagram.json").then(async result => {
       const json = await result.json();
       this.diagram = Diagram.fromJSON(json);
