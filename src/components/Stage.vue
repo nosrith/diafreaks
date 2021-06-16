@@ -204,7 +204,8 @@ export default class Stage extends Vue {
     }
 
     if (konvaEvent.target == konvaEvent.currentTarget && 
-        !konvaEvent.evt.ctrlKey && 
+        !konvaEvent.evt.ctrlKey &&
+        !konvaEvent.evt.shiftKey && 
         !this.stageDragState?.dragging && 
         !this.viewState.trainPathDragState?.dragging && 
         !this.viewState.drawingState) {
@@ -331,13 +332,15 @@ export default class Stage extends Vue {
   }
 
   startDrag(x: number, y: number): void {
-    this.stageDragState = {
-      scrollX0: this.diagram.config.scrollX,
-      scrollY0: this.diagram.config.scrollY,
-      x0: x,
-      y0: y,
-      dragging: false,
-    };
+    if (!this.viewState.pointerPreciseState) {
+      this.stageDragState = {
+        scrollX0: this.diagram.config.scrollX,
+        scrollY0: this.diagram.config.scrollY,
+        x0: x,
+        y0: y,
+        dragging: false,
+      };
+    }
   }
 
   moveDrag(x: number, y: number): void {
@@ -403,7 +406,7 @@ export default class Stage extends Vue {
 
   onKeyDown(event: KeyboardEvent): void {
     if (!event.repeat) {
-      if (event.key == "Shift") {
+      if (event.key == "Alt") {
         this.viewState.pointerPreciseState = {
           sx0: this.viewState.pointerScreenX,
           t0: this.viewState.pointerTime
@@ -450,7 +453,7 @@ export default class Stage extends Vue {
   }
 
   onKeyUp(event: KeyboardEvent): void {
-    if (event.key == "Shift") {
+    if (event.key == "Alt") {
       this.viewState.pointerPreciseState = null;
     }
     if (event.key == "Control") {

@@ -148,8 +148,8 @@ export default class TrainPathGroup extends Vue {
     if (!this.viewState.trainPathDragState?.dragging && !this.viewState.drawingState) {
       const sel = this.viewState.trainSelections[this.train.id];
 
-      // Remove other trains if ctrl not pressed
-      if (!konvaEvent.evt.ctrlKey) {
+      // Remove other trains if shift not pressed
+      if (!konvaEvent.evt.shiftKey) {
         this.viewState.trainSelections = sel ? { [this.train.id]: sel } : {};
       }
 
@@ -159,7 +159,7 @@ export default class TrainPathGroup extends Vue {
         const selectedStevRange = sel.stevRange;
         if (!selectedStevRange) {
           sel.stevRange = clickedStevRange;
-        } else if (!konvaEvent.evt.ctrlKey) {
+        } else if (!konvaEvent.evt.shiftKey) {
           sel.stevRange = clickSelected ? clickedStevRange : null;
         } else {
           let selStart = false, selEnd = false, changed = false;
