@@ -6,33 +6,29 @@
 </template>
 
 <script lang="ts">
-import { Component, Inject, InjectReactive, Prop, Vue } from "vue-property-decorator";
-import HistoryManager from "@/HistoryManager";
-import Diagram from "@/data/Diagram";
-import ViewConfig from "@/data/ViewConfig";
-import ViewState from "@/data/ViewState";
+import { Component, InjectReactive, Prop, Vue } from "vue-property-decorator";
+import DiagramViewContext from "@/data/DiagramViewContext";
 import Station from "@/data/Station";
 import Track from "@/data/Track";
 import { KonvaEventObject } from "konva/types/Node";
 
 @Component
 export default class TrackGroup extends Vue {
-  @InjectReactive() viewConfig!: ViewConfig;
-  @InjectReactive() viewState!: ViewState;
-  @InjectReactive() diagram!: Diagram;
-  @Inject() historyManager!: HistoryManager;
-  @Prop() station!: Station;
-  @Prop() track!: Track;
+  @InjectReactive() private context!: DiagramViewContext;
+  private get diagram() { return this.context.diagram; }
+  private get viewState() { return this.context.state; }
+  @Prop() private station!: Station;
+  @Prop() private track!: Track;
 
-  dragState: { sy0: number, index0: number, dragging: boolean } | null = null;
+  private dragState: { sy0: number, index0: number, dragging: boolean } | null = null;
 
-  get lineConfig(): unknown {
+  private get lineConfig(): unknown {
     return {
       points: [
         this.diagram.config.stationLabelLeftMargin + this.diagram.config.trackLabelLeftMargin, 
-        this.diagram.getYByRelY(this.track.relY), 
+        this.context.getYByRelY(this.track.relY), 
         this.viewState.viewWidth, 
-        this.diagram.getYByRelY(this.track.relY)
+        this.context.getYByRelY(this.track.relY)
       ],
       stroke: this.diagram.config.trackLineColor,
       strokeWidth: this.diagram.config.trackLineWidth,
@@ -40,11 +36,11 @@ export default class TrackGroup extends Vue {
     }
   }
 
-  get labelConfig(): unknown {
+  private get labelConfig(): unknown {
     return {
       id: `track-label-${this.station.id}-${this.track.id}`,
       x: this.diagram.config.stationLabelLeftMargin + this.diagram.config.trackLabelLeftMargin,
-      y: this.diagram.getYByRelY(this.track.relY) - this.diagram.config.trackLabelFontSize,
+      y: this.context.getYByRelY(this.track.relY) - this.diagram.config.trackLabelFontSize,
       width: this.diagram.config.leftPaneWidth - this.diagram.config.stationLabelLeftMargin - this.diagram.config.trackLabelLeftMargin - this.diagram.config.stationLabelRightMargin,
       height: this.diagram.config.trackLabelFontSize,
       text: this.track.name,
@@ -56,20 +52,20 @@ export default class TrackGroup extends Vue {
     }
   }
 
-  get isLineIntersectingPlotPane(): boolean {
-    return this.diagram.getYByRelY(this.track.relY) >= this.diagram.config.topPaneHeight && 
-      this.diagram.getYByRelY(this.track.relY) < this.viewState.viewHeight;
+  private get isLineIntersectingPlotPane(): boolean {
+    return this.context.getYByRelY(this.track.relY) >= this.diagram.config.topPaneHeight && 
+      this.context.getYByRelY(this.track.relY) < this.viewState.viewHeight;
   }
 
-  onLabelClick(): void {
-    if (this.viewConfig.editMode && !this.viewState.busy && !this.dragState?.dragging) {
+  private onLabelClick(): void {
+    if (this.viewState.editMode && !this.viewState.busy && !this.dragState?.dragging) {
       this.viewState.trackNameInputTarget = this.track;
       this.$emit("trackNameInputStart");
     }
   }
 
-  onLabelMouseDown(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    if (this.viewConfig.editMode) {
+  private onLabelMouseDown(konvaEvent: KonvaEventObject<MouseEvent>): void {
+    if (this.viewState.editMode) {
       this.dragState = { 
         sy0: konvaEvent.evt.screenY, 
         index0: this.station.tracks.indexOf(this.track), 
@@ -80,7 +76,7 @@ export default class TrackGroup extends Vue {
     }
   }
 
-  onWindowMouseMove(event: MouseEvent): void {
+  private onWindowMouseMove(event: MouseEvent): void {
     if (this.dragState) {
       if (Math.abs(event.screenY - this.dragState.sy0) > 1) {
         this.dragState.dragging = true;
@@ -88,7 +84,7 @@ export default class TrackGroup extends Vue {
       if (this.dragState.dragging) {
         this.station.removeTrack(this.track);
 
-        const mouseRelY = this.diagram.getRelYByY(event.clientY);
+        const mouseRelY = this.context.getRelYByY(event.clientY);
         const newIndex = this.station.tracks.findIndex(t => mouseRelY < t.relY);
         if (newIndex < 0) {
           this.station.tracks.push(this.track);
@@ -100,7 +96,7 @@ export default class TrackGroup extends Vue {
     }
   }
 
-  onWindowMouseUp(event: MouseEvent): void {
+  private onWindowMouseUp(event: MouseEvent): void {
     if (this.dragState) {
       window.removeEventListener("mousemove", this.onWindowMouseMove);
       window.removeEventListener("mouseup", this.onWindowMouseUp);
@@ -109,7 +105,7 @@ export default class TrackGroup extends Vue {
       const index0 = this.dragState.index0;
       const index1 = this.station.tracks.indexOf(this.track);
       if (index0 != index1) {
-        this.historyManager.push({
+        this.context.history.push({
           this: this,
           undo: () => { 
             this.station.removeTrack(this.track); 

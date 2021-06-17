@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <diagram-view id="diagram-view" :diagram="diagram" :viewConfig="viewConfig" :historyManager="historyManager"></diagram-view>
+    <diagram-view id="diagram-view" :context="context"></diagram-view>
     <help-view id="help-pane" v-if="subView == 'help'"></help-view>
     <div id="nav-pane">
       <span id="nav-pane-logo" class="nav-pane-item">
@@ -10,21 +10,21 @@
         <span id="nav-pane-buttons-left">
           <span class="nav-pane-item" v-if="enableSwitchEditMode">
             <b-tooltip :label="$t('message.editButtonTooltip')" type="is-light">
-              <b-button icon-left="pencil-outline" size="medium" :class="viewConfig.editMode ? 'is-selected': ''" @click="onEditButtonClick"></b-button>
+              <b-button icon-left="pencil-outline" size="medium" :class="context.state.editMode ? 'is-selected': ''" @click="onEditButtonClick"></b-button>
             </b-tooltip>
           </span>
-          <span class="nav-pane-item" v-if="viewConfig.editMode">
+          <span class="nav-pane-item" v-if="context.state.editMode">
             <b-tooltip :label="$t('message.undoButtonTooltip')" type="is-light">
-              <b-button icon-left="undo" size="medium" :disabled="!historyManager.undoable" @click="onUndoButtonClick"></b-button>
+              <b-button icon-left="undo" size="medium" :disabled="!context.history.undoable" @click="onUndoButtonClick"></b-button>
             </b-tooltip>
           </span>
-          <span class="nav-pane-item" v-if="viewConfig.editMode">
+          <span class="nav-pane-item" v-if="context.state.editMode">
             <b-tooltip :label="$t('message.redoButtonTooltip')" type="is-light">
-              <b-button icon-left="redo" size="medium" :disabled="!historyManager.redoable" @click="onRedoButtonClick"></b-button>
+              <b-button icon-left="redo" size="medium" :disabled="!context.history.redoable" @click="onRedoButtonClick"></b-button>
             </b-tooltip>
           </span>
-          <span class="nav-pane-item" v-if="viewConfig.editMode">
-            <b-tooltip :label="Object.keys(diagram.trains).length > 0 ? $t('message.vanishTrainsButtonTooltip') : $t('message.vanishStationsButtonTooltip')" type="is-light">
+          <span class="nav-pane-item" v-if="context.state.editMode">
+            <b-tooltip :label="Object.keys(context.diagram.trains).length > 0 ? $t('message.vanishTrainsButtonTooltip') : $t('message.vanishStationsButtonTooltip')" type="is-light">
               <b-button icon-left="vanish" size="medium" @click="onVanishButtonClick"></b-button>
             </b-tooltip>
           </span>
@@ -54,9 +54,8 @@
 
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
-import HistoryManager from "./HistoryManager";
+import DiagramViewContext from "./data/DiagramViewContext";
 import Diagram from "./data/Diagram";
-import ViewConfig from "./data/ViewConfig";
 import DiagramView from "./components/DiagramView.vue";
 import HelpView from "./components/HelpView.vue";
 
@@ -66,56 +65,54 @@ import HelpView from "./components/HelpView.vue";
   },
 })
 export default class App extends Vue {
-  diagramFileName = "diagram.json";
-  diagram = Diagram.fromJSON({ stations: [], trains: [] });
-  viewConfig = new ViewConfig();
-  historyManager = new HistoryManager(100);
+  private context = new DiagramViewContext();
 
-  enableSwitchEditMode = window.screen.width >= 640;
-  subView: "none" | "help" = "none";
+  private diagramFileName = "diagram.json";
+  private enableSwitchEditMode = window.screen.width >= 640;
+  private subView: "none" | "help" = "none";
 
-  mounted(): void {
-    this.viewConfig.editMode = this.enableSwitchEditMode;
+  private mounted(): void {
+    this.context.state.editMode = this.enableSwitchEditMode;
     fetch("sample-diagram.json").then(async result => {
       const json = await result.json();
-      this.diagram = Diagram.fromJSON(json);
+      this.context.diagram = Diagram.fromJSON(json);
       this.diagramFileName = "sample-diagram.json";
     });
   }
 
-  onEditButtonClick(): void {
-    this.viewConfig.editMode = !this.viewConfig.editMode;
+  private onEditButtonClick(): void {
+    this.context.state.editMode = !this.context.state.editMode;
   }
 
-  onUndoButtonClick(): void {
-    this.historyManager.undo();
+  private onUndoButtonClick(): void {
+    this.context.history.undo();
   }
 
-  onRedoButtonClick(): void {
-    this.historyManager.redo();
+  private onRedoButtonClick(): void {
+    this.context.history.redo();
   }
 
-  onVanishButtonClick(): void {
-    if (Object.keys(this.diagram.trains).length > 0) {
-      const trains = this.diagram.trains;
-      this.historyManager.push({
+  private onVanishButtonClick(): void {
+    if (Object.keys(this.context.diagram.trains).length > 0) {
+      const trains = this.context.diagram.trains;
+      this.context.history.push({
         this: this,
-        undo: () => { this.diagram.trains = trains; },
-        redo: () => { this.diagram.trains = {}; }
+        undo: () => { this.context.diagram.trains = trains; },
+        redo: () => { this.context.diagram.trains = {}; }
       });
-      this.diagram.trains = {}; 
+      this.context.diagram.trains = {}; 
     } else {
-      const diagram = this.diagram;
-      this.historyManager.push({
+      const diagram = this.context.diagram;
+      this.context.history.push({
         this: this,
-        undo: () => { this.diagram = diagram; },
-        redo: () => { this.diagram = Diagram.fromJSON({ stations: {}, trains: {} }); }
+        undo: () => { this.context.diagram = diagram; },
+        redo: () => { this.context.diagram = Diagram.fromJSON({ stations: {}, trains: {} }); }
       });
-      this.diagram = Diagram.fromJSON({ stations: {}, trains: {} }); 
+      this.context.diagram = Diagram.fromJSON({ stations: {}, trains: {} }); 
     }
   }
 
-  onUploadButtonClick(): void {
+  private onUploadButtonClick(): void {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".json, application/json";
@@ -128,9 +125,9 @@ export default class App extends Vue {
           if (typeof(reader.result) == "string") {
             try {
               const data = JSON.parse(reader.result);
-              this.diagram = Diagram.fromJSON(data);
+              this.context.diagram = Diagram.fromJSON(data);
               this.diagramFileName = file.name;
-              this.historyManager.clear();
+              this.context.history.clear();
             } catch (e) {
               this.$buefy.notification.open({
                 type: "is-danger",
@@ -144,8 +141,8 @@ export default class App extends Vue {
     input.click();
   }
 
-  onDownloadButtonClick(): void {
-    const json = JSON.stringify(this.diagram);
+  private onDownloadButtonClick(): void {
+    const json = JSON.stringify(this.context.diagram);
     const blob = new Blob([ json ], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -154,7 +151,7 @@ export default class App extends Vue {
     a.click();
   }
 
-  onHelpButtonClick(): void {
+  private onHelpButtonClick(): void {
     this.subView = this.subView == "help" ? "none" : "help";
   }
 }

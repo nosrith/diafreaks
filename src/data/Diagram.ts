@@ -40,19 +40,6 @@ export default class Diagram {
         return diagram;
     }
 
-    getYByRelY(relY: number): number {
-        return relY + this.config.topPaneHeight - this.config.scrollY;
-    }
-    getRelYByY(y: number): number {
-        return y - this.config.topPaneHeight + this.config.scrollY;
-    }
-    getXByTime(time: number): number {
-        return time * this.config.xScale + this.config.leftPaneWidth - this.config.scrollX;
-    }
-    getTimeByX(x: number): number {
-        return (x - this.config.leftPaneWidth + this.config.scrollX) / this.config.xScale;
-    }
-
     getStationsInMileageOrder(): Station[] {
         return Object.values(this.stations).sort((a, b) => a.mileage - b.mileage);
     }

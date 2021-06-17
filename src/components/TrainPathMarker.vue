@@ -8,22 +8,21 @@
 <script lang="ts">
 import { Component, InjectReactive, Prop, Vue } from "vue-property-decorator";
 import { getTimeText } from "@/utils";
-import Diagram from "@/data/Diagram";
-import ViewConfig from "@/data/ViewConfig";
-import ViewState from "@/data/ViewState";
+import DiagramViewContext from "@/data/DiagramViewContext";
 import TrainPathNode from "@/data/TrainPathNode";
 
 @Component
 export default class TrainPathMarker extends Vue {
-  @InjectReactive() viewConfig!: ViewConfig;
-  @InjectReactive() viewState!: ViewState;
-  @InjectReactive() diagram!: Diagram;
+  @InjectReactive() context!: DiagramViewContext;
+  private get diagram() { return this.context.diagram; }
+  private get viewConfig() { return this.context.config; }
+  private get viewState() { return this.context.state; }
   @Prop() trainPathNode!: TrainPathNode;
 
   get rectConfig(): unknown {
     return {
-      x: this.diagram.getXByTime(this.trainPathNode.time) - this.viewConfig.selectedTrainPathMarkerWidth * 0.5,
-      y: this.diagram.getYByRelY(this.trainPathNode.relY) - this.viewConfig.selectedTrainPathMarkerWidth * 0.5,
+      x: this.context.getXByTime(this.trainPathNode.time) - this.viewConfig.selectedTrainPathMarkerWidth * 0.5,
+      y: this.context.getYByRelY(this.trainPathNode.relY) - this.viewConfig.selectedTrainPathMarkerWidth * 0.5,
       width: this.viewConfig.selectedTrainPathMarkerWidth,
       height: this.viewConfig.selectedTrainPathMarkerWidth,
       fill: this.viewConfig.selectedTrainPathMarkerColor,
@@ -37,8 +36,8 @@ export default class TrainPathMarker extends Vue {
   get labelConfig(): unknown {
     const labelPosition = this.getLabelPosition();
     return {
-      x: this.diagram.getXByTime(this.trainPathNode.time) + labelPosition.x - this.viewConfig.markerLabelFontSize * 8,
-      y: this.diagram.getYByRelY(this.trainPathNode.relY) + labelPosition.y - this.viewConfig.markerLabelLineHeight,
+      x: this.context.getXByTime(this.trainPathNode.time) + labelPosition.x - this.viewConfig.markerLabelFontSize * 8,
+      y: this.context.getYByRelY(this.trainPathNode.relY) + labelPosition.y - this.viewConfig.markerLabelLineHeight,
       width: this.viewConfig.markerLabelFontSize * 8,
       height: this.viewConfig.markerLabelLineHeight,
       text: getTimeText(this.trainPathNode.time, this.viewState.pointerPreciseState != null),
@@ -82,7 +81,7 @@ export default class TrainPathMarker extends Vue {
   }
 
   onRectDoubleClick(): void {
-    if (this.viewConfig.editMode) {
+    if (this.viewState.editMode) {
       if (!this.viewState.drawingState) {
         const n = this.trainPathNode;
         if (!n.stev.prev) {

@@ -9,17 +9,14 @@
 </template>
 
 <script lang="ts">
-import { Component, Inject, InjectReactive, Prop, Vue } from "vue-property-decorator";
+import { Component, InjectReactive, Prop, Vue } from "vue-property-decorator";
 import { KonvaEventObject } from "konva/types/Node";
-import HistoryManager from "@/HistoryManager";
-import Diagram from "@/data/Diagram";
+import DiagramViewContext from "@/data/DiagramViewContext";
 import Station from "@/data/Station";
 import StopEvent, { StopEventRange } from "@/data/StopEvent";
 import Track from "@/data/Track";
 import TrainPathNode from "@/data/TrainPathNode";
 import Train from "@/data/Train";
-import ViewConfig from "@/data/ViewConfig";
-import ViewState from "@/data/ViewState";
 import TrainPathMarker from "./TrainPathMarker.vue";
 
 @Component({
@@ -28,11 +25,12 @@ import TrainPathMarker from "./TrainPathMarker.vue";
   },
 })
 export default class TrainPathGroup extends Vue {
-  @InjectReactive() viewConfig!: ViewConfig;
-  @InjectReactive() viewState!: ViewState;
-  @InjectReactive() diagram!: Diagram;
-  @Inject() historyManager!: HistoryManager;
-  @Prop() train!: Train;
+  @InjectReactive() private context!: DiagramViewContext;
+  private get diagram() { return this.context.diagram; }
+  private get viewConfig() { return this.context.config; }
+  private get viewState() { return this.context.state; }
+
+  @Prop() private train!: Train;
 
   dragState: { 
     t0: number, 
@@ -48,7 +46,7 @@ export default class TrainPathGroup extends Vue {
 
   get regularTrainPathConfig(): unknown {
     return {
-      points: this.regularTrainPathNodes.flatMap(n => [this.diagram.getXByTime(n.time), this.diagram.getYByRelY(n.relY)]),
+      points: this.regularTrainPathNodes.flatMap(n => [this.context.getXByTime(n.time), this.context.getYByRelY(n.relY)]),
       stroke: this.diagram.config.trainPathColor,
       opacity: Object.keys(this.viewState.trainSelections).length > 0 ? this.viewConfig.unselectedTrainPathOpacity : 1,
       strokeWidth: this.diagram.config.trainPathWidth,
@@ -66,7 +64,7 @@ export default class TrainPathGroup extends Vue {
 
   get selectedTrainPathConfig(): unknown {
     return {
-      points: this.selectedTrainPathNodes.flatMap(n => [this.diagram.getXByTime(n.time), this.diagram.getYByRelY(n.relY)]),
+      points: this.selectedTrainPathNodes.flatMap(n => [this.context.getXByTime(n.time), this.context.getYByRelY(n.relY)]),
       stroke: this.viewConfig.selectedTrainPathColor,
       strokeWidth: this.diagram.config.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale,
       hitStrokeWidth: Math.max(this.diagram.config.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale, this.viewConfig.minHitWidth * 2)
@@ -196,10 +194,10 @@ export default class TrainPathGroup extends Vue {
     for (let i = 0; i < this.train.stevs.length - 1; ++i) {
       const thisStev = this.train.stevs[i];
       const nextStev = this.train.stevs[i + 1];
-      const leftX = this.diagram.getXByTime(thisStev.time) - this.viewConfig.minHitWidth;
-      const rightX = this.diagram.getXByTime(nextStev.time) + this.viewConfig.minHitWidth;
-      const topY = this.diagram.getYByRelY(Math.min(thisStev.track.relY, nextStev.track.relY)) - this.viewConfig.minHitWidth;
-      const bottomY = this.diagram.getYByRelY(Math.max(thisStev.track.relY, nextStev.track.relY)) + this.viewConfig.minHitWidth;
+      const leftX = this.context.getXByTime(thisStev.time) - this.viewConfig.minHitWidth;
+      const rightX = this.context.getXByTime(nextStev.time) + this.viewConfig.minHitWidth;
+      const topY = this.context.getYByRelY(Math.min(thisStev.track.relY, nextStev.track.relY)) - this.viewConfig.minHitWidth;
+      const bottomY = this.context.getYByRelY(Math.max(thisStev.track.relY, nextStev.track.relY)) + this.viewConfig.minHitWidth;
       if (leftX < x && x < rightX && topY < y && y < bottomY) {
         return { from: thisStev, to: nextStev };
       }
@@ -208,7 +206,7 @@ export default class TrainPathGroup extends Vue {
   }
 
   onSelectedTrainPathDoubleClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    if (this.viewConfig.editMode && !this.viewState.drawingState) {
+    if (this.viewState.editMode && !this.viewState.drawingState) {
       const targetTime = this.viewState.pointerTime;
       const nearestStation = this.getNearestStation(konvaEvent.evt.clientY);
       const nearestStev = this.getNearestStopEvent(targetTime);
@@ -227,7 +225,7 @@ export default class TrainPathGroup extends Vue {
 
   getNearestStation(y: number): Station {
     const stations = this.diagram.getStationsInMileageOrder();
-    const relY = this.diagram.getRelYByY(y);
+    const relY = this.context.getRelYByY(y);
     let minSta = stations[0];
     let minDist = Math.abs(relY - minSta.bottomRelY);
     for (const s of stations) {
@@ -256,7 +254,7 @@ export default class TrainPathGroup extends Vue {
   }
 
   onSelectedTrainPathMouseDown(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    if (!this.viewConfig.editMode) {
+    if (!this.viewState.editMode) {
       return;
     }
 
@@ -283,7 +281,7 @@ export default class TrainPathGroup extends Vue {
     const firstNode = this.selectedTrainPathNodes[0];
     this.dragState = { 
       t0: firstNode.time, 
-      y0: this.diagram.getYByRelY(firstNode.relY),
+      y0: this.context.getYByRelY(firstNode.relY),
       sx0: konvaEvent.evt.screenX, 
       sy0: konvaEvent.evt.screenY,
       track0: changeTrackTargets ? changeTrackTargets[0].track : null,
@@ -302,13 +300,13 @@ export default class TrainPathGroup extends Vue {
   }
 
   onMarkerMouseDown(konvaEvent: KonvaEventObject<MouseEvent>, node: TrainPathNode): void {
-    if (!this.viewConfig.editMode) {
+    if (!this.viewState.editMode) {
       return;
     }
 
     this.dragState = {
       t0: node.time,
-      y0: this.diagram.getYByRelY(node.relY),
+      y0: this.context.getYByRelY(node.relY),
       track0: node.stev.track,
       sx0: konvaEvent.evt.screenX,
       sy0: konvaEvent.evt.screenY,
@@ -341,7 +339,7 @@ export default class TrainPathGroup extends Vue {
             Math.min(this.dragState.maxTimeShift, Math.max(this.dragState.minTimeShift, this.viewState.pointerTime - this.dragState.t0)) :
             this.viewState.pointerTime - this.dragState.t0;
         if (this.dragState.changeTrackTargets) {
-          const mouseRelY = this.diagram.getRelYByY(event.clientY);
+          const mouseRelY = this.context.getRelYByY(event.clientY);
           const targetStation = this.dragState.changeTrackTargets[0].station;
           const mouseTrack = targetStation.tracks.find(t => Math.abs(t.relY - mouseRelY) < this.viewConfig.minHitWidth);
           if (mouseTrack) {
@@ -364,7 +362,7 @@ export default class TrainPathGroup extends Vue {
           const track0 = this.dragState.track0;
           const track1 = this.dragState.changeTrackTargets[0].track;
           if (track0 != track1) {
-            this.historyManager.push({
+            this.context.history.push({
               this: this,
               undo: () => { targets.forEach(stev => stev.track = track0); },
               redo: () => { targets.forEach(stev => stev.track = track1); }
@@ -381,7 +379,7 @@ export default class TrainPathGroup extends Vue {
                 return sel.stevRange ? sel.train.getStopEventsInRange(sel.stevRange) : sel.train.stevs;
               });
             targets.forEach(stev => stev.time += timeShift);
-            this.historyManager.push({
+            this.context.history.push({
               this: this,
               undo: () => { targets.forEach(stev => stev.time -= timeShift); },
               redo: () => { targets.forEach(stev => stev.time += timeShift); }
@@ -398,7 +396,7 @@ export default class TrainPathGroup extends Vue {
               this.$set(this.viewState.trainSelections, newTrain.id, { train: newTrain, stevRange: null });
               return newTrain;
             });
-            this.historyManager.push({
+            this.context.history.push({
               this: this,
               undo: () => { newTrains.forEach(train => this.diagram.removeTrain(train)); },
               redo: () => { newTrains.forEach(train => this.diagram.addNewTrain(train)); }

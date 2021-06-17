@@ -10,8 +10,7 @@
 
 <script lang="ts">
 import { Component, InjectReactive, Vue } from "vue-property-decorator";
-import Diagram from "@/data/Diagram";
-import ViewState from "@/data/ViewState";
+import DiagramViewContext from "@/data/DiagramViewContext";
 import StationGroup from "./StationGroup.vue";
 
 @Component({
@@ -20,14 +19,15 @@ import StationGroup from "./StationGroup.vue";
   },
 })
 export default class BackLayer extends Vue {
-  @InjectReactive() viewState!: ViewState;
-  @InjectReactive() diagram!: Diagram;
+  @InjectReactive() private context!: DiagramViewContext;
+  private get diagram() { return this.context.diagram; }
+  private get viewState() { return this.context.state; }
 
-  get timeGridLines(): unknown {
+  private get timeGridLines(): unknown {
     const lines = [];
     const scrollLeftTime = this.diagram.config.scrollX / this.diagram.config.xScale;
     let t = Math.ceil(scrollLeftTime / this.diagram.config.minorMinutelyGridLineSpan) * this.diagram.config.minorMinutelyGridLineSpan;
-    let x = t * this.diagram.config.xScale - this.diagram.config.scrollX + this.diagram.config.leftPaneWidth;
+    let x = this.context.getXByTime(t);
     while (x < this.viewState.viewWidth) {
       lines.push({
         key: `time-grid-line-${lines.length}`,
@@ -62,7 +62,7 @@ export default class BackLayer extends Vue {
         }
       });
       t += this.diagram.config.minorMinutelyGridLineSpan;
-      x = t * this.diagram.config.xScale - this.diagram.config.scrollX + this.diagram.config.leftPaneWidth;
+      x = this.context.getXByTime(t);
     }
     return lines;
   }

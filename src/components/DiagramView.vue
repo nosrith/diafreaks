@@ -25,11 +25,8 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Provide, ProvideReactive, Vue } from "vue-property-decorator";
-import HistoryManager from "@/HistoryManager";
-import Diagram from "@/data/Diagram";
-import ViewConfig from "@/data/ViewConfig";
-import ViewState from "@/data/ViewState";
+import { Component, Prop, ProvideReactive, Vue } from "vue-property-decorator";
+import DiagramViewContext from "@/data/DiagramViewContext";
 import Stage from "./Stage.vue";
 import StationAddTrackButton from "./StationAddTrackButton.vue";
 import StationExpandButton from "./StationExpandButton.vue";
@@ -40,29 +37,34 @@ import TrackNameInput from "./TrackNameInput.vue";
 
 @Component({
   components: {
-    Stage, StationAddTrackButton, StationExpandButton, StationNameInput, StationRemoveButton, StationRemoveTrackButton, TrackNameInput
+    Stage, 
+    StationAddTrackButton, 
+    StationExpandButton, 
+    StationNameInput, 
+    StationRemoveButton, 
+    StationRemoveTrackButton, 
+    TrackNameInput
   },
 })
 export default class DiagramView extends Vue {
-  @Prop({ default: () => Diagram.fromJSON({ stations: [], trains: [] }) }) @ProvideReactive() diagram!: Diagram;
-  @Prop({ default: new ViewConfig() }) @ProvideReactive() viewConfig!: ViewConfig;
-  @Prop() @Provide() historyManager!: HistoryManager;
-  @ProvideReactive() viewState = new ViewState();
+  @Prop({ default: new DiagramViewContext() }) @ProvideReactive() private context!: DiagramViewContext;
+  private get diagram() { return this.context.diagram; }
+  private get viewState() { return this.context.state; }
 
-  mounted(): void {
+  private mounted(): void {
     const resizeObserver = new ResizeObserver(this.updateViewSize);
     resizeObserver.observe(this.$el);
   }
 
-  onStationNameInputStart(): void {
+  private onStationNameInputStart(): void {
     this.$nextTick(() => ((this.$refs.stationNameInput as Vue).$el as HTMLInputElement).focus());
   }
 
-  onTrackNameInputStart(): void {
+  private onTrackNameInputStart(): void {
     this.$nextTick(() => ((this.$refs.trackNameInput as Vue).$el as HTMLInputElement).focus());
   }
 
-  updateViewSize(): void {
+  private updateViewSize(): void {
     if (this.$el) {
       this.viewState.viewWidth = this.$el.clientWidth;
       this.viewState.viewHeight = this.$el.clientHeight;
@@ -71,7 +73,7 @@ export default class DiagramView extends Vue {
             Math.min(this.diagram.config.maxPlotTime * this.diagram.config.xScale - (this.viewState.viewWidth - this.diagram.config.leftPaneWidth - this.diagram.config.plotPanePadding),
               this.diagram.config.scrollX));
         this.diagram.config.scrollY = 
-          Math.max(0, Math.min(this.diagram.getYByRelY(this.diagram.maxRelY), 
+          Math.max(0, Math.min(this.context.getYByRelY(this.diagram.maxRelY), 
             this.diagram.config.scrollY));
     }
   }

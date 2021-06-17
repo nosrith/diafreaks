@@ -13,12 +13,9 @@
 </template>
 
 <script lang="ts">
-import { Component, Inject, InjectReactive, Prop, Vue } from "vue-property-decorator";
-import HistoryManager from "@/HistoryManager";
-import Diagram from "@/data/Diagram";
+import { Component, InjectReactive, Prop, Vue } from "vue-property-decorator";
+import DiagramViewContext from "@/data/DiagramViewContext";
 import Station from "@/data/Station";
-import ViewConfig from "@/data/ViewConfig";
-import ViewState from "@/data/ViewState";
 import TrackGroup from "./TrackGroup.vue";
 import { KonvaEventObject } from "konva/types/Node";
 
@@ -28,21 +25,20 @@ import { KonvaEventObject } from "konva/types/Node";
   },
 })
 export default class StationGroup extends Vue {
-  @InjectReactive() viewConfig!: ViewConfig;
-  @InjectReactive() viewState!: ViewState;
-  @InjectReactive() diagram!: Diagram;
-  @Inject() historyManager!: HistoryManager;
-  @Prop() station!: Station;
+  @InjectReactive() private context!: DiagramViewContext;
+  private get diagram() { return this.context.diagram; }
+  private get viewState() { return this.context.state; }
+  @Prop() private station!: Station;
 
-  dragState: { sy0: number, mileage0: number, dragging: boolean } | null = null;
+  private dragState: { sy0: number, mileage0: number, dragging: boolean } | null = null;
 
-  get topLineConfig(): unknown {
+  private get topLineConfig(): unknown {
     return {
       points: [
         0, 
-        this.diagram.getYByRelY(this.station.topRelY), 
+        this.context.getYByRelY(this.station.topRelY), 
         this.viewState.viewWidth, 
-        this.diagram.getYByRelY(this.station.topRelY)
+        this.context.getYByRelY(this.station.topRelY)
       ],
       stroke: this.diagram.config.stationLineColor,
       strokeWidth: this.diagram.config.stationLineWidth,
@@ -50,13 +46,13 @@ export default class StationGroup extends Vue {
     }
   }
 
-  get bottomLineConfig(): unknown {
+  private get bottomLineConfig(): unknown {
     return {
       points: [
         0, 
-        this.diagram.getYByRelY(this.station.bottomRelY), 
+        this.context.getYByRelY(this.station.bottomRelY), 
         this.viewState.viewWidth, 
-        this.diagram.getYByRelY(this.station.bottomRelY)
+        this.context.getYByRelY(this.station.bottomRelY)
       ],
       stroke: this.diagram.config.stationLineColor,
       strokeWidth: this.diagram.config.stationLineWidth,
@@ -64,17 +60,17 @@ export default class StationGroup extends Vue {
     }
   }
 
-  get labelRectConfig(): unknown {
+  private get labelRectConfig(): unknown {
     return {
       id: `station-label-${this.station.id}`,
       x: this.diagram.config.stationLabelLeftMargin,
-      y: this.diagram.getYByRelY(this.station.topRelY) - this.diagram.config.stationLabelFontSize,
+      y: this.context.getYByRelY(this.station.topRelY) - this.diagram.config.stationLabelFontSize,
       width: this.diagram.config.leftPaneWidth - this.diagram.config.stationLabelLeftMargin - this.diagram.config.stationLabelRightMargin,
       height: this.diagram.config.stationLabelFontSize,
     };
   }
 
-  get labelCharacters(): unknown {
+  private get labelCharacters(): unknown {
     const widthForChars = this.diagram.config.leftPaneWidth - this.diagram.config.stationLabelLeftMargin - this.diagram.config.stationLabelRightMargin - this.diagram.config.stationLabelFontSize;
     const charSpan = this.station.name.length > 1 ? widthForChars / (this.station.name.length - 1) : 0;
     return Array.from(this.station.name).map((c, index) => {
@@ -83,7 +79,7 @@ export default class StationGroup extends Vue {
         x: this.station.name.length > 1 ? 
             this.diagram.config.stationLabelLeftMargin + index * charSpan :
             this.diagram.config.stationLabelLeftMargin + widthForChars * 0.5,
-        y: this.diagram.getYByRelY(this.station.topRelY) - this.diagram.config.stationLabelFontSize,
+        y: this.context.getYByRelY(this.station.topRelY) - this.diagram.config.stationLabelFontSize,
         height: this.diagram.config.stationLabelFontSize,
         text: c,
         fontSize: this.diagram.config.stationLabelFontSize,
@@ -95,25 +91,25 @@ export default class StationGroup extends Vue {
     });
   }
 
-  get isTopLineIntersectingPlotPane(): boolean {
-    return this.diagram.getYByRelY(this.station.topRelY) >= this.diagram.config.topPaneHeight && 
-      this.diagram.getYByRelY(this.station.topRelY) < this.viewState.viewHeight;
+  private get isTopLineIntersectingPlotPane(): boolean {
+    return this.context.getYByRelY(this.station.topRelY) >= this.diagram.config.topPaneHeight && 
+      this.context.getYByRelY(this.station.topRelY) < this.viewState.viewHeight;
   }
 
-  get isBottomLineIntersectingPlotPane(): boolean {
-    return this.diagram.getYByRelY(this.station.bottomRelY) >= this.diagram.config.topPaneHeight && 
-      this.diagram.getYByRelY(this.station.bottomRelY) < this.viewState.viewHeight;
+  private get isBottomLineIntersectingPlotPane(): boolean {
+    return this.context.getYByRelY(this.station.bottomRelY) >= this.diagram.config.topPaneHeight && 
+      this.context.getYByRelY(this.station.bottomRelY) < this.viewState.viewHeight;
   }
 
-  onStationLabelClick(): void {
-    if (this.viewConfig.editMode && !this.viewState.busy && !this.dragState?.dragging) {
+  private onStationLabelClick(): void {
+    if (this.viewState.editMode && !this.viewState.busy && !this.dragState?.dragging) {
       this.viewState.stationNameInputTarget = this.station;
       this.$emit("stationNameInputStart");
     }
   }
 
-  onStationLabelMouseDown(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    if (this.viewConfig.editMode && !this.viewState.inputEnabled) {
+  private onStationLabelMouseDown(konvaEvent: KonvaEventObject<MouseEvent>): void {
+    if (this.viewState.editMode && !this.viewState.inputEnabled) {
       this.dragState = {
         sy0: konvaEvent.evt.screenY,
         mileage0: this.station.mileage,
@@ -124,7 +120,7 @@ export default class StationGroup extends Vue {
     }
   }
 
-  onWindowMouseMove(event: MouseEvent): void {
+  private onWindowMouseMove(event: MouseEvent): void {
     if (this.dragState) {
       if (Math.abs(event.screenY - this.dragState.sy0) > 1) {
         this.dragState.dragging = true;
@@ -136,7 +132,7 @@ export default class StationGroup extends Vue {
     }
   }
 
-  onWindowMouseUp(event: MouseEvent): void {
+  private onWindowMouseUp(event: MouseEvent): void {
     if (this.dragState) {
       window.removeEventListener("mousemove", this.onWindowMouseMove);
       window.removeEventListener("mouseup", this.onWindowMouseUp);
@@ -145,7 +141,7 @@ export default class StationGroup extends Vue {
       if (this.dragState.dragging) {
         const mileage0 = this.dragState.mileage0;
         const mileage1 = this.station.mileage;
-        this.historyManager.push({
+        this.context.history.push({
           this: this,
           undo: () => { this.station.mileage = mileage0; },
           redo: () => { this.station.mileage = mileage1; }

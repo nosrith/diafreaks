@@ -8,25 +8,24 @@
 <script lang="ts">
 import { Component, InjectReactive, Vue } from "vue-property-decorator";
 import { getTimeText } from "@/utils";
-import Diagram from "@/data/Diagram";
-import ViewConfig from "@/data/ViewConfig";
-import ViewState from "@/data/ViewState";
+import DiagramViewContext from "@/data/DiagramViewContext";
 
 @Component
 export default class TrainPathGroup extends Vue {
-  @InjectReactive() viewConfig!: ViewConfig;
-  @InjectReactive() viewState!: ViewState;
-  @InjectReactive() diagram!: Diagram;
+  @InjectReactive() private context!: DiagramViewContext;
+  private get viewConfig() { return this.context.config; }
+  private get viewState() { return this.context.state; }
+  private get diagram() { return this.context.diagram; }
 
-  get pointerEnabled(): unknown {
+  private get pointerEnabled(): unknown {
     return this.viewState.pointerTargetLine && !this.viewState.pointerTargetTrainPath &&
       !this.viewState.trainPathDragState && !this.viewState.drawingState;
   }
 
-  get rectConfig(): unknown {
+  private get rectConfig(): unknown {
     const width = this.viewState.drawingState ? this.viewConfig.selectedTrainPathMarkerWidth : this.viewConfig.pointerWidth;
     return {
-      x: this.diagram.getXByTime(this.viewState.pointerTime) - width * 0.5,
+      x: this.context.getXByTime(this.viewState.pointerTime) - width * 0.5,
       y: this.viewState.pointerY - width * 0.5,
       width: width,
       height: width,
@@ -35,12 +34,12 @@ export default class TrainPathGroup extends Vue {
     };
   }
 
-  get labelConfig(): unknown {
+  private get labelConfig(): unknown {
     const time = this.viewState.pointerTime >= 0 ? 
       this.viewState.pointerTime : 
       this.viewState.pointerTime + Math.ceil(-this.viewState.pointerTime / 3600) * 3600;
     return {
-      x: this.diagram.getXByTime(this.viewState.pointerTime),
+      x: this.context.getXByTime(this.viewState.pointerTime),
       y: this.viewState.pointerY - this.viewConfig.pointerLabelFontSize,
       height: this.viewConfig.pointerLabelFontSize,
       text: getTimeText(time, this.viewState.pointerPreciseState != null),
