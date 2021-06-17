@@ -11,6 +11,7 @@ import Track from "@/data/Track";
 export default class TrackNameInput extends Vue {
   @InjectReactive() private context!: DiagramViewContext;
   private get diagram() { return this.context.diagram; }
+  private get viewConfig() { return this.context.config; }
   private get viewState() { return this.context.state; }
 
   private get targetTrack(): Track | Record<string, never> {
@@ -20,14 +21,14 @@ export default class TrackNameInput extends Vue {
   private get style(): unknown {
     return this.viewState.trackNameInputTarget ?
       {
-        left: `${this.diagram.config.stationLabelLeftMargin + this.diagram.config.trackLabelLeftMargin}px`,
-        top: `${this.context.getYByRelY(this.targetTrack.relY) - this.diagram.config.stationLabelFontSize - 4}px`,
-        width: `${this.diagram.config.leftPaneWidth - this.diagram.config.stationLabelLeftMargin - this.diagram.config.trackLabelLeftMargin - this.diagram.config.stationLabelRightMargin}px`,
-        height: `${this.diagram.config.stationLabelFontSize + 4}px`,
+        left: `${this.viewConfig.stationLabelLeftMargin + this.viewConfig.trackLabelLeftMargin}px`,
+        top: `${this.context.getYByRelY(this.targetTrack.relY) - this.viewConfig.stationLabelFontSize - 4}px`,
+        width: `${this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelLeftMargin - this.viewConfig.trackLabelLeftMargin - this.viewConfig.stationLabelRightMargin}px`,
+        height: `${this.viewConfig.stationLabelFontSize + 4}px`,
         paddingTop: "2px",
-        lineHeight: `${this.diagram.config.stationLabelFontSize}px`,
+        lineHeight: `${this.viewConfig.stationLabelFontSize}px`,
         border: "none",
-        fontSize: `${this.diagram.config.stationLabelFontSize}px`,
+        fontSize: `${this.viewConfig.stationLabelFontSize}px`,
       } : {};
   }
 

@@ -49,6 +49,7 @@ import TrackNameInput from "./TrackNameInput.vue";
 export default class DiagramView extends Vue {
   @Prop({ default: new DiagramViewContext() }) @ProvideReactive() private context!: DiagramViewContext;
   private get diagram() { return this.context.diagram; }
+  private get viewConfig() { return this.context.config; }
   private get viewState() { return this.context.state; }
 
   private mounted(): void {
@@ -69,8 +70,8 @@ export default class DiagramView extends Vue {
       this.viewState.viewWidth = this.$el.clientWidth;
       this.viewState.viewHeight = this.$el.clientHeight;
         this.diagram.config.scrollX = 
-          Math.max(this.diagram.config.minPlotTime * this.diagram.config.xScale - this.diagram.config.plotPanePadding, 
-            Math.min(this.diagram.config.maxPlotTime * this.diagram.config.xScale - (this.viewState.viewWidth - this.diagram.config.leftPaneWidth - this.diagram.config.plotPanePadding),
+          Math.max(this.diagram.config.minPlotTime * this.diagram.config.xScale - this.viewConfig.plotPanePadding, 
+            Math.min(this.diagram.config.maxPlotTime * this.diagram.config.xScale - (this.viewState.viewWidth - this.diagram.config.leftPaneWidth - this.viewConfig.plotPanePadding),
               this.diagram.config.scrollX));
         this.diagram.config.scrollY = 
           Math.max(0, Math.min(this.context.getYByRelY(this.diagram.maxRelY), 

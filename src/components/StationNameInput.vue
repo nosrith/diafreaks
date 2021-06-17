@@ -11,6 +11,7 @@ import Station from "@/data/Station";
 export default class StationNameInput extends Vue {
   @InjectReactive() private context!: DiagramViewContext;
   private get diagram() { return this.context.diagram; }
+  private get viewConfig() { return this.context.config; }
   private get viewState() { return this.context.state; }
 
   private get targetStation(): Station | Record<string, never> {
@@ -19,14 +20,14 @@ export default class StationNameInput extends Vue {
 
   private get style(): unknown {
     return {
-      left: `${this.diagram.config.stationLabelLeftMargin}px`,
-      top: `${this.context.getYByRelY(this.targetStation.topRelY) - this.diagram.config.stationLabelFontSize - 4}px`,
-      width: `${this.diagram.config.leftPaneWidth - this.diagram.config.stationLabelLeftMargin - this.diagram.config.stationLabelRightMargin}px`,
-      height: `${this.diagram.config.stationLabelFontSize + 4}px`,
+      left: `${this.viewConfig.stationLabelLeftMargin}px`,
+      top: `${this.context.getYByRelY(this.targetStation.topRelY) - this.viewConfig.stationLabelFontSize - 4}px`,
+      width: `${this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelLeftMargin - this.viewConfig.stationLabelRightMargin}px`,
+      height: `${this.viewConfig.stationLabelFontSize + 4}px`,
       paddingTop: "2px",
-      lineHeight: `${this.diagram.config.stationLabelFontSize}px`,
+      lineHeight: `${this.viewConfig.stationLabelFontSize}px`,
       border: "none",
-      fontSize: `${this.diagram.config.stationLabelFontSize}px`,
+      fontSize: `${this.viewConfig.stationLabelFontSize}px`,
     };
   }
 

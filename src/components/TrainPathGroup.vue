@@ -47,10 +47,10 @@ export default class TrainPathGroup extends Vue {
   get regularTrainPathConfig(): unknown {
     return {
       points: this.regularTrainPathNodes.flatMap(n => [this.context.getXByTime(n.time), this.context.getYByRelY(n.relY)]),
-      stroke: this.diagram.config.trainPathColor,
+      stroke: this.viewConfig.trainPathColor,
       opacity: Object.keys(this.viewState.trainSelections).length > 0 ? this.viewConfig.unselectedTrainPathOpacity : 1,
-      strokeWidth: this.diagram.config.trainPathWidth,
-      hitStrokeWidth: Math.max(this.diagram.config.trainPathWidth, this.viewConfig.minHitWidth * 2),
+      strokeWidth: this.viewConfig.trainPathWidth,
+      hitStrokeWidth: Math.max(this.viewConfig.trainPathWidth, this.viewConfig.minHitWidth * 2),
     }
   }
 
@@ -66,8 +66,8 @@ export default class TrainPathGroup extends Vue {
     return {
       points: this.selectedTrainPathNodes.flatMap(n => [this.context.getXByTime(n.time), this.context.getYByRelY(n.relY)]),
       stroke: this.viewConfig.selectedTrainPathColor,
-      strokeWidth: this.diagram.config.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale,
-      hitStrokeWidth: Math.max(this.diagram.config.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale, this.viewConfig.minHitWidth * 2)
+      strokeWidth: this.viewConfig.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale,
+      hitStrokeWidth: Math.max(this.viewConfig.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale, this.viewConfig.minHitWidth * 2)
     };
   }
 

@@ -16,6 +16,7 @@ import { KonvaEventObject } from "konva/types/Node";
 export default class TrackGroup extends Vue {
   @InjectReactive() private context!: DiagramViewContext;
   private get diagram() { return this.context.diagram; }
+  private get viewConfig() { return this.context.config; }
   private get viewState() { return this.context.state; }
   @Prop() private station!: Station;
   @Prop() private track!: Track;
@@ -25,13 +26,13 @@ export default class TrackGroup extends Vue {
   private get lineConfig(): unknown {
     return {
       points: [
-        this.diagram.config.stationLabelLeftMargin + this.diagram.config.trackLabelLeftMargin, 
+        this.viewConfig.stationLabelLeftMargin + this.viewConfig.trackLabelLeftMargin, 
         this.context.getYByRelY(this.track.relY), 
         this.viewState.viewWidth, 
         this.context.getYByRelY(this.track.relY)
       ],
-      stroke: this.diagram.config.trackLineColor,
-      strokeWidth: this.diagram.config.trackLineWidth,
+      stroke: this.viewConfig.trackLineColor,
+      strokeWidth: this.viewConfig.trackLineWidth,
       listening: false,
     }
   }
@@ -39,21 +40,21 @@ export default class TrackGroup extends Vue {
   private get labelConfig(): unknown {
     return {
       id: `track-label-${this.station.id}-${this.track.id}`,
-      x: this.diagram.config.stationLabelLeftMargin + this.diagram.config.trackLabelLeftMargin,
-      y: this.context.getYByRelY(this.track.relY) - this.diagram.config.trackLabelFontSize,
-      width: this.diagram.config.leftPaneWidth - this.diagram.config.stationLabelLeftMargin - this.diagram.config.trackLabelLeftMargin - this.diagram.config.stationLabelRightMargin,
-      height: this.diagram.config.trackLabelFontSize,
+      x: this.viewConfig.stationLabelLeftMargin + this.viewConfig.trackLabelLeftMargin,
+      y: this.context.getYByRelY(this.track.relY) - this.viewConfig.trackLabelFontSize,
+      width: this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelLeftMargin - this.viewConfig.trackLabelLeftMargin - this.viewConfig.stationLabelRightMargin,
+      height: this.viewConfig.trackLabelFontSize,
       text: this.track.name,
-      fontSize: this.diagram.config.trackLabelFontSize,
-      fontFamily: this.diagram.config.fontFamily,
-      fill: this.diagram.config.trackLabelColor,
+      fontSize: this.viewConfig.trackLabelFontSize,
+      fontFamily: this.viewConfig.fontFamily,
+      fill: this.viewConfig.trackLabelColor,
       align: "left",
       verticalAlign: "bottom",
     }
   }
 
   private get isLineIntersectingPlotPane(): boolean {
-    return this.context.getYByRelY(this.track.relY) >= this.diagram.config.topPaneHeight && 
+    return this.context.getYByRelY(this.track.relY) >= this.viewConfig.topPaneHeight && 
       this.context.getYByRelY(this.track.relY) < this.viewState.viewHeight;
   }
 

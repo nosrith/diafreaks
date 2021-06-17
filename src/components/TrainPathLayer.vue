@@ -18,6 +18,7 @@ import TrainPathGroup from "./TrainPathGroup.vue";
 export default class BackLayer extends Vue {
   @InjectReactive() private context!: DiagramViewContext;
   private get diagram() { return this.context.diagram; }
+  private get viewConfig() { return this.context.config; }
   private get viewState() { return this.context.state; }
 
   // private mounted(): void {
@@ -29,9 +30,9 @@ export default class BackLayer extends Vue {
     return {
       clip: {
         x: this.diagram.config.leftPaneWidth,
-        y: this.diagram.config.topPaneHeight,
+        y: this.viewConfig.topPaneHeight,
         width: this.viewState.viewWidth - this.diagram.config.leftPaneWidth,
-        height: this.viewState.viewHeight - this.diagram.config.topPaneHeight,
+        height: this.viewState.viewHeight - this.viewConfig.topPaneHeight,
       }
     };
   }

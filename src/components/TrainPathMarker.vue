@@ -42,7 +42,7 @@ export default class TrainPathMarker extends Vue {
       height: this.viewConfig.markerLabelLineHeight,
       text: getTimeText(this.trainPathNode.time, this.viewState.pointerPreciseState != null),
       fontSize: this.viewConfig.pointerLabelFontSize,
-      fontFamily: this.diagram.config.fontFamily,
+      fontFamily: this.viewConfig.fontFamily,
       fill: this.viewConfig.markerLabelColor,
       align: "right",
       verticalAlign: "bottom",

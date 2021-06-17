@@ -13,19 +13,20 @@ import Train from "@/data/Train";
 export default class StationRemoveButton extends Vue {
   @InjectReactive() private context!: DiagramViewContext;
   private get diagram() { return this.context.diagram; }
+  private get viewConfig() { return this.context.config; }
   private get viewState() { return this.context.state; }
   @Prop() private station!: Station;
 
   private get style(): unknown {
     return {
-      left: `${this.diagram.config.leftPaneWidth - this.diagram.config.stationLabelRightMargin}px`,
+      left: `${this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelRightMargin}px`,
       top: `${this.context.getYByRelY(this.station.topRelY) - this.diagram.config.trackLineSpan}px`,
       height: `${this.diagram.config.trackLineSpan}px`,
     };
   }
 
   private get isTopLineIntersectingPlotPane(): boolean {
-    return this.context.getYByRelY(this.station.topRelY) >= this.diagram.config.topPaneHeight && 
+    return this.context.getYByRelY(this.station.topRelY) >= this.viewConfig.topPaneHeight && 
       this.context.getYByRelY(this.station.topRelY) < this.viewState.viewHeight;
   }
 

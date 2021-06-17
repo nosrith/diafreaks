@@ -14,6 +14,7 @@ import Train from "@/data/Train";
 export default class StationRemoveTrackButton extends Vue {
   @InjectReactive() private context!: DiagramViewContext;
   private get diagram() { return this.context.diagram; }
+  private get viewConfig() { return this.context.config; }
   private get viewState() { return this.context.state; }
 
   @Prop() private station!: Station;
@@ -21,14 +22,14 @@ export default class StationRemoveTrackButton extends Vue {
 
   private get style(): unknown {
     return {
-      left: `${this.diagram.config.leftPaneWidth - this.diagram.config.stationLabelRightMargin}px`,
+      left: `${this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelRightMargin}px`,
       top: `${this.context.getYByRelY(this.track.relY) - this.diagram.config.trackLineSpan}px`,
       height: `${this.diagram.config.trackLineSpan}px`,
     };
   }
 
   private get isLineIntersectingPlotPane(): boolean {
-    return this.context.getYByRelY(this.track.relY) >= this.diagram.config.topPaneHeight && 
+    return this.context.getYByRelY(this.track.relY) >= this.viewConfig.topPaneHeight && 
       this.context.getYByRelY(this.track.relY) < this.viewState.viewHeight;
   }
 

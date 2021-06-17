@@ -21,12 +21,13 @@ import StationGroup from "./StationGroup.vue";
 export default class BackLayer extends Vue {
   @InjectReactive() private context!: DiagramViewContext;
   private get diagram() { return this.context.diagram; }
+  private get viewConfig() { return this.context.config; }
   private get viewState() { return this.context.state; }
 
   private get timeGridLines(): unknown {
     const lines = [];
     const scrollLeftTime = this.diagram.config.scrollX / this.diagram.config.xScale;
-    let t = Math.ceil(scrollLeftTime / this.diagram.config.minorMinutelyGridLineSpan) * this.diagram.config.minorMinutelyGridLineSpan;
+    let t = Math.ceil(scrollLeftTime / this.viewConfig.minorMinutelyGridLineSpan) * this.viewConfig.minorMinutelyGridLineSpan;
     let x = this.context.getXByTime(t);
     while (x < this.viewState.viewWidth) {
       lines.push({
@@ -34,34 +35,34 @@ export default class BackLayer extends Vue {
         lineConfig: {
           points: [
             x,
-            this.diagram.config.topPaneHeight,
+            this.viewConfig.topPaneHeight,
             x,
             this.viewState.viewHeight
           ],
           stroke:
-            t % 3600 == 0 ? this.diagram.config.hourlyGridLineColor :
-            t % this.diagram.config.majorMinutelyGridLineSpan == 0 ? this.diagram.config.majorMinutelyGridLineColor :
-            this.diagram.config.minorMinutelyGridLineColor,
+            t % 3600 == 0 ? this.viewConfig.hourlyGridLineColor :
+            t % this.viewConfig.majorMinutelyGridLineSpan == 0 ? this.viewConfig.majorMinutelyGridLineColor :
+            this.viewConfig.minorMinutelyGridLineColor,
           strokeWidth: 
-            t % 3600 == 0 ? this.diagram.config.hourlyGridLineWidth :
-            t % this.diagram.config.majorMinutelyGridLineSpan == 0 ? this.diagram.config.majorMinutelyGridLineWidth :
-            this.diagram.config.minorMinutelyGridLineWidth,
+            t % 3600 == 0 ? this.viewConfig.hourlyGridLineWidth :
+            t % this.viewConfig.majorMinutelyGridLineSpan == 0 ? this.viewConfig.majorMinutelyGridLineWidth :
+            this.viewConfig.minorMinutelyGridLineWidth,
           listening: false,
         },
         labelConfig: t % 3600 != 0 ? null : {
-          x: x - this.diagram.config.hourlyLabelFontSize,
-          y: this.diagram.config.topPaneHeight - this.diagram.config.hourlyLabelBottomMargin - this.diagram.config.hourlyLabelFontSize,
-          width: this.diagram.config.hourlyLabelFontSize * 2,
-          height: this.diagram.config.hourlyLabelFontSize,
+          x: x - this.viewConfig.hourlyLabelFontSize,
+          y: this.viewConfig.topPaneHeight - this.viewConfig.hourlyLabelBottomMargin - this.viewConfig.hourlyLabelFontSize,
+          width: this.viewConfig.hourlyLabelFontSize * 2,
+          height: this.viewConfig.hourlyLabelFontSize,
           text: `${ t / 3600 % 24 }`,
-          fontSize: this.diagram.config.hourlyLabelFontSize,
-          fontFamily: this.diagram.config.fontFamily,
-          fill: this.diagram.config.hourlyLabelColor,
+          fontSize: this.viewConfig.hourlyLabelFontSize,
+          fontFamily: this.viewConfig.fontFamily,
+          fill: this.viewConfig.hourlyLabelColor,
           align: "center",
           verticalAlign: "bottom",
         }
       });
-      t += this.diagram.config.minorMinutelyGridLineSpan;
+      t += this.viewConfig.minorMinutelyGridLineSpan;
       x = this.context.getXByTime(t);
     }
     return lines;

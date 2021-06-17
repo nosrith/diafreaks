@@ -10,10 +10,10 @@ export default class DiagramViewContext {
     history = new HistoryManager(100);
 
     getYByRelY(relY: number): number {
-        return relY + this.diagram.config.topPaneHeight - this.diagram.config.scrollY;
+        return relY + this.config.plotPanePadding + this.config.topPaneHeight - this.diagram.config.scrollY;
     }    
     getRelYByY(y: number): number {
-        return y - this.diagram.config.topPaneHeight + this.diagram.config.scrollY;
+        return y - this.config.plotPanePadding - this.config.topPaneHeight + this.diagram.config.scrollY;
     }
     getXByTime(time: number): number {
         return time * this.diagram.config.xScale + this.diagram.config.leftPaneWidth - this.diagram.config.scrollX;

@@ -27,6 +27,7 @@ import { KonvaEventObject } from "konva/types/Node";
 export default class StationGroup extends Vue {
   @InjectReactive() private context!: DiagramViewContext;
   private get diagram() { return this.context.diagram; }
+  private get viewConfig() { return this.context.config; }
   private get viewState() { return this.context.state; }
   @Prop() private station!: Station;
 
@@ -40,8 +41,8 @@ export default class StationGroup extends Vue {
         this.viewState.viewWidth, 
         this.context.getYByRelY(this.station.topRelY)
       ],
-      stroke: this.diagram.config.stationLineColor,
-      strokeWidth: this.diagram.config.stationLineWidth,
+      stroke: this.viewConfig.stationLineColor,
+      strokeWidth: this.viewConfig.stationLineWidth,
       listening: false,
     }
   }
@@ -54,8 +55,8 @@ export default class StationGroup extends Vue {
         this.viewState.viewWidth, 
         this.context.getYByRelY(this.station.bottomRelY)
       ],
-      stroke: this.diagram.config.stationLineColor,
-      strokeWidth: this.diagram.config.stationLineWidth,
+      stroke: this.viewConfig.stationLineColor,
+      strokeWidth: this.viewConfig.stationLineWidth,
       listening: false,
     }
   }
@@ -63,28 +64,28 @@ export default class StationGroup extends Vue {
   private get labelRectConfig(): unknown {
     return {
       id: `station-label-${this.station.id}`,
-      x: this.diagram.config.stationLabelLeftMargin,
-      y: this.context.getYByRelY(this.station.topRelY) - this.diagram.config.stationLabelFontSize,
-      width: this.diagram.config.leftPaneWidth - this.diagram.config.stationLabelLeftMargin - this.diagram.config.stationLabelRightMargin,
-      height: this.diagram.config.stationLabelFontSize,
+      x: this.viewConfig.stationLabelLeftMargin,
+      y: this.context.getYByRelY(this.station.topRelY) - this.viewConfig.stationLabelFontSize,
+      width: this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelLeftMargin - this.viewConfig.stationLabelRightMargin,
+      height: this.viewConfig.stationLabelFontSize,
     };
   }
 
   private get labelCharacters(): unknown {
-    const widthForChars = this.diagram.config.leftPaneWidth - this.diagram.config.stationLabelLeftMargin - this.diagram.config.stationLabelRightMargin - this.diagram.config.stationLabelFontSize;
+    const widthForChars = this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelLeftMargin - this.viewConfig.stationLabelRightMargin - this.viewConfig.stationLabelFontSize;
     const charSpan = this.station.name.length > 1 ? widthForChars / (this.station.name.length - 1) : 0;
     return Array.from(this.station.name).map((c, index) => {
       return {
         key: `station-label-${this.station.id}-${index}`,
         x: this.station.name.length > 1 ? 
-            this.diagram.config.stationLabelLeftMargin + index * charSpan :
-            this.diagram.config.stationLabelLeftMargin + widthForChars * 0.5,
-        y: this.context.getYByRelY(this.station.topRelY) - this.diagram.config.stationLabelFontSize,
-        height: this.diagram.config.stationLabelFontSize,
+            this.viewConfig.stationLabelLeftMargin + index * charSpan :
+            this.viewConfig.stationLabelLeftMargin + widthForChars * 0.5,
+        y: this.context.getYByRelY(this.station.topRelY) - this.viewConfig.stationLabelFontSize,
+        height: this.viewConfig.stationLabelFontSize,
         text: c,
-        fontSize: this.diagram.config.stationLabelFontSize,
-        fontFamily: this.diagram.config.fontFamily,
-        fill: this.diagram.config.stationLabelColor,
+        fontSize: this.viewConfig.stationLabelFontSize,
+        fontFamily: this.viewConfig.fontFamily,
+        fill: this.viewConfig.stationLabelColor,
         align: "left",
         verticalAlign: "bottom",
       }
@@ -92,12 +93,12 @@ export default class StationGroup extends Vue {
   }
 
   private get isTopLineIntersectingPlotPane(): boolean {
-    return this.context.getYByRelY(this.station.topRelY) >= this.diagram.config.topPaneHeight && 
+    return this.context.getYByRelY(this.station.topRelY) >= this.viewConfig.topPaneHeight && 
       this.context.getYByRelY(this.station.topRelY) < this.viewState.viewHeight;
   }
 
   private get isBottomLineIntersectingPlotPane(): boolean {
-    return this.context.getYByRelY(this.station.bottomRelY) >= this.diagram.config.topPaneHeight && 
+    return this.context.getYByRelY(this.station.bottomRelY) >= this.viewConfig.topPaneHeight && 
       this.context.getYByRelY(this.station.bottomRelY) < this.viewState.viewHeight;
   }
 

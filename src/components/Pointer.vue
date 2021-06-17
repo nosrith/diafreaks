@@ -15,7 +15,6 @@ export default class TrainPathGroup extends Vue {
   @InjectReactive() private context!: DiagramViewContext;
   private get viewConfig() { return this.context.config; }
   private get viewState() { return this.context.state; }
-  private get diagram() { return this.context.diagram; }
 
   private get pointerEnabled(): unknown {
     return this.viewState.pointerTargetLine && !this.viewState.pointerTargetTrainPath &&
@@ -44,7 +43,7 @@ export default class TrainPathGroup extends Vue {
       height: this.viewConfig.pointerLabelFontSize,
       text: getTimeText(time, this.viewState.pointerPreciseState != null),
       fontSize: this.viewConfig.pointerLabelFontSize,
-      fontFamily: this.diagram.config.fontFamily,
+      fontFamily: this.viewConfig.fontFamily,
       fill: this.viewConfig.pointerColor,
       align: "left",
       verticalAlign: "bottom",

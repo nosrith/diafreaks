@@ -138,23 +138,23 @@ export default class Stage extends Vue {
 
   private findPointerTargetLine(y: number): { station: Station, track: Track | null, relY: number } | undefined {
     const stationPointedOnTop = this.stationsInMileageOrder.find(s => 
-      Math.abs(this.context.getYByRelY(s.topRelY) - y) < Math.max(this.diagram.config.stationLineWidth * 0.5, this.viewConfig.minHitWidth));
+      Math.abs(this.context.getYByRelY(s.topRelY) - y) < Math.max(this.viewConfig.stationLineWidth * 0.5, this.viewConfig.minHitWidth));
     if (stationPointedOnTop) {
       return { station: stationPointedOnTop, track: null, relY: stationPointedOnTop.topRelY };
     }
 
     const stationPointedOnBottom = this.stationsInMileageOrder.find(s =>
-      Math.abs(this.context.getYByRelY(s.bottomRelY) - y) < Math.max(this.diagram.config.stationLineWidth * 0.5, this.viewConfig.minHitWidth));
+      Math.abs(this.context.getYByRelY(s.bottomRelY) - y) < Math.max(this.viewConfig.stationLineWidth * 0.5, this.viewConfig.minHitWidth));
     if (stationPointedOnBottom) {
       return { station: stationPointedOnBottom, track: null, relY: stationPointedOnBottom.bottomRelY };
     }
 
     const station = this.stationsInMileageOrder.find(s => 
-      this.context.getYByRelY(s.topRelY) + this.diagram.config.trackLineSpan - Math.max(this.diagram.config.trackLineWidth * 0.5, this.viewConfig.minHitWidth) < y &&
-      this.context.getYByRelY(s.bottomRelY) - this.diagram.config.trackLineSpan + Math.max(this.diagram.config.trackLineWidth * 0.5, this.viewConfig.minHitWidth) > y
+      this.context.getYByRelY(s.topRelY) + this.diagram.config.trackLineSpan - Math.max(this.viewConfig.trackLineWidth * 0.5, this.viewConfig.minHitWidth) < y &&
+      this.context.getYByRelY(s.bottomRelY) - this.diagram.config.trackLineSpan + Math.max(this.viewConfig.trackLineWidth * 0.5, this.viewConfig.minHitWidth) > y
     );
     if (station) {
-      const pointedTrack = station.tracks.find(t => Math.abs(this.context.getYByRelY(t.relY) - y) < Math.max(this.diagram.config.trackLineWidth * 0.5, this.viewConfig.minHitWidth));
+      const pointedTrack = station.tracks.find(t => Math.abs(this.context.getYByRelY(t.relY) - y) < Math.max(this.viewConfig.trackLineWidth * 0.5, this.viewConfig.minHitWidth));
       if (pointedTrack) {
         return { station, track: pointedTrack, relY: pointedTrack.relY };
       }
@@ -362,11 +362,11 @@ export default class Stage extends Vue {
       }
       if (this.stageDragState.dragging) {
         this.diagram.config.scrollX = 
-          Math.max(this.diagram.config.minPlotTime * this.diagram.config.xScale - this.diagram.config.plotPanePadding, 
-            Math.min(this.diagram.config.maxPlotTime * this.diagram.config.xScale - (this.viewState.viewWidth - this.diagram.config.leftPaneWidth - this.diagram.config.plotPanePadding),
+          Math.max(this.diagram.config.minPlotTime * this.diagram.config.xScale - this.viewConfig.plotPanePadding, 
+            Math.min(this.diagram.config.maxPlotTime * this.diagram.config.xScale - (this.viewState.viewWidth - this.diagram.config.leftPaneWidth - this.viewConfig.plotPanePadding),
               this.stageDragState.scrollX0 - (x - this.stageDragState.x0)));
         this.diagram.config.scrollY = 
-          Math.max(0, Math.min(this.diagram.maxRelY - (this.viewState.viewHeight - this.diagram.config.topPaneHeight - this.diagram.config.trackLineSpan), 
+          Math.max(0, Math.min(this.diagram.maxRelY - (this.viewState.viewHeight - this.viewConfig.plotPanePadding - this.viewConfig.topPaneHeight - this.diagram.config.trackLineSpan), 
             this.stageDragState.scrollY0 - (y - this.stageDragState.y0)));
       }
     }
@@ -377,8 +377,8 @@ export default class Stage extends Vue {
     const f = Math.pow(2, -Math.sign(konvaEvent.evt.deltaY) * this.viewConfig.wheelScale);
     this.diagram.config.scrollX += (f - 1) * (konvaEvent.evt.clientX - this.diagram.config.leftPaneWidth + this.diagram.config.scrollX);
     this.diagram.config.scrollY = 
-      Math.max(0, Math.min(this.diagram.maxRelY + this.diagram.config.topPaneHeight - this.viewState.viewHeight,
-      this.diagram.config.scrollY + (f - 1) * (konvaEvent.evt.clientY - this.diagram.config.topPaneHeight + this.diagram.config.scrollY)));
+      Math.max(0, Math.min(this.diagram.maxRelY + this.viewConfig.topPaneHeight - this.viewState.viewHeight,
+      this.diagram.config.scrollY + (f - 1) * (konvaEvent.evt.clientY - this.viewConfig.topPaneHeight + this.diagram.config.scrollY)));
     this.diagram.config.xScale *= f;
     this.diagram.config.yScale *= f;
     this.diagram.updateY();
@@ -393,8 +393,8 @@ export default class Stage extends Vue {
     if (this.pinchState) {
       this.diagram.config.scrollX += (event.scale / this.pinchState.lastScale - 1) * (event.center.x - this.diagram.config.leftPaneWidth + this.diagram.config.scrollX);
       this.diagram.config.scrollY = 
-        Math.max(0, Math.min(this.diagram.maxRelY + this.diagram.config.topPaneHeight - this.viewState.viewHeight,
-        this.diagram.config.scrollY + (event.scale / this.pinchState.lastScale - 1) * (event.center.y - this.diagram.config.topPaneHeight + this.diagram.config.scrollY)));
+        Math.max(0, Math.min(this.diagram.maxRelY + this.viewConfig.topPaneHeight - this.viewState.viewHeight,
+        this.diagram.config.scrollY + (event.scale / this.pinchState.lastScale - 1) * (event.center.y - this.viewConfig.topPaneHeight + this.diagram.config.scrollY)));
       this.diagram.config.xScale *= event.scale / this.pinchState.lastScale;
       this.diagram.config.yScale *= event.scale / this.pinchState.lastScale;
       this.pinchState.lastScale = event.scale;

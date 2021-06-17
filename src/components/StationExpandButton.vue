@@ -11,6 +11,7 @@ import Station from "@/data/Station";
 export default class StationExpandButton extends Vue {
   @InjectReactive() private context!: DiagramViewContext;
   private get diagram() { return this.context.diagram; }
+  private get viewConfig() { return this.context.config; }
   private get viewState() { return this.context.state; }
   @Prop() private station!: Station;
 
@@ -20,14 +21,14 @@ export default class StationExpandButton extends Vue {
 
   private get style(): unknown {
     return {
-      left: `${this.diagram.config.stationLabelLeftMargin}px`,
+      left: `${this.viewConfig.stationLabelLeftMargin}px`,
       top: `${this.context.getYByRelY(this.station.bottomRelY)}px`,
       height: `${this.diagram.config.trackLineSpan}px`,
     };
   }
 
   private get isBottomLineIntersectingPlotPane(): boolean {
-    return this.context.getYByRelY(this.station.bottomRelY) >= this.diagram.config.topPaneHeight && 
+    return this.context.getYByRelY(this.station.bottomRelY) >= this.viewConfig.topPaneHeight && 
       this.context.getYByRelY(this.station.bottomRelY) < this.viewState.viewHeight;
   }
 
