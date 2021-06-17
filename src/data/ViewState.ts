@@ -2,16 +2,12 @@ import Station from "./Station";
 import StopEvent, { StopEventRange } from "./StopEvent";
 import Track from "./Track";
 import Train from "./Train";
-
-export interface TrainSelectionState {
-    readonly train: Train;
-    stevRange: StopEventRange | null;
-}
+import TrainSelection from "./TrainSelection";
 
 export default class ViewState {
     viewWidth = 0;
     viewHeight = 0;
-    trainSelections: { [trainId: number]: TrainSelectionState } = {};
+    trainSelections: { [trainId: number]: TrainSelection } = {};
     pointerScreenX = 0;
     pointerTime = 0;
     pointerY = 0;
@@ -27,11 +23,16 @@ export default class ViewState {
     } | null = null;
     trainPathDragState: { 
         dragging: boolean,
-        targets: { [trainId: number]: TrainSelectionState },
+        targets: { [trainId: number]: TrainSelection },
         timeShift: number 
     } | null = null;
     stationNameInputTarget: Station | null = null;
     trackNameInputTarget: Track | null = null;
+    trainNameInputTarget: {
+        train: Train,
+        x: number,
+        y: number
+    } | null = null;
     controlKeyPressed = false;
 
     get busy(): boolean {

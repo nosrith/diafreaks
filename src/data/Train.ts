@@ -1,5 +1,7 @@
 import Station from "./Station";
 import StopEvent, { StopEventRange } from "./StopEvent";
+import TrainPathNode from "./TrainPathNode";
+import TrainSelection from "./TrainSelection";
 
 export default class Train {
     constructor(
@@ -29,6 +31,35 @@ export default class Train {
         return result;
     }
 
+    getTrainPathNodes(): TrainPathNode[] {
+        const nodes: TrainPathNode[] = [];
+        for (const stev of this.stevs) {
+          if (stev.station.expanded && stev.prev && stev.prev.station != stev.station) {
+            nodes.push({ 
+              stev, 
+              phase: "arr",
+              time: stev.time, 
+              relY: stev.prev.station.mileage < stev.station.mileage ? stev.station.topRelY : stev.station.bottomRelY
+            });
+          }
+          nodes.push({
+            stev,
+            phase: "track",
+            time: stev.time,
+            relY: stev.track.relY
+          });
+          if (stev.station.expanded && stev.next && stev.next.station != stev.station) {
+            nodes.push({ 
+              stev, 
+              phase: "dep",
+              time: stev.time, 
+              relY: stev.next.station.mileage < stev.station.mileage ? stev.station.topRelY : stev.station.bottomRelY
+            });
+          }
+        }
+        return nodes;
+      }
+    
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
     static fromJSON(o: any, stations: { [id: number]: Station }): Train {
         /* eslint-disable @typescript-eslint/no-explicit-any */

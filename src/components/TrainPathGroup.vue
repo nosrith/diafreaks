@@ -1,5 +1,6 @@
 <template>
   <v-group>
+    <v-text :config="trainNameLabelConfig" @click="onTrainNameLabelClick"></v-text>
     <v-line :config="regularTrainPathConfig" @click="onTrainPathClick" @mousemove="onTrainPathMouseMove" @tap="onTrainPathTap"></v-line>
     <template v-if="selectedTrainPathEnabled">
       <v-line :config="selectedTrainPathConfig" @click="onSelectedTrainPathClick" @dblclick="onSelectedTrainPathDoubleClick" @mousedown="onSelectedTrainPathMouseDown" @mousemove="onSelectedTrainPathMouseMove"></v-line>
@@ -11,6 +12,7 @@
 <script lang="ts">
 import { Component, Inject, InjectReactive, Prop, Vue } from "vue-property-decorator";
 import { KonvaEventObject } from "konva/types/Node";
+import { getTextWidth } from "@/utils";
 import HistoryManager from "@/HistoryManager";
 import Diagram from "@/data/Diagram";
 import Station from "@/data/Station";
@@ -46,9 +48,62 @@ export default class TrainPathGroup extends Vue {
     changeTrackTargets: StopEvent[] | null,
   } | null = null;
 
+  get trainNameLabelConfig(): unknown {
+    return {
+      text: this.trainNameLabelText, 
+      ...this.trainNameLabelRect,
+      fontSize: this.diagram.config.trainNameLabelFontSize,
+      fontFamily: this.diagram.config.fontFamily,
+      fill: this.diagram.config.trainPathColor,
+    };
+  }
+
+  get trainNameLabelText(): string {
+    return this.train.name != "" ? this.train.name : `Train #${this.train.id}`;
+  }
+
+  get trainNameLabelRect(): { x: number, y: number, width: number, height: number, rotation: number } {
+    const text = this.trainNameLabelText;
+    const textWidth = getTextWidth(text, this.diagram.config.fontFamily, this.diagram.config.trainNameLabelFontSize);
+    const firstNodeRunning = this.trainPathNodes.find((n, i) => i < this.trainPathNodes.length - 1 && this.trainPathNodes[i + 1].stev.station != n.stev.station);
+    if (firstNodeRunning) {
+      let forwardIndex = this.trainPathNodes.indexOf(firstNodeRunning) + 1;
+      for (; forwardIndex < this.trainPathNodes.length - 1; ++forwardIndex) {
+        const forwardNode = this.trainPathNodes[forwardIndex];
+        const forwardDist = Math.hypot(forwardNode.x - firstNodeRunning.x, forwardNode.y - firstNodeRunning.y);
+        if (forwardDist >= textWidth) break;
+      }
+      const forwardNode = this.trainPathNodes[forwardIndex];
+
+      const segDistX = forwardNode.x - firstNodeRunning.x;
+      const segDistY = forwardNode.y - firstNodeRunning.y;
+      const segDist = Math.hypot(segDistX, segDistY);
+      const x = forwardNode.relY >= firstNodeRunning.relY ?
+        segDistY / segDist * this.diagram.config.trainNameLabelFontSize + firstNodeRunning.x : 
+        -segDistY / segDist * (this.diagram.config.trainNameLabelLineHeight - this.diagram.config.trainNameLabelFontSize) + firstNodeRunning.x;
+      const y = forwardNode.relY >= firstNodeRunning.relY ?
+        -segDistX / segDist * this.diagram.config.trainNameLabelFontSize + firstNodeRunning.y : 
+        segDistX / segDist * (this.diagram.config.trainNameLabelLineHeight - this.diagram.config.trainNameLabelFontSize) + firstNodeRunning.y;
+      const rotation = Math.atan2(segDistY, segDistX) / Math.PI * 180;
+      return { 
+        x, y, rotation,
+        width: textWidth,
+        height: this.diagram.config.trainNameLabelFontSize,
+      };
+    } else {
+      return {
+        x: this.trainPathNodes[0].x,
+        y: this.trainPathNodes.reduce((v, n) => Math.min(v, n.y), this.trainPathNodes[0].y) - this.diagram.config.trainNameLabelFontSize,
+        rotation: 0,
+        width: textWidth,
+        height: this.diagram.config.trainNameLabelFontSize,
+      };
+    }
+  }
+
   get regularTrainPathConfig(): unknown {
     return {
-      points: this.regularTrainPathNodes.flatMap(n => [this.diagram.getXByTime(n.time), this.diagram.getYByRelY(n.relY)]),
+      points: this.regularTrainPathNodes.flatMap(n => [n.x, n.y]),
       stroke: this.diagram.config.trainPathColor,
       opacity: Object.keys(this.viewState.trainSelections).length > 0 ? this.viewConfig.unselectedTrainPathOpacity : 1,
       strokeWidth: this.diagram.config.trainPathWidth,
@@ -56,8 +111,21 @@ export default class TrainPathGroup extends Vue {
     }
   }
 
-  get regularTrainPathNodes(): TrainPathNode[] {
-    return this.getTrainPathNodes("regular");
+  get regularTrainPathNodes(): (TrainPathNode & { x: number, y: number })[] {
+    const nodes = this.trainPathNodes;
+
+    const dragState = this.viewState.trainPathDragState;
+    const dragTarget = dragState?.targets[this.train.id];
+    if (dragState && dragTarget && !this.viewState.controlKeyPressed) {
+      let inRange = !dragTarget.stevRange;
+      for (const node of nodes) {
+        if (node.stev == dragTarget.stevRange?.from) inRange = true;
+        if (inRange) node.time += dragState.timeShift;
+        if (node.stev == dragTarget.stevRange?.to) inRange = false;
+      }
+    }
+
+    return nodes;
   }
 
   get selectedTrainPathEnabled(): boolean {
@@ -66,56 +134,47 @@ export default class TrainPathGroup extends Vue {
 
   get selectedTrainPathConfig(): unknown {
     return {
-      points: this.selectedTrainPathNodes.flatMap(n => [this.diagram.getXByTime(n.time), this.diagram.getYByRelY(n.relY)]),
+      points: this.selectedTrainPathNodes.flatMap(n => [n.x, n.y]),
       stroke: this.viewConfig.selectedTrainPathColor,
       strokeWidth: this.diagram.config.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale,
       hitStrokeWidth: Math.max(this.diagram.config.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale, this.viewConfig.minHitWidth * 2)
     };
   }
 
-  get selectedTrainPathNodes(): TrainPathNode[] {
-    return this.getTrainPathNodes("selected");
+  get selectedTrainPathNodes(): (TrainPathNode & { x: number, y: number })[] {
+    const stevRange = this.viewState.trainSelections[this.train.id]?.stevRange;
+    let inRange = !stevRange;
+    const nodes = this.trainPathNodes.filter(n => {
+      if (n.stev == stevRange?.from) inRange = true;
+      const nInRange = inRange;
+      if (n.stev == stevRange?.to) inRange = false;
+      return nInRange;
+    });
+
+    const dragState = this.viewState.trainPathDragState;
+    const dragTarget = dragState?.targets[this.train.id];
+    if (dragState && dragTarget) {
+      for (const node of nodes) {
+        node.time += dragState.timeShift;
+      }
+    }
+
+    return nodes;
   }
 
-  getTrainPathNodes(mode: "regular" | "selected"): TrainPathNode[] {
-    const sel = this.viewState.trainSelections[this.train.id];
-    const stevs = mode == "selected" && sel.stevRange != null ? 
-      this.train.getStopEventsInRange(sel.stevRange) : this.train.stevs;
+  get trainPathNodes(): (TrainPathNode & { x: number, y: number })[] {
+    return this.train.getTrainPathNodes().map(n => { 
+      return { ...n, x: this.diagram.getXByTime(n.time), y: this.diagram.getYByRelY(n.relY) };
+    });
+  }
 
-    const shiftEnabled = this.viewState.trainPathDragState?.targets[this.train.id] && (mode == "selected" || !this.viewState.controlKeyPressed);
-    const shiftTime = this.viewState.trainPathDragState?.timeShift ?? 0;
-    const shiftRange = this.viewState.trainPathDragState?.targets[this.train.id]?.stevRange;
-    let inShiftRange = shiftEnabled && !shiftRange;
-
-    const result: TrainPathNode[] = [];
-    for (const stev of stevs) {
-      if (shiftEnabled && stev == shiftRange?.from) inShiftRange = true;
-      const time = inShiftRange ? stev.time + shiftTime : stev.time;
-      if (stev.station.expanded && stev.prev && stev.prev.station != stev.station) {
-        result.push({ 
-          stev, 
-          phase: "arr",
-          time, 
-          relY: stev.prev.station.mileage < stev.station.mileage ? stev.station.topRelY : stev.station.bottomRelY
-        });
-      }
-      result.push({
-        stev,
-        phase: "track",
-        time,
-        relY: stev.track.relY
-      });
-      if (stev.station.expanded && stev.next && stev.next.station != stev.station) {
-        result.push({ 
-          stev, 
-          phase: "dep",
-          time, 
-          relY: stev.next.station.mileage < stev.station.mileage ? stev.station.topRelY : stev.station.bottomRelY
-        });
-      }
-      if (shiftEnabled && stev == shiftRange?.to) inShiftRange = false;
+  onTrainNameLabelClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
+    if (konvaEvent.target == konvaEvent.currentTarget && this.viewConfig.editMode) {
+      this.viewState.trainNameInputTarget = {
+        train: this.train,
+        ...this.trainNameLabelRect,
+      };
     }
-    return result;
   }
 
   onTrainPathMouseMove(): void {

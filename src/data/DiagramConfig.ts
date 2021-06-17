@@ -35,6 +35,8 @@ export default class DiagramConfig {
     yScale = 10;
     trainPathWidth = 1;
     trainPathColor = "rgb(0, 0, 0)";
+    trainNameLabelLineHeight = 13;
+    trainNameLabelFontSize = 11;
 
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
     static fromJSON(o: any): DiagramConfig {

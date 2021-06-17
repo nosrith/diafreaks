@@ -4,6 +4,7 @@
     <div class="diagram-view-ui">
       <station-name-input ref="stationNameInput"></station-name-input>
       <track-name-input ref="trackNameInput"></track-name-input>
+      <train-name-input ref="trainNameInput"></train-name-input>
       <station-expand-button
         v-for="s in Object.values(diagram.stations)" :key="`station-expand-button-${s.id}`" 
         :station="s" 
@@ -37,10 +38,11 @@ import StationNameInput from "./StationNameInput.vue";
 import StationRemoveButton from "./StationRemoveButton.vue";
 import StationRemoveTrackButton from "./StationRemoveTrackButton.vue";
 import TrackNameInput from "./TrackNameInput.vue";
+import TrainNameInput from "./TrainNameInput.vue";
 
 @Component({
   components: {
-    Stage, StationAddTrackButton, StationExpandButton, StationNameInput, StationRemoveButton, StationRemoveTrackButton, TrackNameInput
+    Stage, StationAddTrackButton, StationExpandButton, StationNameInput, StationRemoveButton, StationRemoveTrackButton, TrackNameInput, TrainNameInput
   },
 })
 export default class DiagramView extends Vue {
