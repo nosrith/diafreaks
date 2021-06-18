@@ -84,20 +84,13 @@ export default class TrainPathMarker extends Vue {
     if (this.viewState.editMode) {
       if (!this.viewState.drawingState) {
         const n = this.trainPathNode;
-        if (!n.stev.prev) {
+        if (!n.stev.next || !n.stev.prev) {
           this.viewState.drawingState = {
             train: n.stev.train,
             lastStev: n.stev,
-            direction: -1,
-            stableEnd: n.stev,
-            floating: null
-          };
-          this.viewState.trainSelections[n.stev.train.id].stevRange = null;
-        } else if (!n.stev.next) {
-          this.viewState.drawingState = {
-            train: n.stev.train,
-            lastStev: n.stev,
-            direction: 1,
+            direction:
+              !n.stev.next && !n.stev.prev ? 0 :
+              !n.stev.next ? 1 : -1,
             stableEnd: n.stev,
             floating: null
           };

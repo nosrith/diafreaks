@@ -50,7 +50,8 @@ export default class TrainPathGroup extends Vue {
     const sel = this.viewState.trainSelections[this.train.id];
     return {
       ref: `train-name-label-${this.train.id}`,
-      visible: Object.keys(this.viewState.trainSelections).length == 0 || !!sel,
+      visible: Object.keys(this.viewState.trainSelections).length == 0 || 
+        (!!sel && !this.viewState.controlKeyPressed),
       text: this.trainNameLabelText, 
       ...this.trainNameLabelRect,
       fontSize: this.viewConfig.trainNameLabelFontSize,
@@ -67,11 +68,14 @@ export default class TrainPathGroup extends Vue {
     const text = this.trainNameLabelText;
     const textWidth = getTextWidth(text, this.viewConfig.fontFamily, this.viewConfig.trainNameLabelFontSize);
 
+    const nodes = 
+      this.viewState.trainPathDragState?.targets[this.train.id] && this.viewState.controlKeyPressed ?
+        this.selectedTrainPathNodes : this.regularTrainPathNodes;
     const firstNodeRunning = 
-      this.trainPathNodes.find((n, i) => i < this.trainPathNodes.length - 1 && this.trainPathNodes[i + 1].stev.station != n.stev.station) ??
-      this.trainPathNodes[0];
+      nodes.find((n, i) => i < nodes.length - 1 && nodes[i + 1].stev.station != n.stev.station) ??
+      nodes[0];
     let segDYToDX = NaN;
-    for (const forwardNode of this.trainPathNodes.slice(this.trainPathNodes.indexOf(firstNodeRunning) + 1)) {
+    for (const forwardNode of nodes.slice(nodes.indexOf(firstNodeRunning) + 1)) {
       const dx = forwardNode.x - firstNodeRunning.x;
       const dy = forwardNode.y - firstNodeRunning.y;
       const dy2dx = dx != 0 ? dy / dx : Math.sign(dy) * Infinity;
@@ -118,15 +122,18 @@ export default class TrainPathGroup extends Vue {
   }
 
   get regularTrainPathNodes(): (TrainPathNode & { x: number, y: number })[] {
-    const nodes = this.trainPathNodes;
+    const nodes = this.getTrainPathNodes();
 
     const dragState = this.viewState.trainPathDragState;
     const dragTarget = dragState?.targets[this.train.id];
     if (dragState && dragTarget && !this.viewState.controlKeyPressed) {
       let inRange = !dragTarget.stevRange;
       for (const node of nodes) {
-        if (node.stev == dragTarget.stevRange?.from) inRange = true;
-        if (inRange) node.time += dragState.timeShift;
+        if (node.stev == dragTarget.stevRange?.from || node.stev == dragTarget.stevRange?.to) inRange = true;
+        if (inRange) {
+          node.time += dragState.timeShift;
+          node.x = this.context.getXByTime(node.time);
+        }
         if (node.stev == dragTarget.stevRange?.to) inRange = false;
       }
     }
@@ -148,27 +155,28 @@ export default class TrainPathGroup extends Vue {
   }
 
   get selectedTrainPathNodes(): (TrainPathNode & { x: number, y: number })[] {
-    const stevRange = this.viewState.trainSelections[this.train.id]?.stevRange;
+    const stevRange = 
+      this.viewState.trainPathDragState?.targets[this.train.id]?.stevRange ??
+      this.viewState.trainSelections[this.train.id].stevRange;
     let inRange = !stevRange;
-    const nodes = this.trainPathNodes.filter(n => {
-      if (n.stev == stevRange?.from) inRange = true;
+    const nodes = this.getTrainPathNodes().filter(n => {
+      if (n.stev == stevRange?.from || n.stev == stevRange?.to) inRange = true;
       const nInRange = inRange;
       if (n.stev == stevRange?.to) inRange = false;
       return nInRange;
     });
 
-    const dragState = this.viewState.trainPathDragState;
-    const dragTarget = dragState?.targets[this.train.id];
-    if (dragState && dragTarget) {
+    if (this.viewState.trainPathDragState) {
       for (const node of nodes) {
-        node.time += dragState.timeShift;
+        node.time += this.viewState.trainPathDragState.timeShift;
+        node.x = this.context.getXByTime(node.time);
       }
     }
 
     return nodes;
   }
 
-  get trainPathNodes(): (TrainPathNode & { x: number, y: number })[] {
+  getTrainPathNodes(): (TrainPathNode & { x: number, y: number })[] {
     return this.train.getTrainPathNodes().map(n => { 
       return { ...n, x: this.context.getXByTime(n.time), y: this.context.getYByRelY(n.relY) };
     });
@@ -460,7 +468,7 @@ export default class TrainPathGroup extends Vue {
               redo: () => { targets.forEach(stev => stev.time += timeShift); }
             });
           } else {
-            const newTrains = Object.values(this.viewState.trainSelections).map(sel => {
+            const newTrains = Object.values(this.viewState.trainPathDragState.targets).map(sel => {
               const srcTrain = sel.train;
               const srcStevs = sel.stevRange ? srcTrain.getStopEventsInRange(sel.stevRange) : srcTrain.stevs;
               const newTrain = this.diagram.addNewTrain(new Train(this.diagram.genId(), ""));
