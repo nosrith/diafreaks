@@ -1,6 +1,6 @@
 <template>
   <v-group>
-    <v-text :config="trainNameLabelConfig" @click="onTrainNameLabelClick"></v-text>
+    <v-text ref="trainNameLabel" :config="trainNameLabelConfig" @click="onTrainNameLabelClick"></v-text>
     <v-line :config="regularTrainPathConfig" @click="onTrainPathClick" @mousemove="onTrainPathMouseMove" @tap="onTrainPathTap"></v-line>
     <template v-if="selectedTrainPathEnabled">
       <v-line :config="selectedTrainPathConfig" @click="onSelectedTrainPathClick" @dblclick="onSelectedTrainPathDoubleClick" @mousedown="onSelectedTrainPathMouseDown" @mousemove="onSelectedTrainPathMouseMove"></v-line>
@@ -50,8 +50,11 @@ export default class TrainPathGroup extends Vue {
     const sel = this.viewState.trainSelections[this.train.id];
     return {
       ref: `train-name-label-${this.train.id}`,
-      visible: Object.keys(this.viewState.trainSelections).length == 0 || 
-        (!!sel && !this.viewState.controlKeyPressed),
+      visible:
+        !this.viewState.trainInfoEditorTarget && (
+          Object.keys(this.viewState.trainSelections).length == 0 || 
+          (!!sel && !this.viewState.controlKeyPressed)
+        ),
       text: this.trainNameLabelText, 
       ...this.trainNameLabelRect,
       fontSize: this.viewConfig.trainNameLabelFontSize,
@@ -184,17 +187,19 @@ export default class TrainPathGroup extends Vue {
 
   onTrainNameLabelClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
     if (konvaEvent.target == konvaEvent.currentTarget) {
-      if (!this.viewState.trainSelections[this.train.id]) {
+      if (this.viewState.trainSelections[this.train.id] && !this.viewState.trainSelections[this.train.id].stevRange) {
+        this.viewState.trainInfoEditorTarget = {
+          train: this.train,
+          x: this.trainNameLabelRect.x,
+          y: this.trainNameLabelRect.y,
+          verticalAlign: this.trainNameLabelRect.rotation >= 0 ? "top" : "bottom"
+        };
+        this.$emit("trainInfoEditStart");
+      } else {
         if (!konvaEvent.evt.shiftKey) {
           this.viewState.trainSelections = {};
         }
         this.$set(this.viewState.trainSelections, this.train.id, { train: this.train, stevRange: null });
-      } else {
-        this.viewState.trainInfoEditorTarget = {
-          train: this.train,
-          ...this.trainNameLabelRect,
-        };
-        this.$emit("trainInfoEditStart");
       }
     }
   }

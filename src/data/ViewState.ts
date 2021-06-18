@@ -32,7 +32,8 @@ export default class ViewState {
     trainInfoEditorTarget: {
         train: Train,
         x: number,
-        y: number
+        y: number,
+        verticalAlign: "top" | "bottom"
     } | null = null;
     controlKeyPressed = false;
 

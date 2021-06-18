@@ -1,6 +1,6 @@
 <template>
   <div class="train-info-editor-box box" :style="groupStyle">
-    <input ref="trainNameInput" class="train-name-input" :value="targetTrain.name" v-show="viewState.trainInfoEditorTarget" :style="trainNameInputStyle" @keypress.enter="onComplete">
+    <input ref="trainNameInput" class="train-name-input" :value="targetTrain.name" :style="trainNameInputStyle" @keypress.enter="onComplete">
   </div>
 </template>
 
@@ -29,8 +29,11 @@ export default class TrackNameInput extends Vue {
     return state ?
       {
         left: `${state.x}px`,
-        top: `${state.y - this.viewConfig.stationLabelFontSize - 4}px`,
-      } : {};
+        top: `${state.y + (state.verticalAlign == "bottom" ? -this.$el.clientHeight : 0)}px`,
+      } : {
+        left: "0px",
+        top: `${this.viewState.viewHeight}px`
+      };
   }
 
   private get trainNameInputStyle(): unknown {
