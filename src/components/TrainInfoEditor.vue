@@ -29,7 +29,7 @@ export default class TrackNameInput extends Vue {
     return state ?
       {
         left: `${state.x}px`,
-        top: `${state.y + (state.verticalAlign == "bottom" ? -this.$el.clientHeight : 0)}px`,
+        top: `${state.y + (state.verticalAlign == "bottom" ? -this.$el?.clientHeight ?? 0 : 0)}px`,
       } : {
         left: "0px",
         top: `${this.viewState.viewHeight}px`

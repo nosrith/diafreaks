@@ -187,7 +187,7 @@ export default class TrainPathGroup extends Vue {
 
   onTrainNameLabelClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
     if (konvaEvent.target == konvaEvent.currentTarget) {
-      if (this.viewState.trainSelections[this.train.id] && !this.viewState.trainSelections[this.train.id].stevRange) {
+      if (this.viewState.editMode && this.viewState.trainSelections[this.train.id] && !this.viewState.trainSelections[this.train.id].stevRange) {
         this.viewState.trainInfoEditorTarget = {
           train: this.train,
           x: this.trainNameLabelRect.x,
