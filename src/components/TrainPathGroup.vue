@@ -49,13 +49,13 @@ export default class TrainPathGroup extends Vue {
   get trainNameLabelConfig(): unknown {
     const sel = this.viewState.trainSelections[this.train.id];
     return {
+      ref: `train-name-label-${this.train.id}`,
       visible: Object.keys(this.viewState.trainSelections).length == 0 || !!sel,
       text: this.trainNameLabelText, 
       ...this.trainNameLabelRect,
       fontSize: this.viewConfig.trainNameLabelFontSize,
       fontFamily: this.viewConfig.fontFamily,
       fill: sel && !sel.stevRange ? this.viewConfig.selectedTrainPathColor : this.viewConfig.trainPathColor,
-      listening: !!sel,
     };
   }
 
@@ -175,11 +175,19 @@ export default class TrainPathGroup extends Vue {
   }
 
   onTrainNameLabelClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    if (konvaEvent.target == konvaEvent.currentTarget && this.viewState.editMode) {
-      this.viewState.trainNameInputTarget = {
-        train: this.train,
-        ...this.trainNameLabelRect,
-      };
+    if (konvaEvent.target == konvaEvent.currentTarget) {
+      if (!this.viewState.trainSelections[this.train.id]) {
+        if (!konvaEvent.evt.shiftKey) {
+          this.viewState.trainSelections = {};
+        }
+        this.$set(this.viewState.trainSelections, this.train.id, { train: this.train, stevRange: null });
+      } else {
+        this.viewState.trainInfoEditorTarget = {
+          train: this.train,
+          ...this.trainNameLabelRect,
+        };
+        this.$emit("trainInfoEditStart");
+      }
     }
   }
 

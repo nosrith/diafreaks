@@ -26,6 +26,8 @@ export default class ViewConfig {
     trackLineColor = "rgb(128, 192, 128)";
     trainPathWidth = 1;
     trainPathColor = "rgb(0, 0, 0)";
+    trainNameLabelLineHeight = 14;
+    trainNameLabelFontSize = 12;
 
     minHitWidth = 3;
     pointerWidth = 3;

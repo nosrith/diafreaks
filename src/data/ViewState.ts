@@ -29,7 +29,7 @@ export default class ViewState {
     } | null = null;
     stationNameInputTarget: Station | null = null;
     trackNameInputTarget: Track | null = null;
-    trainNameInputTarget: {
+    trainInfoEditorTarget: {
         train: Train,
         x: number,
         y: number

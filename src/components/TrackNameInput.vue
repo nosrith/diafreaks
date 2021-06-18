@@ -14,6 +14,8 @@ export default class TrackNameInput extends Vue {
   private get viewConfig() { return this.context.config; }
   private get viewState() { return this.context.state; }
 
+  $el!: HTMLInputElement;
+
   private get targetTrack(): Track | Record<string, never> {
     return this.viewState.trackNameInputTarget ?? {};
   }

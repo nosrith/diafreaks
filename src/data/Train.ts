@@ -1,7 +1,6 @@
 import Station from "./Station";
 import StopEvent, { StopEventRange } from "./StopEvent";
 import TrainPathNode from "./TrainPathNode";
-import TrainSelection from "./TrainSelection";
 
 export default class Train {
     constructor(

@@ -8,7 +8,7 @@
     @contextmenu="onContextMenu"
     @touchend="onTouchEnd">
     <back-layer v-on="$listeners"></back-layer>
-    <train-path-layer></train-path-layer>
+    <train-path-layer v-on="$listeners"></train-path-layer>
     <v-layer>
       <pointer></pointer>
     </v-layer>
@@ -166,7 +166,7 @@ export default class Stage extends Vue {
     if (drawingState) {
       if (konvaEvent.evt.button == 0 && this.viewState.pointerTargetLine) {
         if (drawingState.direction == 0) {
-          drawingState.direction = Math.sign(this.viewState.pointerTime - drawingState.lastStev.time);
+          drawingState.direction = this.viewState.pointerTime >= drawingState.lastStev.time ? 1 : -1;
         }
         if (drawingState.floating){
           const triple = drawingState.floating.track == drawingState.lastStev.track && (
@@ -208,6 +208,10 @@ export default class Stage extends Vue {
         !this.viewState.trainPathDragState?.dragging && 
         !this.viewState.drawingState) {
       this.viewState.trainSelections = {};
+    }
+
+    if (!konvaEvent.target.attrs.ref?.startsWith("train-name-label")) {
+      this.$emit("trainInfoEditEnd");
     }
   }
 

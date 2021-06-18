@@ -14,6 +14,8 @@ export default class StationNameInput extends Vue {
   private get viewConfig() { return this.context.config; }
   private get viewState() { return this.context.state; }
 
+  $el!: HTMLInputElement;
+
   private get targetStation(): Station | Record<string, never> {
     return this.viewState.stationNameInputTarget ?? {};
   }

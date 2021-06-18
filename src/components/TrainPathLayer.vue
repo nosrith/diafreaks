@@ -1,7 +1,7 @@
 <template>
   <v-layer id="train-path-layer" ref="trainPathLayer" :config="layerConfig">
-    <train-path-group v-for="t in Object.values(diagram.trains).filter(t => !viewState.trainSelections[t.id])" :key="`train-${t.id}`" :train="t"></train-path-group>
-    <train-path-group v-for="t in Object.values(diagram.trains).filter(t => viewState.trainSelections[t.id])" :key="`train-${t.id}`" :train="t"></train-path-group>
+    <train-path-group v-for="t in Object.values(diagram.trains).filter(t => !viewState.trainSelections[t.id])" :key="`train-${t.id}`" :train="t" v-on="$listeners"></train-path-group>
+    <train-path-group v-for="t in Object.values(diagram.trains).filter(t => viewState.trainSelections[t.id])" :key="`train-${t.id}`" :train="t" v-on="$listeners"></train-path-group>
   </v-layer>
 </template>
 

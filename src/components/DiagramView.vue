@@ -1,10 +1,14 @@
 <template>
   <div class="diagram-view">
-    <stage class="diagram-view-stage" @stationNameInputStart="onStationNameInputStart" @trackNameInputStart="onTrackNameInputStart"></stage>
+    <stage class="diagram-view-stage" 
+      @stationNameInputStart="onStationNameInputStart" 
+      @trackNameInputStart="onTrackNameInputStart"
+      @trainInfoEditStart="onTrainInfoEditStart"
+      @trainInfoEditEnd="onTrainInfoEditEnd"></stage>
     <div class="diagram-view-ui">
       <station-name-input ref="stationNameInput"></station-name-input>
       <track-name-input ref="trackNameInput"></track-name-input>
-      <train-name-input ref="trainNameInput"></train-name-input>
+      <train-info-editor ref="trainInfoEditor"></train-info-editor>
       <station-expand-button
         v-for="s in Object.values(diagram.stations)" :key="`station-expand-button-${s.id}`" 
         :station="s" 
@@ -35,7 +39,7 @@ import StationNameInput from "./StationNameInput.vue";
 import StationRemoveButton from "./StationRemoveButton.vue";
 import StationRemoveTrackButton from "./StationRemoveTrackButton.vue";
 import TrackNameInput from "./TrackNameInput.vue";
-import TrainNameInput from "./TrainNameInput.vue";
+import TrainInfoEditor from "./TrainInfoEditor.vue";
 
 @Component({
   components: {
@@ -46,7 +50,7 @@ import TrainNameInput from "./TrainNameInput.vue";
     StationRemoveButton, 
     StationRemoveTrackButton, 
     TrackNameInput,
-    TrainNameInput
+    TrainInfoEditor
   },
 })
 export default class DiagramView extends Vue {
@@ -55,17 +59,31 @@ export default class DiagramView extends Vue {
   private get viewConfig() { return this.context.config; }
   private get viewState() { return this.context.state; }
 
+  $refs!: { 
+    stationNameInput: StationNameInput,  
+    trackNameInput: TrackNameInput,
+    trainInfoEditor: TrainInfoEditor,
+  };
+
   private mounted(): void {
     const resizeObserver = new ResizeObserver(this.updateViewSize);
     resizeObserver.observe(this.$el);
   }
 
   private onStationNameInputStart(): void {
-    this.$nextTick(() => ((this.$refs.stationNameInput as Vue).$el as HTMLInputElement).focus());
+    this.$nextTick(() => this.$refs.stationNameInput.$el.focus());
   }
 
   private onTrackNameInputStart(): void {
-    this.$nextTick(() => ((this.$refs.trackNameInput as Vue).$el as HTMLInputElement).focus());
+    this.$nextTick(() => this.$refs.trackNameInput.$el.focus());
+  }
+
+  private onTrainInfoEditStart(): void {
+    this.$nextTick(() => this.$refs.trainInfoEditor.$refs.trainNameInput.focus());
+  }
+
+  private onTrainInfoEditEnd(): void {
+    this.$refs.trainInfoEditor.onComplete();
   }
 
   private updateViewSize(): void {
