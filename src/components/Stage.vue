@@ -210,7 +210,7 @@ export default class Stage extends Vue {
       this.viewState.trainSelections = {};
     }
 
-    if (!konvaEvent.target.attrs.ref?.startsWith("train-name-label")) {
+    if (this.viewState.trainInfoEditorTarget && !konvaEvent.target.attrs.ref?.startsWith("train-name-label")) {
       this.$emit("trainInfoEditEnd");
     }
   }
