@@ -40,19 +40,6 @@ export default class Diagram {
         return diagram;
     }
 
-    getYByRelY(relY: number): number {
-        return relY + this.config.topPaneHeight - this.config.scrollY;
-    }
-    getRelYByY(y: number): number {
-        return y - this.config.topPaneHeight + this.config.scrollY;
-    }
-    getXByTime(time: number): number {
-        return time * this.config.xScale + this.config.leftPaneWidth - this.config.scrollX;
-    }
-    getTimeByX(x: number): number {
-        return (x - this.config.leftPaneWidth + this.config.scrollX) / this.config.xScale;
-    }
-
     getStationsInMileageOrder(): Station[] {
         return Object.values(this.stations).sort((a, b) => a.mileage - b.mileage);
     }
@@ -90,7 +77,7 @@ export default class Diagram {
           s.mileage = s.mileage - initialMileage;
         }
     
-        let y = this.config.plotPanePadding;
+        let y = 0;
         let lastMileage = 0;
         for (const s of stations) {
           y += (s.mileage - lastMileage) * this.config.yScale;
@@ -108,7 +95,7 @@ export default class Diagram {
           lastMileage = s.mileage;
         }
     
-        this.maxRelY = stations[stations.length - 1].bottomRelY + this.config.plotPanePadding;
+        this.maxRelY = stations[stations.length - 1].bottomRelY;
       }
     
     toJSON(): unknown {

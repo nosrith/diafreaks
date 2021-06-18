@@ -10,19 +10,16 @@
 </template>
 
 <script lang="ts">
-import { Component, Inject, InjectReactive, Prop, Vue } from "vue-property-decorator";
+import { Component, InjectReactive, Prop, Vue } from "vue-property-decorator";
 import { KonvaEventObject } from "konva/types/Node";
 import { getTextWidth } from "@/utils";
-import HistoryManager from "@/HistoryManager";
-import Diagram from "@/data/Diagram";
+import DiagramViewContext from "@/data/DiagramViewContext";
 import Station from "@/data/Station";
 import StopEvent, { StopEventRange } from "@/data/StopEvent";
 import Track from "@/data/Track";
-import TrainPathNode from "@/data/TrainPathNode";
 import Train from "@/data/Train";
-import ViewConfig from "@/data/ViewConfig";
-import ViewState from "@/data/ViewState";
 import TrainPathMarker from "./TrainPathMarker.vue";
+import TrainPathNode from "@/data/TrainPathNode";
 
 @Component({
   components: {
@@ -30,11 +27,12 @@ import TrainPathMarker from "./TrainPathMarker.vue";
   },
 })
 export default class TrainPathGroup extends Vue {
-  @InjectReactive() viewConfig!: ViewConfig;
-  @InjectReactive() viewState!: ViewState;
-  @InjectReactive() diagram!: Diagram;
-  @Inject() historyManager!: HistoryManager;
-  @Prop() train!: Train;
+  @InjectReactive() private context!: DiagramViewContext;
+  private get diagram() { return this.context.diagram; }
+  private get viewConfig() { return this.context.config; }
+  private get viewState() { return this.context.state; }
+
+  @Prop() private train!: Train;
 
   dragState: { 
     t0: number, 
@@ -49,54 +47,62 @@ export default class TrainPathGroup extends Vue {
   } | null = null;
 
   get trainNameLabelConfig(): unknown {
+    const sel = this.viewState.trainSelections[this.train.id];
     return {
+      visible: Object.keys(this.viewState.trainSelections).length == 0 || !!sel,
       text: this.trainNameLabelText, 
       ...this.trainNameLabelRect,
-      fontSize: this.diagram.config.trainNameLabelFontSize,
-      fontFamily: this.diagram.config.fontFamily,
-      fill: this.diagram.config.trainPathColor,
+      fontSize: this.viewConfig.trainNameLabelFontSize,
+      fontFamily: this.viewConfig.fontFamily,
+      fill: sel && !sel.stevRange ? this.viewConfig.selectedTrainPathColor : this.viewConfig.trainPathColor,
+      listening: !!sel,
     };
   }
 
   get trainNameLabelText(): string {
-    return this.train.name != "" ? this.train.name : `Train #${this.train.id}`;
+    return this.train.name != "" ? this.train.name : `#${this.train.id}`;
   }
 
   get trainNameLabelRect(): { x: number, y: number, width: number, height: number, rotation: number } {
     const text = this.trainNameLabelText;
-    const textWidth = getTextWidth(text, this.diagram.config.fontFamily, this.diagram.config.trainNameLabelFontSize);
-    const firstNodeRunning = this.trainPathNodes.find((n, i) => i < this.trainPathNodes.length - 1 && this.trainPathNodes[i + 1].stev.station != n.stev.station);
-    if (firstNodeRunning) {
-      let forwardIndex = this.trainPathNodes.indexOf(firstNodeRunning) + 1;
-      for (; forwardIndex < this.trainPathNodes.length - 1; ++forwardIndex) {
-        const forwardNode = this.trainPathNodes[forwardIndex];
-        const forwardDist = Math.hypot(forwardNode.x - firstNodeRunning.x, forwardNode.y - firstNodeRunning.y);
-        if (forwardDist >= textWidth) break;
-      }
-      const forwardNode = this.trainPathNodes[forwardIndex];
+    const textWidth = getTextWidth(text, this.viewConfig.fontFamily, this.viewConfig.trainNameLabelFontSize);
 
-      const segDistX = forwardNode.x - firstNodeRunning.x;
-      const segDistY = forwardNode.y - firstNodeRunning.y;
-      const segDist = Math.hypot(segDistX, segDistY);
-      const x = forwardNode.relY >= firstNodeRunning.relY ?
-        segDistY / segDist * this.diagram.config.trainNameLabelFontSize + firstNodeRunning.x : 
-        -segDistY / segDist * (this.diagram.config.trainNameLabelLineHeight - this.diagram.config.trainNameLabelFontSize) + firstNodeRunning.x;
-      const y = forwardNode.relY >= firstNodeRunning.relY ?
-        -segDistX / segDist * this.diagram.config.trainNameLabelFontSize + firstNodeRunning.y : 
-        segDistX / segDist * (this.diagram.config.trainNameLabelLineHeight - this.diagram.config.trainNameLabelFontSize) + firstNodeRunning.y;
-      const rotation = Math.atan2(segDistY, segDistX) / Math.PI * 180;
+    const firstNodeRunning = 
+      this.trainPathNodes.find((n, i) => i < this.trainPathNodes.length - 1 && this.trainPathNodes[i + 1].stev.station != n.stev.station) ??
+      this.trainPathNodes[0];
+    let segDYToDX = NaN;
+    for (const forwardNode of this.trainPathNodes.slice(this.trainPathNodes.indexOf(firstNodeRunning) + 1)) {
+      const dx = forwardNode.x - firstNodeRunning.x;
+      const dy = forwardNode.y - firstNodeRunning.y;
+      const dy2dx = dx != 0 ? dy / dx : Math.sign(dy) * Infinity;
+      if (isNaN(segDYToDX) || Math.sign(dy2dx) == Math.sign(segDYToDX) && Math.abs(dy2dx) < Math.abs(segDYToDX)) {
+        segDYToDX = dy2dx;
+      }
+      if (Math.hypot(dx, dy) >= textWidth) break;
+    }
+
+    if (!isNaN(segDYToDX)) {
+      const segDXToD = Math.sqrt(1 / (1 + segDYToDX * segDYToDX));
+      const segDYToD = segDXToD != 0 ? segDXToD * segDYToDX : 1;
+      const x = segDYToDX >= 0 ?
+        segDYToD * this.viewConfig.trainNameLabelFontSize + firstNodeRunning.x : 
+        -segDYToD * (this.viewConfig.trainNameLabelLineHeight - this.viewConfig.trainNameLabelFontSize) + firstNodeRunning.x;
+      const y = segDYToDX >= 0 ?
+        -segDXToD * this.viewConfig.trainNameLabelFontSize + firstNodeRunning.y : 
+        segDXToD * (this.viewConfig.trainNameLabelLineHeight - this.viewConfig.trainNameLabelFontSize) + firstNodeRunning.y;
+      const rotation = Math.atan(segDYToDX) / Math.PI * 180;
       return { 
         x, y, rotation,
         width: textWidth,
-        height: this.diagram.config.trainNameLabelFontSize,
+        height: this.viewConfig.trainNameLabelFontSize,
       };
     } else {
-      return {
-        x: this.trainPathNodes[0].x,
-        y: this.trainPathNodes.reduce((v, n) => Math.min(v, n.y), this.trainPathNodes[0].y) - this.diagram.config.trainNameLabelFontSize,
+      return { 
+        x: firstNodeRunning.x, 
+        y: firstNodeRunning.y, 
         rotation: 0,
         width: textWidth,
-        height: this.diagram.config.trainNameLabelFontSize,
+        height: this.viewConfig.trainNameLabelFontSize,
       };
     }
   }
@@ -104,10 +110,10 @@ export default class TrainPathGroup extends Vue {
   get regularTrainPathConfig(): unknown {
     return {
       points: this.regularTrainPathNodes.flatMap(n => [n.x, n.y]),
-      stroke: this.diagram.config.trainPathColor,
+      stroke: this.viewConfig.trainPathColor,
       opacity: Object.keys(this.viewState.trainSelections).length > 0 ? this.viewConfig.unselectedTrainPathOpacity : 1,
-      strokeWidth: this.diagram.config.trainPathWidth,
-      hitStrokeWidth: Math.max(this.diagram.config.trainPathWidth, this.viewConfig.minHitWidth * 2),
+      strokeWidth: this.viewConfig.trainPathWidth,
+      hitStrokeWidth: Math.max(this.viewConfig.trainPathWidth, this.viewConfig.minHitWidth * 2),
     }
   }
 
@@ -136,8 +142,8 @@ export default class TrainPathGroup extends Vue {
     return {
       points: this.selectedTrainPathNodes.flatMap(n => [n.x, n.y]),
       stroke: this.viewConfig.selectedTrainPathColor,
-      strokeWidth: this.diagram.config.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale,
-      hitStrokeWidth: Math.max(this.diagram.config.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale, this.viewConfig.minHitWidth * 2)
+      strokeWidth: this.viewConfig.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale,
+      hitStrokeWidth: Math.max(this.viewConfig.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale, this.viewConfig.minHitWidth * 2)
     };
   }
 
@@ -164,12 +170,12 @@ export default class TrainPathGroup extends Vue {
 
   get trainPathNodes(): (TrainPathNode & { x: number, y: number })[] {
     return this.train.getTrainPathNodes().map(n => { 
-      return { ...n, x: this.diagram.getXByTime(n.time), y: this.diagram.getYByRelY(n.relY) };
+      return { ...n, x: this.context.getXByTime(n.time), y: this.context.getYByRelY(n.relY) };
     });
   }
 
   onTrainNameLabelClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    if (konvaEvent.target == konvaEvent.currentTarget && this.viewConfig.editMode) {
+    if (konvaEvent.target == konvaEvent.currentTarget && this.viewState.editMode) {
       this.viewState.trainNameInputTarget = {
         train: this.train,
         ...this.trainNameLabelRect,
@@ -255,10 +261,10 @@ export default class TrainPathGroup extends Vue {
     for (let i = 0; i < this.train.stevs.length - 1; ++i) {
       const thisStev = this.train.stevs[i];
       const nextStev = this.train.stevs[i + 1];
-      const leftX = this.diagram.getXByTime(thisStev.time) - this.viewConfig.minHitWidth;
-      const rightX = this.diagram.getXByTime(nextStev.time) + this.viewConfig.minHitWidth;
-      const topY = this.diagram.getYByRelY(Math.min(thisStev.track.relY, nextStev.track.relY)) - this.viewConfig.minHitWidth;
-      const bottomY = this.diagram.getYByRelY(Math.max(thisStev.track.relY, nextStev.track.relY)) + this.viewConfig.minHitWidth;
+      const leftX = this.context.getXByTime(thisStev.time) - this.viewConfig.minHitWidth;
+      const rightX = this.context.getXByTime(nextStev.time) + this.viewConfig.minHitWidth;
+      const topY = this.context.getYByRelY(Math.min(thisStev.track.relY, nextStev.track.relY)) - this.viewConfig.minHitWidth;
+      const bottomY = this.context.getYByRelY(Math.max(thisStev.track.relY, nextStev.track.relY)) + this.viewConfig.minHitWidth;
       if (leftX < x && x < rightX && topY < y && y < bottomY) {
         return { from: thisStev, to: nextStev };
       }
@@ -267,7 +273,7 @@ export default class TrainPathGroup extends Vue {
   }
 
   onSelectedTrainPathDoubleClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    if (this.viewConfig.editMode && !this.viewState.drawingState) {
+    if (this.viewState.editMode && !this.viewState.drawingState) {
       const targetTime = this.viewState.pointerTime;
       const nearestStation = this.getNearestStation(konvaEvent.evt.clientY);
       const nearestStev = this.getNearestStopEvent(targetTime);
@@ -286,7 +292,7 @@ export default class TrainPathGroup extends Vue {
 
   getNearestStation(y: number): Station {
     const stations = this.diagram.getStationsInMileageOrder();
-    const relY = this.diagram.getRelYByY(y);
+    const relY = this.context.getRelYByY(y);
     let minSta = stations[0];
     let minDist = Math.abs(relY - minSta.bottomRelY);
     for (const s of stations) {
@@ -315,7 +321,7 @@ export default class TrainPathGroup extends Vue {
   }
 
   onSelectedTrainPathMouseDown(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    if (!this.viewConfig.editMode) {
+    if (!this.viewState.editMode) {
       return;
     }
 
@@ -342,7 +348,7 @@ export default class TrainPathGroup extends Vue {
     const firstNode = this.selectedTrainPathNodes[0];
     this.dragState = { 
       t0: firstNode.time, 
-      y0: this.diagram.getYByRelY(firstNode.relY),
+      y0: this.context.getYByRelY(firstNode.relY),
       sx0: konvaEvent.evt.screenX, 
       sy0: konvaEvent.evt.screenY,
       track0: changeTrackTargets ? changeTrackTargets[0].track : null,
@@ -361,13 +367,13 @@ export default class TrainPathGroup extends Vue {
   }
 
   onMarkerMouseDown(konvaEvent: KonvaEventObject<MouseEvent>, node: TrainPathNode): void {
-    if (!this.viewConfig.editMode) {
+    if (!this.viewState.editMode) {
       return;
     }
 
     this.dragState = {
       t0: node.time,
-      y0: this.diagram.getYByRelY(node.relY),
+      y0: this.context.getYByRelY(node.relY),
       track0: node.stev.track,
       sx0: konvaEvent.evt.screenX,
       sy0: konvaEvent.evt.screenY,
@@ -400,7 +406,7 @@ export default class TrainPathGroup extends Vue {
             Math.min(this.dragState.maxTimeShift, Math.max(this.dragState.minTimeShift, this.viewState.pointerTime - this.dragState.t0)) :
             this.viewState.pointerTime - this.dragState.t0;
         if (this.dragState.changeTrackTargets) {
-          const mouseRelY = this.diagram.getRelYByY(event.clientY);
+          const mouseRelY = this.context.getRelYByY(event.clientY);
           const targetStation = this.dragState.changeTrackTargets[0].station;
           const mouseTrack = targetStation.tracks.find(t => Math.abs(t.relY - mouseRelY) < this.viewConfig.minHitWidth);
           if (mouseTrack) {
@@ -423,7 +429,7 @@ export default class TrainPathGroup extends Vue {
           const track0 = this.dragState.track0;
           const track1 = this.dragState.changeTrackTargets[0].track;
           if (track0 != track1) {
-            this.historyManager.push({
+            this.context.history.push({
               this: this,
               undo: () => { targets.forEach(stev => stev.track = track0); },
               redo: () => { targets.forEach(stev => stev.track = track1); }
@@ -440,7 +446,7 @@ export default class TrainPathGroup extends Vue {
                 return sel.stevRange ? sel.train.getStopEventsInRange(sel.stevRange) : sel.train.stevs;
               });
             targets.forEach(stev => stev.time += timeShift);
-            this.historyManager.push({
+            this.context.history.push({
               this: this,
               undo: () => { targets.forEach(stev => stev.time -= timeShift); },
               redo: () => { targets.forEach(stev => stev.time += timeShift); }
@@ -457,7 +463,7 @@ export default class TrainPathGroup extends Vue {
               this.$set(this.viewState.trainSelections, newTrain.id, { train: newTrain, stevRange: null });
               return newTrain;
             });
-            this.historyManager.push({
+            this.context.history.push({
               this: this,
               undo: () => { newTrains.forEach(train => this.diagram.removeTrain(train)); },
               redo: () => { newTrains.forEach(train => this.diagram.addNewTrain(train)); }

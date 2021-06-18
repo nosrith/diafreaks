@@ -7,8 +7,7 @@
 
 <script lang="ts">
 import { Component, InjectReactive, Vue } from "vue-property-decorator";
-import Diagram from "@/data/Diagram";
-import ViewState from "@/data/ViewState";
+import DiagramViewContext from "@/data/DiagramViewContext";
 import TrainPathGroup from "./TrainPathGroup.vue";
 
 @Component({
@@ -17,21 +16,23 @@ import TrainPathGroup from "./TrainPathGroup.vue";
   },
 })
 export default class BackLayer extends Vue {
-  @InjectReactive() viewState!: ViewState;
-  @InjectReactive() diagram!: Diagram;
+  @InjectReactive() private context!: DiagramViewContext;
+  private get diagram() { return this.context.diagram; }
+  private get viewConfig() { return this.context.config; }
+  private get viewState() { return this.context.state; }
 
-  // mounted(): void {
+  // private mounted(): void {
   //   const hitCanvas = (this.$refs.trainPathLayer as any).getNode().hitCanvas._canvas;
   //   document.body.appendChild(hitCanvas);
   // }
 
-  get layerConfig(): unknown {
+  private get layerConfig(): unknown {
     return {
       clip: {
         x: this.diagram.config.leftPaneWidth,
-        y: this.diagram.config.topPaneHeight,
+        y: this.viewConfig.topPaneHeight,
         width: this.viewState.viewWidth - this.diagram.config.leftPaneWidth,
-        height: this.viewState.viewHeight - this.diagram.config.topPaneHeight,
+        height: this.viewState.viewHeight - this.viewConfig.topPaneHeight,
       }
     };
   }

@@ -5,6 +5,7 @@ import Train from "./Train";
 import TrainSelection from "./TrainSelection";
 
 export default class ViewState {
+    editMode = true;
     viewWidth = 0;
     viewHeight = 0;
     trainSelections: { [trainId: number]: TrainSelection } = {};

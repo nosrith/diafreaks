@@ -3,42 +3,41 @@
 </template>
 
 <script lang="ts">
-import { Component, Inject, InjectReactive, Vue } from "vue-property-decorator";
-import HistoryManager from "@/HistoryManager";
-import Diagram from "@/data/Diagram";
+import { Component, InjectReactive, Vue } from "vue-property-decorator";
+import DiagramViewContext from "@/data/DiagramViewContext";
 import Station from "@/data/Station";
-import ViewState from "@/data/ViewState";
 
 @Component
 export default class StationNameInput extends Vue {
-  @InjectReactive() viewState!: ViewState;
-  @InjectReactive() diagram!: Diagram;
-  @Inject() historyManager!: HistoryManager;
+  @InjectReactive() private context!: DiagramViewContext;
+  private get diagram() { return this.context.diagram; }
+  private get viewConfig() { return this.context.config; }
+  private get viewState() { return this.context.state; }
 
-  get targetStation(): Station | Record<string, never> {
+  private get targetStation(): Station | Record<string, never> {
     return this.viewState.stationNameInputTarget ?? {};
   }
 
-  get style(): unknown {
+  private get style(): unknown {
     return {
-      left: `${this.diagram.config.stationLabelLeftMargin}px`,
-      top: `${this.diagram.getYByRelY(this.targetStation.topRelY) - this.diagram.config.stationLabelFontSize - 4}px`,
-      width: `${this.diagram.config.leftPaneWidth - this.diagram.config.stationLabelLeftMargin - this.diagram.config.stationLabelRightMargin}px`,
-      height: `${this.diagram.config.stationLabelFontSize + 4}px`,
+      left: `${this.viewConfig.stationLabelLeftMargin}px`,
+      top: `${this.context.getYByRelY(this.targetStation.topRelY) - this.viewConfig.stationLabelFontSize - 4}px`,
+      width: `${this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelLeftMargin - this.viewConfig.stationLabelRightMargin}px`,
+      height: `${this.viewConfig.stationLabelFontSize + 4}px`,
       paddingTop: "2px",
-      lineHeight: `${this.diagram.config.stationLabelFontSize}px`,
+      lineHeight: `${this.viewConfig.stationLabelFontSize}px`,
       border: "none",
-      fontSize: `${this.diagram.config.stationLabelFontSize}px`,
+      fontSize: `${this.viewConfig.stationLabelFontSize}px`,
     };
   }
 
-  onComplete(): void {
+  private onComplete(): void {
     const targetStation = this.targetStation;
     const name0 = this.targetStation.name;
     const name1 = (this.$el as HTMLInputElement).value;
     if (name0 != name1) {
       targetStation.name = name1;
-      this.historyManager.push({
+      this.context.history.push({
         this: this,
         undo: () => { targetStation.name = name0; },
         redo: () => { targetStation.name = name1; }
