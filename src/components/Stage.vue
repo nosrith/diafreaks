@@ -267,7 +267,7 @@ export default class Stage extends Vue {
         const targetLine = this.viewState.pointerTargetLine;
         if (targetLine && (targetLine.track || !targetLine.station.expanded)) {
           const track = targetLine.track ?? targetLine.station.tracks[0];
-          const train = this.diagram.addNewTrain(new Train(this.diagram.genId(), ""));
+          const train = this.diagram.addNewTrain();
           train.addNewStopEvent(new StopEvent(train, track, this.viewState.pointerTime));
           this.viewState.trainSelections = { [train.id]: { train: train, stevRange: null } };
           this.viewState.drawingState = {
@@ -284,13 +284,9 @@ export default class Stage extends Vue {
         const mileage = prevSta ?
           (relY - prevSta.bottomRelY) / this.diagram.config.yScale + prevSta.mileage :
           relY / this.diagram.config.yScale;
-        const station = Station.fromJSON({
-          id: this.diagram.genId(),
-          name: "",
-          mileage,
-          tracks: [ { id: this.diagram.genId(), name: "" } ],
-        });
-        this.$set(this.diagram.stations, station.id, station);
+
+        const station = this.diagram.addNewStation();
+        station.mileage = mileage;
         this.diagram.updateY();
 
         this.context.history.push({

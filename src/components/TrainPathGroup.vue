@@ -476,7 +476,7 @@ export default class TrainPathGroup extends Vue {
             const newTrains = Object.values(this.viewState.trainPathDragState.targets).map(sel => {
               const srcTrain = sel.train;
               const srcStevs = sel.stevRange ? srcTrain.getStopEventsInRange(sel.stevRange) : srcTrain.stevs;
-              const newTrain = this.diagram.addNewTrain(new Train(this.diagram.genId(), ""));
+              const newTrain = this.diagram.addNewTrain();
               for (const srcStev of srcStevs) {
                 newTrain.addNewStopEvent(new StopEvent(newTrain, srcStev.track, srcStev.time + timeShift));
               }

@@ -4,7 +4,7 @@ export default class Track {
     constructor(
         public readonly station: Station,
         public readonly id: number, 
-        public name: string,
+        public name = "",
         public relY = 0,
     ) {}
 

@@ -5,7 +5,7 @@ import TrainPathNode from "./TrainPathNode";
 export default class Train {
     constructor(
         public readonly id: number, 
-        public name: string,
+        public name = "",
     ) {}
     stevs: StopEvent[] = [];
 

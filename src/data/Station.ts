@@ -3,15 +3,19 @@ import Track from "./Track";
 export default class Station {
     constructor(
         public readonly id: number, 
-        public name: string,
-        public mileage: number,
+        public name = "",
+        public mileage = 0,
         public expanded = false,
         public topRelY = 0,
-        public bottomRelY = 0
+        public bottomRelY = 0,
     ) {}
-    readonly tracks: Track[] = [];
+    tracks: Track[] = [ new Track(this, 1) ];
 
-    addNewTrack(track: Track, index: number = this.tracks.length): Track {
+    addNewTrack(track?: Track, index: number = this.tracks.length): Track {
+        if (!track) {
+            const id = Math.max(0, ...this.tracks.map(t => t.id)) + 1;
+            track = new Track(this, id);
+        }
         this.tracks.splice(index, 0, track);
         return this.tracks[index];
     }
@@ -28,8 +32,7 @@ export default class Station {
             throw "Invalid JSON @ Station"
         }
         const station = new Station(o.id, o.name, o.mileage, !!o.expanded);
-        (o.tracks as any[]).map((t: any) => Track.fromJSON(t, station))
-            .forEach(t => station.tracks.push(t));
+        station.tracks = (o.tracks as any[]).map((t: any) => Track.fromJSON(t, station));
         return station;
     }
 
