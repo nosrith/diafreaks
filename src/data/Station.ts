@@ -46,7 +46,7 @@ export default class Station {
             n: this.name,
             m: this.mileage,
             t: this.tracks,
-            e: this.expanded,
+            e: this.expanded ? 1 : undefined,
         };
     }
 }
