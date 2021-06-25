@@ -25,7 +25,7 @@ export default class TrainPathMarker extends Vue {
       y: this.context.getYByRelY(this.trainPathNode.relY) - this.viewConfig.selectedTrainPathMarkerWidth * 0.5,
       width: this.viewConfig.selectedTrainPathMarkerWidth,
       height: this.viewConfig.selectedTrainPathMarkerWidth,
-      fill: this.viewConfig.selectedTrainPathMarkerColor,
+      fill: this.trainPathNode.stev.train.color || this.viewConfig.trainPathColor,
     };
   }
 
@@ -43,7 +43,7 @@ export default class TrainPathMarker extends Vue {
       text: getTimeText(this.trainPathNode.time, this.viewState.pointerPreciseState != null),
       fontSize: this.viewConfig.pointerLabelFontSize,
       fontFamily: this.viewConfig.fontFamily,
-      fill: this.viewConfig.markerLabelColor,
+      fill: this.trainPathNode.stev.train.color || this.viewConfig.trainPathColor,
       align: "right",
       verticalAlign: "bottom",
       listening: false,

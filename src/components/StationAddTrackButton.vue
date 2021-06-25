@@ -6,7 +6,6 @@
 import { Component, InjectReactive, Prop, Vue } from "vue-property-decorator";
 import DiagramViewContext from "@/data/DiagramViewContext";
 import Station from "@/data/Station";
-import Track from "@/data/Track";
 
 @Component
 export default class StationAddTrackButton extends Vue {

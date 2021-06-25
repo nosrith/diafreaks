@@ -59,7 +59,7 @@ export default class TrainPathGroup extends Vue {
       ...this.trainNameLabelRect,
       fontSize: this.viewConfig.trainNameLabelFontSize,
       fontFamily: this.viewConfig.fontFamily,
-      fill: sel && !sel.stevRange ? this.viewConfig.selectedTrainPathColor : this.viewConfig.trainPathColor,
+      fill: this.train.color || this.viewConfig.trainPathColor,
     };
   }
 
@@ -115,12 +115,13 @@ export default class TrainPathGroup extends Vue {
   }
 
   get regularTrainPathConfig(): unknown {
+    const strokeWidth = this.train.lineWidth ?? this.viewConfig.trainPathWidth;
     return {
       points: this.regularTrainPathNodes.flatMap(n => [n.x, n.y]),
-      stroke: this.viewConfig.trainPathColor,
+      stroke: this.train.color || this.viewConfig.trainPathColor,
       opacity: Object.keys(this.viewState.trainSelections).length > 0 ? this.viewConfig.unselectedTrainPathOpacity : 1,
-      strokeWidth: this.viewConfig.trainPathWidth,
-      hitStrokeWidth: Math.max(this.viewConfig.trainPathWidth, this.viewConfig.minHitWidth * 2),
+      strokeWidth,
+      hitStrokeWidth: Math.max(strokeWidth, this.viewConfig.minHitWidth * 2),
     }
   }
 
@@ -149,11 +150,12 @@ export default class TrainPathGroup extends Vue {
   }
 
   get selectedTrainPathConfig(): unknown {
+    const strokeWidth = (this.train.lineWidth ?? this.viewConfig.trainPathWidth) + (this.viewConfig.selectedTrainPathWidthScale - 1);
     return {
       points: this.selectedTrainPathNodes.flatMap(n => [n.x, n.y]),
-      stroke: this.viewConfig.selectedTrainPathColor,
-      strokeWidth: this.viewConfig.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale,
-      hitStrokeWidth: Math.max(this.viewConfig.trainPathWidth * this.viewConfig.selectedTrainPathWidthScale, this.viewConfig.minHitWidth * 2)
+      stroke: this.train.color || this.viewConfig.trainPathColor,
+      strokeWidth,
+      hitStrokeWidth: Math.max(strokeWidth, this.viewConfig.minHitWidth * 2)
     };
   }
 

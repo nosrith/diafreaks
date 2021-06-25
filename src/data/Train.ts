@@ -6,6 +6,8 @@ export default class Train {
     constructor(
         public readonly id: number, 
         public name = "",
+        public color = "",
+        public lineWidth = 1,
     ) {}
     stevs: StopEvent[] = [];
 
@@ -65,7 +67,7 @@ export default class Train {
         if (!(o && typeof o == "object" && o.id != null && o.name != null && Array.isArray(o.stops))) {
             throw "Invalid JSON @ Train";
         }
-        const train = new Train(o.id, o.name);
+        const train = new Train(o.id, o.name, o.color, o.lineWidth);
         (o.stops as any[]).flatMap((s: any) => StopEvent.fromJSONStop(s, train, stations))
             .forEach(stev => train.stevs.push(stev));
         return train;
@@ -89,6 +91,8 @@ export default class Train {
         return {
             id: this.id,
             name: this.name,
+            color: this.color,
+            lineWidth: this.lineWidth,
             stops: stops
         };
     }
