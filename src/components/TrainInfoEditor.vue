@@ -139,22 +139,24 @@ export default class TrackNameInput extends Vue {
   }
 
   private onColorPickerClick(color: string): void {
-    const color0 = this.targetTrain.color;
-    this.targetTrain.color = color;
+    const targetTrain = this.targetTrain;
+    const color0 = targetTrain.color;
+    targetTrain.color = color;
     this.context.history.push({
       this: this,
-      undo: () => { this.targetTrain.color = color0; },
-      redo: () => { this.targetTrain.color = color; }
+      undo: () => { targetTrain.color = color0; },
+      redo: () => { targetTrain.color = color; }
     });
   }
 
   private onLineWidthPickerClick(lineWidth: number): void {
-    const lineWidth0 = this.targetTrain.lineWidth;
-    this.targetTrain.lineWidth = lineWidth;
+    const targetTrain = this.targetTrain;
+    const lineWidth0 = targetTrain.lineWidth;
+    targetTrain.lineWidth = lineWidth;
     this.context.history.push({
       this: this,
-      undo: () => { this.targetTrain.lineWidth = lineWidth0; },
-      redo: () => { this.targetTrain.lineWidth = lineWidth; }
+      undo: () => { targetTrain.lineWidth = lineWidth0; },
+      redo: () => { targetTrain.lineWidth = lineWidth; }
     });
   }
 }
