@@ -3,7 +3,7 @@
     <div ref="trainInfoEditorBox" class="train-info-editor-box box" :style="trainInfoEditorBoxStyle">
       <input ref="trainNameInput" class="train-name-input" :value="targetTrain.name" :style="trainNameInputStyle" @keypress.enter="onComplete">
       <span ref="colorPickerTrigger" class="color-picker picker" :style="{ background: targetTrain.color || viewConfig.trainPathColor }" @click="onColorPickerTriggerClick"></span>
-      <span ref="lineWidthPickerTrigger" class="line-width-picker picker" @click="onLineWidthPickerTriggerClick"><span class="line-width-picker-preview" :style="{ background: targetTrain.color || viewConfig.trainPathColor, height: `${targetTrain.lineWidth}px` }"></span></span>
+      <span ref="lineWidthPickerTrigger" class="line-width-picker picker" @click="onLineWidthPickerTriggerClick"><span class="line-width-picker-preview" :style="{ background: targetTrain.color || viewConfig.trainPathColor, height: `${getDispLineWidthByValue(targetTrain.lineWidth)}px` }"></span></span>
     </div>
     <div class="color-picker-box picker-box box" :style="colorPickerBoxStyle">
       <div><span class="color-picker picker" style="background: #000" @click="onColorPickerClick('#000')"></span></div>
@@ -97,6 +97,10 @@ export default class TrackNameInput extends Vue {
       } : {
         top: `${this.viewState.viewHeight}px`
       };
+  }
+
+  private getDispLineWidthByValue(value: number) {
+    return this.lineWidthPickerValues.find(e => e.value == value)?.disp ?? value;
   }
 
   private get lineWidthPickerValues() {
