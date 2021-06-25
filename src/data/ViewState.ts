@@ -44,6 +44,8 @@ export default class ViewState {
     }
 
     get inputEnabled(): boolean {
-        return this.stationNameInputTarget != null || this.trackNameInputTarget != null;
+        return this.stationNameInputTarget != null || 
+            this.trackNameInputTarget != null ||
+            this.trainInfoEditorTarget != null;
     }
 }
