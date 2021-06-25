@@ -4,7 +4,7 @@ export default class Track {
     constructor(
         public readonly station: Station,
         public readonly id: number, 
-        public name?: string,
+        public name: string | null = null,
         public relY = 0,
     ) {}
 
@@ -21,7 +21,7 @@ export default class Track {
     toJSON(): unknown {
         return {
             id: this.id,
-            n: this.name,
+            n: this.name ?? undefined,
         };
     }
 }

@@ -5,9 +5,9 @@ import TrainPathNode from "./TrainPathNode";
 export default class Train {
     constructor(
         public readonly id: number, 
-        public name?: string,
-        public color?: string,
-        public lineWidth?: number,
+        public name: string | null = null,
+        public color: string | null = null,
+        public lineWidth: number | null = null,
     ) {}
     stevs: StopEvent[] = [];
 
@@ -94,9 +94,9 @@ export default class Train {
         }
         return {
             id: this.id,
-            n: this.name,
-            c: this.color,
-            w: this.lineWidth,
+            n: this.name ?? undefined,
+            c: this.color ?? undefined,
+            w: this.lineWidth ?? undefined,
             s: stops
         };
     }

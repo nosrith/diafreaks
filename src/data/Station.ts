@@ -3,7 +3,7 @@ import Track from "./Track";
 export default class Station {
     constructor(
         public readonly id: number, 
-        public name?: string,
+        public name: string | null = null, 
         public mileage = 0,
         public expanded = false,
         public topRelY = 0,
@@ -43,7 +43,7 @@ export default class Station {
     toJSON(): unknown {
         return {
             id: this.id,
-            n: this.name,
+            n: this.name ?? undefined,
             m: this.mileage,
             t: this.tracks,
             e: this.expanded ? 1 : undefined,
