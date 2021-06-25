@@ -10,7 +10,7 @@
       <div><span class="color-picker picker" v-for="(c, i) in colorPickerColors" :key="`train-path-color-picker-${i}`" :style="{ background: c }" @click="onColorPickerClick(c)"></span></div>
     </div>
     <div class="line-width-picker-box picker-box box" :style="lineWidthPickerBoxStyle">
-      <div><span class="line-width-picker picker" v-for="(w, i) in lineWidthPickerValues" :key="`train-path-line-width-picker-${i}`" @click="onLineWidthPickerClick(w)"><span class="line-width-picker-preview" :style="{ background: targetTrain.color || viewConfig.trainPathColor, height: `${w}px` }"></span></span></div>
+      <div><span class="line-width-picker picker" v-for="(w, i) in lineWidthPickerValues" :key="`train-path-line-width-picker-${i}`" @click="onLineWidthPickerClick(w.value)"><span class="line-width-picker-preview" :style="{ background: targetTrain.color || viewConfig.trainPathColor, height: `${w.disp}px` }"></span></span></div>
     </div>
   </div>
 </template>
@@ -100,7 +100,7 @@ export default class TrackNameInput extends Vue {
   }
 
   private get lineWidthPickerValues() {
-    return [ 1, 2.25 ];
+    return [ { value: 1, disp: 0.75 }, { value: 2, disp: 2.25 } ];
   }
 
   onComplete(): void {
