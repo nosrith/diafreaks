@@ -479,6 +479,8 @@ export default class TrainPathGroup extends Vue {
               const srcTrain = sel.train;
               const srcStevs = sel.stevRange ? srcTrain.getStopEventsInRange(sel.stevRange) : srcTrain.stevs;
               const newTrain = this.diagram.addNewTrain();
+              newTrain.color = srcTrain.color;
+              newTrain.lineWidth = srcTrain.lineWidth;
               for (const srcStev of srcStevs) {
                 newTrain.addNewStopEvent(new StopEvent(newTrain, srcStev.track, srcStev.time + timeShift));
               }
