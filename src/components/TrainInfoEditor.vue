@@ -40,12 +40,19 @@ export default class TrackNameInput extends Vue {
     return this.viewState.trainInfoEditorTarget?.train ?? {};
   }
 
+  private get trainInfoEditorBoxTop(): number {
+    const state = this.viewState.trainInfoEditorTarget;
+    return state ?
+      state.y + (state.verticalAlign == "bottom" ? -this.$refs.trainInfoEditorBox.clientHeight ?? 0 : 0) :
+      this.viewState.viewHeight;
+  }
+
   private get trainInfoEditorBoxStyle(): unknown {
     const state = this.viewState.trainInfoEditorTarget;
     return state ?
       {
         left: `${state.x}px`,
-        top: `${state.y + (state.verticalAlign == "bottom" ? -this.$el?.clientHeight ?? 0 : 0)}px`,
+        top: `${this.trainInfoEditorBoxTop}px`,
       } : {
         top: `${this.viewState.viewHeight}px`
       };
@@ -64,7 +71,7 @@ export default class TrackNameInput extends Vue {
     return state && this.pickerMode == "color" ?
       {
         left: `calc(${state.x + this.$refs.colorPickerTrigger.offsetLeft}px - 0.5rem)`,
-        top: `${state.y + this.$refs.trainInfoEditorBox.clientHeight}px`,
+        top: `${this.trainInfoEditorBoxTop + this.$refs.trainInfoEditorBox.clientHeight}px`,
       } : {
         top: `${this.viewState.viewHeight}px`
       };
@@ -86,7 +93,7 @@ export default class TrackNameInput extends Vue {
     return state && this.pickerMode == "lineWidth" ?
       {
         left: `calc(${state.x + this.$refs.lineWidthPickerTrigger.offsetLeft}px - 0.5rem)`,
-        top: `${state.y + this.$refs.trainInfoEditorBox.clientHeight}px`,
+        top: `${this.trainInfoEditorBoxTop + this.$refs.trainInfoEditorBox.clientHeight}px`,
       } : {
         top: `${this.viewState.viewHeight}px`
       };
