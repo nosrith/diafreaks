@@ -3,7 +3,7 @@ import Track from "./Track";
 export default class Station {
     constructor(
         public readonly id: number, 
-        public name = "",
+        public name?: string,
         public mileage = 0,
         public expanded = false,
         public topRelY = 0,
@@ -28,21 +28,25 @@ export default class Station {
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
     static fromJSON(o: any): Station {
         /* eslint-disable @typescript-eslint/no-explicit-any */
-        if (!(o && typeof o == "object" && o.id != null && o.name != null && o.mileage != null && Array.isArray(o.tracks))) {
+        const name = o.name ?? o.n;
+        const mileage = o.mileage ?? o.m;
+        const expanded = !!(o.expanded ?? o.e);
+        const tracks = o.tracks ?? o.t;
+        if (!(o && typeof o == "object" && o.id != null && mileage != null && Array.isArray(tracks))) {
             throw "Invalid JSON @ Station"
         }
-        const station = new Station(o.id, o.name, o.mileage, !!o.expanded);
-        station.tracks = (o.tracks as any[]).map((t: any) => Track.fromJSON(t, station));
+        const station = new Station(o.id, name, mileage, expanded);
+        station.tracks = (tracks as any[]).map((t: any) => Track.fromJSON(t, station));
         return station;
     }
 
     toJSON(): unknown {
         return {
             id: this.id,
-            name: this.name,
-            mileage: this.mileage,
-            tracks: this.tracks,
-            expanded: this.expanded,
+            n: this.name,
+            m: this.mileage,
+            t: this.tracks,
+            e: this.expanded,
         };
     }
 }

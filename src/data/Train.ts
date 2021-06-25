@@ -5,9 +5,9 @@ import TrainPathNode from "./TrainPathNode";
 export default class Train {
     constructor(
         public readonly id: number, 
-        public name = "",
-        public color = "",
-        public lineWidth = 1,
+        public name?: string,
+        public color?: string,
+        public lineWidth?: number,
     ) {}
     stevs: StopEvent[] = [];
 
@@ -64,36 +64,40 @@ export default class Train {
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
     static fromJSON(o: any, stations: { [id: number]: Station }): Train {
         /* eslint-disable @typescript-eslint/no-explicit-any */
-        if (!(o && typeof o == "object" && o.id != null && o.name != null && Array.isArray(o.stops))) {
+        const name = o.name ?? o.n;
+        const color = o.color ?? o.c;
+        const lineWidth = o.lineWidth ?? o.w;
+        const stops = o.stops ?? o.s;
+        if (!(o && typeof o == "object" && o.id != null && Array.isArray(stops))) {
             throw "Invalid JSON @ Train";
         }
-        const train = new Train(o.id, o.name, o.color, o.lineWidth);
-        (o.stops as any[]).flatMap((s: any) => StopEvent.fromJSONStop(s, train, stations))
+        const train = new Train(o.id, name, color, lineWidth);
+        (stops as any[]).flatMap((s: any) => StopEvent.fromJSONStop(s, train, stations))
             .forEach(stev => train.stevs.push(stev));
         return train;
     }
 
     toJSON(): unknown {
-        const stops: { stationId: number, trackId: number, arrTime: number, depTime: number }[] = [];
+        const stops: { s: number, t: number, a: number, d: number }[] = [];
         for (const stev of this.stevs) {
             const lastStop = stops[stops.length - 1];
-            if (lastStop && lastStop.trackId == stev.track.id && lastStop.arrTime == lastStop.depTime) {
-                lastStop.depTime = stev.time;
+            if (lastStop && lastStop.t == stev.track.id && lastStop.a == lastStop.d) {
+                lastStop.d = stev.time;
             } else {
                 stops.push({ 
-                    stationId: stev.station.id, 
-                    trackId: stev.track.id, 
-                    arrTime: stev.time, 
-                    depTime: stev.time 
+                    s: stev.station.id, 
+                    t: stev.track.id, 
+                    a: stev.time, 
+                    d: stev.time 
                 });
             }
         }
         return {
             id: this.id,
-            name: this.name,
-            color: this.color,
-            lineWidth: this.lineWidth,
-            stops: stops
+            n: this.name,
+            c: this.color,
+            w: this.lineWidth,
+            s: stops
         };
     }
 }

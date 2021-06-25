@@ -64,7 +64,7 @@ export default class TrainPathGroup extends Vue {
   }
 
   get trainNameLabelText(): string {
-    return this.train.name != "" ? this.train.name : `#${this.train.id}`;
+    return this.train.name || `#${this.train.id}`;
   }
 
   get trainNameLabelRect(): { x: number, y: number, width: number, height: number, rotation: number } {

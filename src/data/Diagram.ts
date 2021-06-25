@@ -89,8 +89,8 @@ export default class Diagram {
     toJSON(): unknown {
         return {
             config: this.config,
-            stations: this.stations,
-            trains: this.trains,
+            stations: Object.values(this.stations),
+            trains: Object.values(this.trains),
         };
     }
 }

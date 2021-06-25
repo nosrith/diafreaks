@@ -27,17 +27,21 @@ export default class StopEvent {
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
     static fromJSONStop(o: any, train: Train, stations: { [id: number]: Station }): StopEvent[] {
         /* eslint-disable @typescript-eslint/no-explicit-any */
-        if (!(o && typeof o == "object" && o.stationId != null && o.trackId != null && o.arrTime != null && o.depTime != null)) {
+        const stationId = o.stationId ?? o.s;
+        const trackId = o.trackId ?? o.t;
+        const arrTime = o.arrTime ?? o.a;
+        const depTime = o.depTime ?? o.d;
+        if (!(o && typeof o == "object" && stationId != null && trackId != null && arrTime != null && depTime != null)) {
             throw "Invalid JSON @ Stop";
         }
-        const station = stations[o.stationId];
-        const track = station && station.tracks.find(t => t.id == o.trackId);
+        const station = stations[stationId];
+        const track = station && station.tracks.find(t => t.id == trackId);
         if (!(station && track)) {
             throw "Invalid data @ Stop";
         }
-        return o.arrTime == o.depTime ?
-            [ new StopEvent(train, track, o.arrTime) ] :
-            [ new StopEvent(train, track, o.arrTime), new StopEvent(train, track, o.depTime) ];
+        return arrTime == depTime ?
+            [ new StopEvent(train, track, arrTime) ] :
+            [ new StopEvent(train, track, arrTime), new StopEvent(train, track, depTime) ];
     }
 }
 
