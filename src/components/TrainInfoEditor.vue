@@ -1,7 +1,7 @@
 <template>
   <div class="train-info-editor-group">
     <div ref="trainInfoEditorBox" class="train-info-editor-box box" :style="trainInfoEditorBoxStyle">
-      <input ref="trainNameInput" class="train-name-input" :value="targetTrain.name" :style="trainNameInputStyle" @keypress.enter="onComplete">
+      <input ref="trainNameInput" class="train-name-input" :value="targetTrain.name" :style="trainNameInputStyle" @keypress.enter="onComplete" @blur="onBlur">
       <span ref="colorPickerTrigger" class="color-picker picker" :style="{ background: targetTrain.color || viewConfig.trainPathColor }" @click="onColorPickerTriggerClick"></span>
       <span ref="lineWidthPickerTrigger" class="line-width-picker picker" @click="onLineWidthPickerTriggerClick"><span class="line-width-picker-preview" :style="{ background: targetTrain.color || viewConfig.trainPathColor, height: `${getDispLineWidthByValue(targetTrain.lineWidth || viewConfig.trainPathWidth)}px` }"></span></span>
     </div>
@@ -108,19 +108,26 @@ export default class TrackNameInput extends Vue {
   }
 
   onComplete(): void {
-    const targetTrain = this.targetTrain;
-    const name0 = targetTrain.name;
-    const name1 = this.$refs.trainNameInput.value;
-    if (name0 != name1) {
-      targetTrain.name = name1;
-      this.context.history.push({
-        this: this,
-        undo: () => { targetTrain.name = name0; },
-        redo: () => { targetTrain.name = name1; }
-      });
-    }
+    this.onBlur();
     this.viewState.trainInfoEditorTarget = null;
     this.pickerMode = "none";
+  }
+
+  private onBlur(): void {
+    const state = this.viewState.trainInfoEditorTarget;
+    if (state) {
+      const targetTrain = this.targetTrain;
+      const name0 = state.train.name;
+      const name = this.$refs.trainNameInput.value;
+      if (name != name0) {
+        state.train.name = name;
+        this.context.history.push({
+          this: this,
+          undo: () => { targetTrain.name = name0; },
+          redo: () => { targetTrain.name = name; }
+        });
+      }
+    }
   }
 
   private onColorPickerTriggerClick(): void {
@@ -132,11 +139,23 @@ export default class TrackNameInput extends Vue {
   }
 
   private onColorPickerClick(color: string): void {
+    const color0 = this.targetTrain.color;
     this.targetTrain.color = color;
+    this.context.history.push({
+      this: this,
+      undo: () => { this.targetTrain.color = color0; },
+      redo: () => { this.targetTrain.color = color; }
+    });
   }
 
   private onLineWidthPickerClick(lineWidth: number): void {
+    const lineWidth0 = this.targetTrain.lineWidth;
     this.targetTrain.lineWidth = lineWidth;
+    this.context.history.push({
+      this: this,
+      undo: () => { this.targetTrain.lineWidth = lineWidth0; },
+      redo: () => { this.targetTrain.lineWidth = lineWidth; }
+    });
   }
 }
 </script>
