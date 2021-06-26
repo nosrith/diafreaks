@@ -1,10 +1,31 @@
 <template>
   <v-group>
-    <v-text ref="trainNameLabel" :config="trainNameLabelConfig" @click="onTrainNameLabelClick"></v-text>
-    <v-line :config="regularTrainPathConfig" @click="onTrainPathClick" @mousemove="onTrainPathMouseMove" @tap="onTrainPathTap"></v-line>
+    <v-text
+      ref="trainNameLabel"
+      :config="trainNameLabelConfig"
+      @click="onTrainNameLabelClick"
+    ></v-text>
+    <v-line
+      :config="regularTrainPathConfig"
+      @click="onTrainPathClick"
+      @mousemove="onTrainPathMouseMove"
+      @tap="onTrainPathTap"
+    ></v-line>
     <template v-if="selectedTrainPathEnabled">
-      <v-line :config="selectedTrainPathConfig" @click="onSelectedTrainPathClick" @dblclick="onSelectedTrainPathDoubleClick" @mousedown="onSelectedTrainPathMouseDown" @mousemove="onSelectedTrainPathMouseMove"></v-line>
-      <train-path-marker v-for="n in selectedTrainPathNodes" :key="`marker-${train.id}-${n.stev.privateId}-${n.phase}`" :trainPathNode="n" @click="onMarkerClick" @mousedown="onMarkerMouseDown"></train-path-marker>
+      <v-line
+        :config="selectedTrainPathConfig"
+        @click="onSelectedTrainPathClick"
+        @dblclick="onSelectedTrainPathDoubleClick"
+        @mousedown="onSelectedTrainPathMouseDown"
+        @mousemove="onSelectedTrainPathMouseMove"
+      ></v-line>
+      <train-path-marker
+        v-for="n in selectedTrainPathNodes"
+        :key="`marker-${train.id}-${n.stev.privateId}-${n.phase}`"
+        :trainPathNode="n"
+        @click="onMarkerClick"
+        @mousedown="onMarkerMouseDown"
+      ></train-path-marker>
     </template>
   </v-group>
 </template>
@@ -23,27 +44,33 @@ import TrainPathNode from "@/data/TrainPathNode";
 
 @Component({
   components: {
-    TrainPathMarker
+    TrainPathMarker,
   },
 })
 export default class TrainPathGroup extends Vue {
   @InjectReactive() private context!: DiagramViewContext;
-  private get diagram() { return this.context.diagram; }
-  private get viewConfig() { return this.context.config; }
-  private get viewState() { return this.context.state; }
+  private get diagram() {
+    return this.context.diagram;
+  }
+  private get viewConfig() {
+    return this.context.config;
+  }
+  private get viewState() {
+    return this.context.state;
+  }
 
   @Prop() private train!: Train;
 
-  dragState: { 
-    t0: number, 
-    y0: number,
-    sx0: number, 
-    sy0: number,
-    track0: Track | null,
-    minTimeShift: number,
-    maxTimeShift: number,
-    changeTimeTargets: StopEvent[] | null,
-    changeTrackTargets: StopEvent[] | null,
+  dragState: {
+    t0: number;
+    y0: number;
+    sx0: number;
+    sy0: number;
+    track0: Track | null;
+    minTimeShift: number;
+    maxTimeShift: number;
+    changeTimeTargets: StopEvent[] | null;
+    changeTrackTargets: StopEvent[] | null;
   } | null = null;
 
   get trainNameLabelConfig(): unknown {
@@ -51,11 +78,10 @@ export default class TrainPathGroup extends Vue {
     return {
       ref: `train-name-label-${this.train.id}`,
       visible:
-        !this.viewState.trainInfoEditorTarget && (
-          Object.keys(this.viewState.trainSelections).length == 0 || 
-          (!!sel && !this.viewState.controlKeyPressed)
-        ),
-      text: this.trainNameLabelText, 
+        !this.viewState.trainInfoEditorTarget &&
+        (Object.keys(this.viewState.trainSelections).length == 0 ||
+          (!!sel && !this.viewState.controlKeyPressed)),
+      text: this.trainNameLabelText,
       ...this.trainNameLabelRect,
       fontSize: this.viewConfig.trainNameLabelFontSize * this.context.subScale,
       fontFamily: this.viewConfig.fontFamily,
@@ -67,24 +93,46 @@ export default class TrainPathGroup extends Vue {
     return this.train.name || `#${this.train.id}`;
   }
 
-  get trainNameLabelRect(): { x: number, y: number, width: number, height: number, rotation: number } {
+  get trainNameLabelRect(): {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    rotation: number;
+  } {
     const text = this.trainNameLabelText;
-    const physFontSize = this.viewConfig.trainNameLabelFontSize * this.context.subScale;
-    const physLineHeight = this.viewConfig.trainNameLabelLineHeight * this.context.subScale;
-    const textWidth = getTextWidth(text, this.viewConfig.fontFamily, physFontSize);
+    const physFontSize =
+      this.viewConfig.trainNameLabelFontSize * this.context.subScale;
+    const physLineHeight =
+      this.viewConfig.trainNameLabelLineHeight * this.context.subScale;
+    const textWidth = getTextWidth(
+      text,
+      this.viewConfig.fontFamily,
+      physFontSize
+    );
 
-    const nodes = 
-      this.viewState.trainPathDragState?.targets[this.train.id] && this.viewState.controlKeyPressed ?
-        this.selectedTrainPathNodes : this.regularTrainPathNodes;
-    const firstNodeRunning = 
-      nodes.find((n, i) => i < nodes.length - 1 && nodes[i + 1].stev.station != n.stev.station) ??
-      nodes[0];
+    const nodes =
+      this.viewState.trainPathDragState?.targets[this.train.id] &&
+      this.viewState.controlKeyPressed
+        ? this.selectedTrainPathNodes
+        : this.regularTrainPathNodes;
+    const firstNodeRunning =
+      nodes.find(
+        (n, i) =>
+          i < nodes.length - 1 && nodes[i + 1].stev.station != n.stev.station
+      ) ?? nodes[0];
     let segDYToDX = NaN;
-    for (const forwardNode of nodes.slice(nodes.indexOf(firstNodeRunning) + 1)) {
+    for (const forwardNode of nodes.slice(
+      nodes.indexOf(firstNodeRunning) + 1
+    )) {
       const dx = forwardNode.x - firstNodeRunning.x;
       const dy = forwardNode.y - firstNodeRunning.y;
       const dy2dx = dx != 0 ? dy / dx : Math.sign(dy) * Infinity;
-      if (isNaN(segDYToDX) || Math.sign(dy2dx) == Math.sign(segDYToDX) && Math.abs(dy2dx) < Math.abs(segDYToDX)) {
+      if (
+        isNaN(segDYToDX) ||
+        (Math.sign(dy2dx) == Math.sign(segDYToDX) &&
+          Math.abs(dy2dx) < Math.abs(segDYToDX))
+      ) {
         segDYToDX = dy2dx;
       }
       if (Math.hypot(dx, dy) >= textWidth) break;
@@ -93,22 +141,26 @@ export default class TrainPathGroup extends Vue {
     if (!isNaN(segDYToDX)) {
       const segDXToD = Math.sqrt(1 / (1 + segDYToDX * segDYToDX));
       const segDYToD = segDXToD != 0 ? segDXToD * segDYToDX : 1;
-      const x = segDYToDX >= 0 ?
-        segDYToD * physFontSize + firstNodeRunning.x : 
-        -segDYToD * (physLineHeight - physFontSize) + firstNodeRunning.x;
-      const y = segDYToDX >= 0 ?
-        -segDXToD * physFontSize + firstNodeRunning.y : 
-        segDXToD * (physLineHeight - physFontSize) + firstNodeRunning.y;
-      const rotation = Math.atan(segDYToDX) / Math.PI * 180;
-      return { 
-        x, y, rotation,
+      const x =
+        segDYToDX >= 0
+          ? segDYToD * physFontSize + firstNodeRunning.x
+          : -segDYToD * (physLineHeight - physFontSize) + firstNodeRunning.x;
+      const y =
+        segDYToDX >= 0
+          ? -segDXToD * physFontSize + firstNodeRunning.y
+          : segDXToD * (physLineHeight - physFontSize) + firstNodeRunning.y;
+      const rotation = (Math.atan(segDYToDX) / Math.PI) * 180;
+      return {
+        x,
+        y,
+        rotation,
         width: textWidth,
         height: physFontSize,
       };
     } else {
-      return { 
-        x: firstNodeRunning.x, 
-        y: firstNodeRunning.y, 
+      return {
+        x: firstNodeRunning.x,
+        y: firstNodeRunning.y,
         rotation: 0,
         width: textWidth,
         height: physFontSize,
@@ -119,15 +171,18 @@ export default class TrainPathGroup extends Vue {
   get regularTrainPathConfig(): unknown {
     const strokeWidth = this.train.lineWidth ?? this.viewConfig.trainPathWidth;
     return {
-      points: this.regularTrainPathNodes.flatMap(n => [n.x, n.y]),
+      points: this.regularTrainPathNodes.flatMap((n) => [n.x, n.y]),
       stroke: this.train.color || this.viewConfig.trainPathColor,
-      opacity: Object.keys(this.viewState.trainSelections).length > 0 ? this.viewConfig.unselectedTrainPathOpacity : 1,
+      opacity:
+        Object.keys(this.viewState.trainSelections).length > 0
+          ? this.viewConfig.unselectedTrainPathOpacity
+          : 1,
       strokeWidth,
       hitStrokeWidth: Math.max(strokeWidth, this.viewConfig.minHitWidth * 2),
-    }
+    };
   }
 
-  get regularTrainPathNodes(): (TrainPathNode & { x: number, y: number })[] {
+  get regularTrainPathNodes(): (TrainPathNode & { x: number; y: number })[] {
     const nodes = this.getTrainPathNodes();
 
     const dragState = this.viewState.trainPathDragState;
@@ -135,7 +190,11 @@ export default class TrainPathGroup extends Vue {
     if (dragState && dragTarget && !this.viewState.controlKeyPressed) {
       let inRange = !dragTarget.stevRange;
       for (const node of nodes) {
-        if (node.stev == dragTarget.stevRange?.from || node.stev == dragTarget.stevRange?.to) inRange = true;
+        if (
+          node.stev == dragTarget.stevRange?.from ||
+          node.stev == dragTarget.stevRange?.to
+        )
+          inRange = true;
         if (inRange) {
           node.time += dragState.timeShift;
           node.x = this.context.getXByTime(node.time);
@@ -152,21 +211,23 @@ export default class TrainPathGroup extends Vue {
   }
 
   get selectedTrainPathConfig(): unknown {
-    const strokeWidth = (this.train.lineWidth ?? this.viewConfig.trainPathWidth) + (this.viewConfig.selectedTrainPathWidthScale - 1);
+    const strokeWidth =
+      (this.train.lineWidth ?? this.viewConfig.trainPathWidth) +
+      (this.viewConfig.selectedTrainPathWidthScale - 1);
     return {
-      points: this.selectedTrainPathNodes.flatMap(n => [n.x, n.y]),
+      points: this.selectedTrainPathNodes.flatMap((n) => [n.x, n.y]),
       stroke: this.train.color || this.viewConfig.trainPathColor,
       strokeWidth,
-      hitStrokeWidth: Math.max(strokeWidth, this.viewConfig.minHitWidth * 2)
+      hitStrokeWidth: Math.max(strokeWidth, this.viewConfig.minHitWidth * 2),
     };
   }
 
-  get selectedTrainPathNodes(): (TrainPathNode & { x: number, y: number })[] {
-    const stevRange = 
+  get selectedTrainPathNodes(): (TrainPathNode & { x: number; y: number })[] {
+    const stevRange =
       this.viewState.trainPathDragState?.targets[this.train.id]?.stevRange ??
       this.viewState.trainSelections[this.train.id].stevRange;
     let inRange = !stevRange;
-    const nodes = this.getTrainPathNodes().filter(n => {
+    const nodes = this.getTrainPathNodes().filter((n) => {
       if (n.stev == stevRange?.from || n.stev == stevRange?.to) inRange = true;
       const nInRange = inRange;
       if (n.stev == stevRange?.to) inRange = false;
@@ -183,27 +244,39 @@ export default class TrainPathGroup extends Vue {
     return nodes;
   }
 
-  getTrainPathNodes(): (TrainPathNode & { x: number, y: number })[] {
-    return this.train.getTrainPathNodes().map(n => { 
-      return { ...n, x: this.context.getXByTime(n.time), y: this.context.getYByRelY(n.relY) };
+  getTrainPathNodes(): (TrainPathNode & { x: number; y: number })[] {
+    return this.train.getTrainPathNodes().map((n) => {
+      return {
+        ...n,
+        x: this.context.getXByTime(n.time),
+        y: this.context.getYByRelY(n.relY),
+      };
     });
   }
 
   onTrainNameLabelClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
     if (konvaEvent.target == konvaEvent.currentTarget) {
-      if (this.viewState.editMode && this.viewState.trainSelections[this.train.id] && !this.viewState.trainSelections[this.train.id].stevRange) {
+      if (
+        this.viewState.editMode &&
+        this.viewState.trainSelections[this.train.id] &&
+        !this.viewState.trainSelections[this.train.id].stevRange
+      ) {
         this.viewState.trainInfoEditorTarget = {
           train: this.train,
           x: this.trainNameLabelRect.x,
           y: this.trainNameLabelRect.y,
-          verticalAlign: this.trainNameLabelRect.rotation >= 0 ? "top" : "bottom"
+          verticalAlign:
+            this.trainNameLabelRect.rotation >= 0 ? "top" : "bottom",
         };
         this.$emit("trainInfoEditStart");
       } else {
         if (!konvaEvent.evt.shiftKey) {
           this.viewState.trainSelections = {};
         }
-        this.$set(this.viewState.trainSelections, this.train.id, { train: this.train, stevRange: null });
+        this.$set(this.viewState.trainSelections, this.train.id, {
+          train: this.train,
+          stevRange: null,
+        });
       }
     }
   }
@@ -213,29 +286,51 @@ export default class TrainPathGroup extends Vue {
   }
 
   onSelectedTrainPathMouseMove(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    this.viewState.pointerTargetTrainPath = { 
-      train: this.train, 
-      stevRange: this.getPointedStevRange(konvaEvent.evt.clientX, konvaEvent.evt.clientY)
+    this.viewState.pointerTargetTrainPath = {
+      train: this.train,
+      stevRange: this.getPointedStevRange(
+        konvaEvent.evt.clientX,
+        konvaEvent.evt.clientY
+      ),
     };
   }
 
   onTrainPathClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    const clickedStopRange = this.getPointedStevRange(konvaEvent.evt.clientX, konvaEvent.evt.clientY);
+    const clickedStopRange = this.getPointedStevRange(
+      konvaEvent.evt.clientX,
+      konvaEvent.evt.clientY
+    );
     this.changeTrainSelections(konvaEvent, clickedStopRange, false);
   }
 
   onSelectedTrainPathClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    const clickedStopRange = this.getPointedStevRange(konvaEvent.evt.clientX, konvaEvent.evt.clientY);
+    const clickedStopRange = this.getPointedStevRange(
+      konvaEvent.evt.clientX,
+      konvaEvent.evt.clientY
+    );
     this.changeTrainSelections(konvaEvent, clickedStopRange, true);
   }
 
-  onMarkerClick(konvaEvent: KonvaEventObject<MouseEvent>, trainPathNode: TrainPathNode): void {
-    const clickedStevRange = { from: trainPathNode.stev, to: trainPathNode.stev };
+  onMarkerClick(
+    konvaEvent: KonvaEventObject<MouseEvent>,
+    trainPathNode: TrainPathNode
+  ): void {
+    const clickedStevRange = {
+      from: trainPathNode.stev,
+      to: trainPathNode.stev,
+    };
     this.changeTrainSelections(konvaEvent, clickedStevRange, true);
   }
 
-  changeTrainSelections(konvaEvent: KonvaEventObject<MouseEvent>, clickedStevRange: StopEventRange, clickSelected: boolean): void {
-    if (!this.viewState.trainPathDragState?.dragging && !this.viewState.drawingState) {
+  changeTrainSelections(
+    konvaEvent: KonvaEventObject<MouseEvent>,
+    clickedStevRange: StopEventRange,
+    clickSelected: boolean
+  ): void {
+    if (
+      !this.viewState.trainPathDragState?.dragging &&
+      !this.viewState.drawingState
+    ) {
       const sel = this.viewState.trainSelections[this.train.id];
 
       // Remove other trains if shift not pressed
@@ -244,7 +339,10 @@ export default class TrainPathGroup extends Vue {
       }
 
       if (!sel) {
-        this.$set(this.viewState.trainSelections, this.train.id, { train: this.train, stevRange: null });
+        this.$set(this.viewState.trainSelections, this.train.id, {
+          train: this.train,
+          stevRange: null,
+        });
       } else {
         const selectedStevRange = sel.stevRange;
         if (!selectedStevRange) {
@@ -252,7 +350,9 @@ export default class TrainPathGroup extends Vue {
         } else if (!konvaEvent.evt.shiftKey) {
           sel.stevRange = clickSelected ? clickedStevRange : null;
         } else {
-          let selStart = false, selEnd = false, changed = false;
+          let selStart = false,
+            selEnd = false,
+            changed = false;
           for (const stev of this.train.stevs) {
             if (!selStart && stev == clickedStevRange.from) {
               selectedStevRange.from = clickedStevRange.from;
@@ -274,42 +374,69 @@ export default class TrainPathGroup extends Vue {
   }
 
   onTrainPathTap(): void {
-    this.viewState.trainSelections = { [this.train.id]: { train: this.train, stevRange: null } };
+    this.viewState.trainSelections = {
+      [this.train.id]: { train: this.train, stevRange: null },
+    };
   }
 
   getPointedStevRange(x: number, y: number): StopEventRange {
     if (this.train.stevs.length <= 2) {
-      return { from: this.train.stevs[0], to: this.train.stevs[this.train.stevs.length - 1] };
+      return {
+        from: this.train.stevs[0],
+        to: this.train.stevs[this.train.stevs.length - 1],
+      };
     }
 
     // TODO: more precise detection
     for (let i = 0; i < this.train.stevs.length - 1; ++i) {
       const thisStev = this.train.stevs[i];
       const nextStev = this.train.stevs[i + 1];
-      const leftX = this.context.getXByTime(thisStev.time) - this.viewConfig.minHitWidth;
-      const rightX = this.context.getXByTime(nextStev.time) + this.viewConfig.minHitWidth;
-      const topY = this.context.getYByRelY(Math.min(thisStev.track.relY, nextStev.track.relY)) - this.viewConfig.minHitWidth;
-      const bottomY = this.context.getYByRelY(Math.max(thisStev.track.relY, nextStev.track.relY)) + this.viewConfig.minHitWidth;
+      const leftX =
+        this.context.getXByTime(thisStev.time) - this.viewConfig.minHitWidth;
+      const rightX =
+        this.context.getXByTime(nextStev.time) + this.viewConfig.minHitWidth;
+      const topY =
+        this.context.getYByRelY(
+          Math.min(thisStev.track.relY, nextStev.track.relY)
+        ) - this.viewConfig.minHitWidth;
+      const bottomY =
+        this.context.getYByRelY(
+          Math.max(thisStev.track.relY, nextStev.track.relY)
+        ) + this.viewConfig.minHitWidth;
       if (leftX < x && x < rightX && topY < y && y < bottomY) {
         return { from: thisStev, to: nextStev };
       }
     }
-    return { from: this.train.stevs[0], to: this.train.stevs[this.train.stevs.length - 1] };
+    return {
+      from: this.train.stevs[0],
+      to: this.train.stevs[this.train.stevs.length - 1],
+    };
   }
 
-  onSelectedTrainPathDoubleClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
+  onSelectedTrainPathDoubleClick(
+    konvaEvent: KonvaEventObject<MouseEvent>
+  ): void {
     if (this.viewState.editMode && !this.viewState.drawingState) {
       const targetTime = this.viewState.pointerTime;
       const nearestStation = this.getNearestStation(konvaEvent.evt.clientY);
       const nearestStev = this.getNearestStopEvent(targetTime);
-      if (!(nearestStation == nearestStev.station && (nearestStev.prev?.track == nearestStev.track || nearestStev.next?.track == nearestStev.track))) {
-        const index = this.train.stevs.findIndex(s => s.time > targetTime);
-        const newStev = this.train.addNewStopEvent(new StopEvent(this.train, nearestStation.tracks[0], targetTime), index);
-        this.viewState.trainSelections = { 
+      if (
+        !(
+          nearestStation == nearestStev.station &&
+          (nearestStev.prev?.track == nearestStev.track ||
+            nearestStev.next?.track == nearestStev.track)
+        )
+      ) {
+        const index = this.train.stevs.findIndex((s) => s.time > targetTime);
+        const newStev = this.train.addNewStopEvent(
+          new StopEvent(this.train, nearestStation.tracks[0], targetTime),
+          index
+        );
+        this.viewState.trainSelections = {
           [this.train.id]: {
             train: this.train,
-            stevRange: { from: newStev, to: newStev }
-          } 
+            stevRange: { from: newStev, to: newStev },
+          },
         };
       }
     }
@@ -356,42 +483,56 @@ export default class TrainPathGroup extends Vue {
       const stevRange = sel.stevRange;
       if (stevRange) {
         if (stevRange.from.prev) {
-          minTimeShift = Math.max(minTimeShift, stevRange.from.prev.time - stevRange.from.time);
+          minTimeShift = Math.max(
+            minTimeShift,
+            stevRange.from.prev.time - stevRange.from.time
+          );
         }
         if (stevRange.to.next) {
-          maxTimeShift = Math.min(maxTimeShift, stevRange.to.next.time - stevRange.to.time);
+          maxTimeShift = Math.min(
+            maxTimeShift,
+            stevRange.to.next.time - stevRange.to.time
+          );
         }
       }
     }
 
-    const clickedStevRange = this.getPointedStevRange(konvaEvent.evt.clientX, konvaEvent.evt.clientY);
-    const changeTrackTargets = 
-      clickedStevRange.from == clickedStevRange.to ? [ clickedStevRange.from ] : 
-      clickedStevRange.from.track == clickedStevRange.to.track ? [ clickedStevRange.from, clickedStevRange.to ] :
-      null;
+    const clickedStevRange = this.getPointedStevRange(
+      konvaEvent.evt.clientX,
+      konvaEvent.evt.clientY
+    );
+    const changeTrackTargets =
+      clickedStevRange.from == clickedStevRange.to
+        ? [clickedStevRange.from]
+        : clickedStevRange.from.track == clickedStevRange.to.track
+        ? [clickedStevRange.from, clickedStevRange.to]
+        : null;
 
     const firstNode = this.selectedTrainPathNodes[0];
-    this.dragState = { 
-      t0: firstNode.time, 
+    this.dragState = {
+      t0: firstNode.time,
       y0: this.context.getYByRelY(firstNode.relY),
-      sx0: konvaEvent.evt.screenX, 
+      sx0: konvaEvent.evt.screenX,
       sy0: konvaEvent.evt.screenY,
       track0: changeTrackTargets ? changeTrackTargets[0].track : null,
       minTimeShift: minTimeShift,
       maxTimeShift: maxTimeShift,
       changeTimeTargets: null,
-      changeTrackTargets: changeTrackTargets ?? null
+      changeTrackTargets: changeTrackTargets ?? null,
     };
     this.viewState.trainPathDragState = {
       dragging: false,
       targets: this.viewState.trainSelections,
-      timeShift: 0
+      timeShift: 0,
     };
     window.addEventListener("mousemove", this.onWindowMouseMove);
     window.addEventListener("mouseup", this.onWindowMouseUp);
   }
 
-  onMarkerMouseDown(konvaEvent: KonvaEventObject<MouseEvent>, node: TrainPathNode): void {
+  onMarkerMouseDown(
+    konvaEvent: KonvaEventObject<MouseEvent>,
+    node: TrainPathNode
+  ): void {
     if (!this.viewState.editMode) {
       return;
     }
@@ -404,13 +545,18 @@ export default class TrainPathGroup extends Vue {
       sy0: konvaEvent.evt.screenY,
       minTimeShift: node.stev.prev ? node.stev.prev.time - node.time : -86400,
       maxTimeShift: node.stev.next ? node.stev.next.time - node.time : 86400,
-      changeTimeTargets: [ node.stev ],
-      changeTrackTargets: [ node.stev ]
+      changeTimeTargets: [node.stev],
+      changeTrackTargets: [node.stev],
     };
     this.viewState.trainPathDragState = {
       dragging: false,
-      targets: { [node.stev.train.id]: { train: node.stev.train, stevRange: { from: node.stev, to: node.stev } } },
-      timeShift: 0
+      targets: {
+        [node.stev.train.id]: {
+          train: node.stev.train,
+          stevRange: { from: node.stev, to: node.stev },
+        },
+      },
+      timeShift: 0,
     };
     window.addEventListener("mousemove", this.onWindowMouseMove);
     window.addEventListener("mouseup", this.onWindowMouseUp);
@@ -418,22 +564,43 @@ export default class TrainPathGroup extends Vue {
 
   onWindowMouseMove(event: MouseEvent): void {
     if (this.dragState && this.viewState.trainPathDragState) {
-      if (!this.viewState.trainPathDragState.dragging && Math.hypot(event.clientX - this.dragState.sx0, event.clientY - this.dragState.sy0) > 1) {
+      if (
+        !this.viewState.trainPathDragState.dragging &&
+        Math.hypot(
+          event.clientX - this.dragState.sx0,
+          event.clientY - this.dragState.sy0
+        ) > 1
+      ) {
         this.viewState.trainPathDragState.dragging = true;
         this.viewState.pointerY = this.dragState.y0;
       }
       if (this.viewState.trainPathDragState.dragging) {
         if (!this.viewState.pointerPreciseState) {
-          this.viewState.pointerTime = this.dragState.t0 + Math.floor((event.screenX - this.dragState.sx0) / this.context.xPhysScale / 60) * 60;
+          this.viewState.pointerTime =
+            this.dragState.t0 +
+            Math.floor(
+              (event.screenX - this.dragState.sx0) /
+                this.context.xPhysScale /
+                60
+            ) *
+              60;
         }
-        this.viewState.trainPathDragState.timeShift = 
-          !this.viewState.controlKeyPressed ?
-            Math.min(this.dragState.maxTimeShift, Math.max(this.dragState.minTimeShift, this.viewState.pointerTime - this.dragState.t0)) :
-            this.viewState.pointerTime - this.dragState.t0;
+        this.viewState.trainPathDragState.timeShift = !this.viewState
+          .controlKeyPressed
+          ? Math.min(
+              this.dragState.maxTimeShift,
+              Math.max(
+                this.dragState.minTimeShift,
+                this.viewState.pointerTime - this.dragState.t0
+              )
+            )
+          : this.viewState.pointerTime - this.dragState.t0;
         if (this.dragState.changeTrackTargets) {
           const mouseRelY = this.context.getRelYByY(event.clientY);
           const targetStation = this.dragState.changeTrackTargets[0].station;
-          const mouseTrack = targetStation.tracks.find(t => Math.abs(t.relY - mouseRelY) < this.viewConfig.minHitWidth);
+          const mouseTrack = targetStation.tracks.find(
+            (t) => Math.abs(t.relY - mouseRelY) < this.viewConfig.minHitWidth
+          );
           if (mouseTrack) {
             for (const stev of this.dragState.changeTrackTargets) {
               stev.track = mouseTrack;
@@ -456,8 +623,12 @@ export default class TrainPathGroup extends Vue {
           if (track0 != track1) {
             this.context.history.push({
               this: this,
-              undo: () => { targets.forEach(stev => stev.track = track0); },
-              redo: () => { targets.forEach(stev => stev.track = track1); }
+              undo: () => {
+                targets.forEach((stev) => (stev.track = track0));
+              },
+              redo: () => {
+                targets.forEach((stev) => (stev.track = track1));
+              },
             });
           }
         }
@@ -465,35 +636,58 @@ export default class TrainPathGroup extends Vue {
         const timeShift = this.viewState.trainPathDragState.timeShift;
         if (timeShift != 0) {
           if (!this.viewState.controlKeyPressed) {
-            const targets = 
+            const targets =
               this.dragState.changeTimeTargets ??
-              Object.values(this.viewState.trainSelections).flatMap(sel => {
-                return sel.stevRange ? sel.train.getStopEventsInRange(sel.stevRange) : sel.train.stevs;
+              Object.values(this.viewState.trainSelections).flatMap((sel) => {
+                return sel.stevRange
+                  ? sel.train.getStopEventsInRange(sel.stevRange)
+                  : sel.train.stevs;
               });
-            targets.forEach(stev => stev.time += timeShift);
+            targets.forEach((stev) => (stev.time += timeShift));
             this.context.history.push({
               this: this,
-              undo: () => { targets.forEach(stev => stev.time -= timeShift); },
-              redo: () => { targets.forEach(stev => stev.time += timeShift); }
+              undo: () => {
+                targets.forEach((stev) => (stev.time -= timeShift));
+              },
+              redo: () => {
+                targets.forEach((stev) => (stev.time += timeShift));
+              },
             });
           } else {
-            const newTrains = Object.values(this.viewState.trainPathDragState.targets).map(sel => {
+            const newTrains = Object.values(
+              this.viewState.trainPathDragState.targets
+            ).map((sel) => {
               const srcTrain = sel.train;
-              const srcStevs = sel.stevRange ? srcTrain.getStopEventsInRange(sel.stevRange) : srcTrain.stevs;
+              const srcStevs = sel.stevRange
+                ? srcTrain.getStopEventsInRange(sel.stevRange)
+                : srcTrain.stevs;
               const newTrain = this.diagram.addNewTrain();
               newTrain.color = srcTrain.color;
               newTrain.lineWidth = srcTrain.lineWidth;
               for (const srcStev of srcStevs) {
-                newTrain.addNewStopEvent(new StopEvent(newTrain, srcStev.track, srcStev.time + timeShift));
+                newTrain.addNewStopEvent(
+                  new StopEvent(
+                    newTrain,
+                    srcStev.track,
+                    srcStev.time + timeShift
+                  )
+                );
               }
               this.$delete(this.viewState.trainSelections, sel.train.id);
-              this.$set(this.viewState.trainSelections, newTrain.id, { train: newTrain, stevRange: null });
+              this.$set(this.viewState.trainSelections, newTrain.id, {
+                train: newTrain,
+                stevRange: null,
+              });
               return newTrain;
             });
             this.context.history.push({
               this: this,
-              undo: () => { newTrains.forEach(train => this.diagram.removeTrain(train)); },
-              redo: () => { newTrains.forEach(train => this.diagram.addNewTrain(train)); }
+              undo: () => {
+                newTrains.forEach((train) => this.diagram.removeTrain(train));
+              },
+              redo: () => {
+                newTrains.forEach((train) => this.diagram.addNewTrain(train));
+              },
             });
           }
         }

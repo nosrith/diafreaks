@@ -1,5 +1,11 @@
 <template>
-  <b-icon v-if="viewState.editMode && isTopLineIntersectingPlotPane" icon="close" size="is-small" :style="style" @click.native="onClick"></b-icon>
+  <b-icon
+    v-if="viewState.editMode && isTopLineIntersectingPlotPane"
+    icon="close"
+    size="is-small"
+    :style="style"
+    @click.native="onClick"
+  ></b-icon>
 </template>
 
 <script lang="ts">
@@ -12,28 +18,44 @@ import Train from "@/data/Train";
 @Component
 export default class StationRemoveButton extends Vue {
   @InjectReactive() private context!: DiagramViewContext;
-  private get diagram() { return this.context.diagram; }
-  private get viewConfig() { return this.context.config; }
-  private get viewState() { return this.context.state; }
+  private get diagram() {
+    return this.context.diagram;
+  }
+  private get viewConfig() {
+    return this.context.config;
+  }
+  private get viewState() {
+    return this.context.state;
+  }
   @Prop() private station!: Station;
 
   private get style(): unknown {
     return {
-      left: `${(this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelRightMargin) * this.context.subScale}px`,
-      top: `${this.context.getYByRelY(this.station.topRelY) - this.viewConfig.trackLineSpan}px`,
+      left: `${
+        (this.diagram.config.leftPaneWidth -
+          this.viewConfig.stationLabelRightMargin) *
+        this.context.subScale
+      }px`,
+      top: `${
+        this.context.getYByRelY(this.station.topRelY) -
+        this.viewConfig.trackLineSpan
+      }px`,
       height: `${this.viewConfig.trackLineSpan}px`,
     };
   }
 
   private get isTopLineIntersectingPlotPane(): boolean {
-    return this.context.getYByRelY(this.station.topRelY) >= this.viewConfig.topPaneHeight * this.context.subScale && 
-      this.context.getYByRelY(this.station.topRelY) < this.viewState.viewHeight;
+    return (
+      this.context.getYByRelY(this.station.topRelY) >=
+        this.viewConfig.topPaneHeight * this.context.subScale &&
+      this.context.getYByRelY(this.station.topRelY) < this.viewState.viewHeight
+    );
   }
 
   private onClick(): void {
     if (!this.viewState.busy) {
       const removingTrains: Train[] = [];
-      const removingStevs: { stev: StopEvent, index: number }[] = [];
+      const removingStevs: { stev: StopEvent; index: number }[] = [];
       for (const train of Object.values(this.diagram.trains)) {
         for (let i = 0; i < train.stevs.length; ++i) {
           const stev = train.stevs[i];
@@ -46,25 +68,27 @@ export default class StationRemoveButton extends Vue {
         }
       }
 
-      removingStevs.forEach(e => e.stev.train.removeStopEvent(e.stev));
-      removingTrains.forEach(train => this.diagram.removeTrain(train)); 
+      removingStevs.forEach((e) => e.stev.train.removeStopEvent(e.stev));
+      removingTrains.forEach((train) => this.diagram.removeTrain(train));
       this.$delete(this.diagram.stations, this.station.id);
       this.context.updateY();
 
       this.context.history.push({
         this: this,
-        undo: () => { 
+        undo: () => {
           this.$set(this.diagram.stations, this.station.id, this.station);
-          removingTrains.forEach(train => this.diagram.addNewTrain(train)); 
-          removingStevs.forEach(e => e.stev.train.addNewStopEvent(e.stev, e.index));
+          removingTrains.forEach((train) => this.diagram.addNewTrain(train));
+          removingStevs.forEach((e) =>
+            e.stev.train.addNewStopEvent(e.stev, e.index)
+          );
           this.context.updateY();
         },
-        redo: () => { 
-          removingStevs.forEach(e => e.stev.train.removeStopEvent(e.stev));
-          removingTrains.forEach(train => this.diagram.removeTrain(train)); 
-          this.$delete(this.diagram.stations, this.station.id); 
+        redo: () => {
+          removingStevs.forEach((e) => e.stev.train.removeStopEvent(e.stev));
+          removingTrains.forEach((train) => this.diagram.removeTrain(train));
+          this.$delete(this.diagram.stations, this.station.id);
           this.context.updateY();
-        }
+        },
       });
     }
   }

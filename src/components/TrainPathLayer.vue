@@ -1,7 +1,21 @@
 <template>
   <v-layer id="train-path-layer" ref="trainPathLayer" :config="layerConfig">
-    <train-path-group v-for="t in Object.values(diagram.trains).filter(t => !viewState.trainSelections[t.id])" :key="`train-${t.id}`" :train="t" v-on="$listeners"></train-path-group>
-    <train-path-group v-for="t in Object.values(diagram.trains).filter(t => viewState.trainSelections[t.id])" :key="`train-${t.id}`" :train="t" v-on="$listeners"></train-path-group>
+    <train-path-group
+      v-for="t in Object.values(diagram.trains).filter(
+        (t) => !viewState.trainSelections[t.id]
+      )"
+      :key="`train-${t.id}`"
+      :train="t"
+      v-on="$listeners"
+    ></train-path-group>
+    <train-path-group
+      v-for="t in Object.values(diagram.trains).filter(
+        (t) => viewState.trainSelections[t.id]
+      )"
+      :key="`train-${t.id}`"
+      :train="t"
+      v-on="$listeners"
+    ></train-path-group>
   </v-layer>
 </template>
 
@@ -12,14 +26,20 @@ import TrainPathGroup from "./TrainPathGroup.vue";
 
 @Component({
   components: {
-    TrainPathGroup
+    TrainPathGroup,
   },
 })
 export default class BackLayer extends Vue {
   @InjectReactive() private context!: DiagramViewContext;
-  private get diagram() { return this.context.diagram; }
-  private get viewConfig() { return this.context.config; }
-  private get viewState() { return this.context.state; }
+  private get diagram() {
+    return this.context.diagram;
+  }
+  private get viewConfig() {
+    return this.context.config;
+  }
+  private get viewState() {
+    return this.context.state;
+  }
 
   // private mounted(): void {
   //   const hitCanvas = (this.$refs.trainPathLayer as any).getNode().hitCanvas._canvas;
@@ -31,9 +51,13 @@ export default class BackLayer extends Vue {
       clip: {
         x: this.diagram.config.leftPaneWidth * this.context.subScale,
         y: this.viewConfig.topPaneHeight * this.context.subScale,
-        width: this.viewState.viewWidth - this.diagram.config.leftPaneWidth * this.context.subScale,
-        height: this.viewState.viewHeight - this.viewConfig.topPaneHeight * this.context.subScale,
-      }
+        width:
+          this.viewState.viewWidth -
+          this.diagram.config.leftPaneWidth * this.context.subScale,
+        height:
+          this.viewState.viewHeight -
+          this.viewConfig.topPaneHeight * this.context.subScale,
+      },
     };
   }
 }

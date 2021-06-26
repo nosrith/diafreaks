@@ -1,12 +1,15 @@
 <template>
-  <v-stage v-if="diagram" :config="stageConfig" 
-    @mousedown="onStageMouseDown" 
-    @mousemove="onStageMouseMove" 
-    @click="onStageClick" 
-    @dblclick="onStageDoubleClick" 
+  <v-stage
+    v-if="diagram"
+    :config="stageConfig"
+    @mousedown="onStageMouseDown"
+    @mousemove="onStageMouseMove"
+    @click="onStageClick"
+    @dblclick="onStageDoubleClick"
     @wheel="onStageMouseWheel"
     @contextmenu="onContextMenu"
-    @touchend="onTouchEnd">
+    @touchend="onTouchEnd"
+  >
     <back-layer v-on="$listeners"></back-layer>
     <train-path-layer v-on="$listeners"></train-path-layer>
     <v-layer>
@@ -30,24 +33,38 @@ import TrainPathLayer from "./TrainPathLayer.vue";
 
 @Component({
   components: {
-    BackLayer, Pointer, TrainPathLayer
+    BackLayer,
+    Pointer,
+    TrainPathLayer,
   },
 })
 export default class Stage extends Vue {
   @InjectReactive() private context!: DiagramViewContext;
-  private get diagram() { return this.context.diagram; }
-  private get viewConfig() { return this.context.config; }
-  private get viewState() { return this.context.state; }
+  private get diagram() {
+    return this.context.diagram;
+  }
+  private get viewConfig() {
+    return this.context.config;
+  }
+  private get viewState() {
+    return this.context.state;
+  }
 
   $el!: HTMLElement;
 
-  private stageDragState: { scrollTime0: number, scrollRelY0: number, x0: number, y0: number, dragging: boolean } | null = null;
+  private stageDragState: {
+    scrollTime0: number;
+    scrollRelY0: number;
+    x0: number;
+    y0: number;
+    dragging: boolean;
+  } | null = null;
   private pinchState: { lastScale: number } | null = null;
 
   private get stageConfig(): unknown {
     return {
       width: this.viewState.viewWidth,
-      height: this.viewState.viewHeight
+      height: this.viewState.viewHeight,
     };
   }
 
@@ -85,15 +102,26 @@ export default class Stage extends Vue {
     // Update pointer state
     this.viewState.pointerScreenX = event.screenX;
     if (this.viewState.pointerPreciseState) {
-      const dUnit = Math.round((event.screenX - this.viewState.pointerPreciseState.sx0) / this.viewConfig.pointerPrecisePixelPerTimeUnit);
-      this.viewState.pointerTime = dUnit * this.diagram.config.minimumTimeUnit + this.viewState.pointerPreciseState.t0;
+      const dUnit = Math.round(
+        (event.screenX - this.viewState.pointerPreciseState.sx0) /
+          this.viewConfig.pointerPrecisePixelPerTimeUnit
+      );
+      this.viewState.pointerTime =
+        dUnit * this.diagram.config.minimumTimeUnit +
+        this.viewState.pointerPreciseState.t0;
     } else if (!this.viewState.trainPathDragState?.dragging) {
-      this.viewState.pointerTime = Math.round(this.context.getTimeByX(event.clientX) / 60) * 60;
-      if (event.clientX >= this.diagram.config.leftPaneWidth * this.context.subScale) {
+      this.viewState.pointerTime =
+        Math.round(this.context.getTimeByX(event.clientX) / 60) * 60;
+      if (
+        event.clientX >=
+        this.diagram.config.leftPaneWidth * this.context.subScale
+      ) {
         const pointerTargetLine = this.findPointerTargetLine(event.clientY);
         if (pointerTargetLine) {
           this.viewState.pointerTargetLine = pointerTargetLine ?? null;
-          this.viewState.pointerY = this.context.getYByRelY(pointerTargetLine.relY);
+          this.viewState.pointerY = this.context.getYByRelY(
+            pointerTargetLine.relY
+          );
         } else {
           this.viewState.pointerTargetLine = null;
         }
@@ -109,9 +137,15 @@ export default class Stage extends Vue {
     const drawingState = this.viewState.drawingState;
     if (drawingState) {
       if (drawingState.direction > 0) {
-        this.viewState.pointerTime = Math.max(this.viewState.pointerTime, drawingState.lastStev.time);
+        this.viewState.pointerTime = Math.max(
+          this.viewState.pointerTime,
+          drawingState.lastStev.time
+        );
       } else if (drawingState.direction < 0) {
-        this.viewState.pointerTime = Math.min(this.viewState.pointerTime, drawingState.lastStev.time);
+        this.viewState.pointerTime = Math.min(
+          this.viewState.pointerTime,
+          drawingState.lastStev.time
+        );
       }
 
       if (drawingState.floating) {
@@ -119,42 +153,92 @@ export default class Stage extends Vue {
         drawingState.floating = null;
       }
 
-      const pointerTargetLine = event.clientX >= this.diagram.config.leftPaneWidth * this.context.subScale ?
-        this.findPointerTargetLine(event.clientY) : undefined;
+      const pointerTargetLine =
+        event.clientX >=
+        this.diagram.config.leftPaneWidth * this.context.subScale
+          ? this.findPointerTargetLine(event.clientY)
+          : undefined;
       if (pointerTargetLine) {
-        const targetTrack = pointerTargetLine.track ?? pointerTargetLine.station.tracks[0];
+        const targetTrack =
+          pointerTargetLine.track ?? pointerTargetLine.station.tracks[0];
         const newStev = drawingState.train.addNewStopEvent(
           new StopEvent(
             drawingState.train,
             targetTrack,
             this.viewState.pointerTime
           ),
-          drawingState.direction > 0 || (drawingState.direction == 0 && this.viewState.pointerTime >= drawingState.lastStev.time) ? undefined : 0
+          drawingState.direction > 0 ||
+            (drawingState.direction == 0 &&
+              this.viewState.pointerTime >= drawingState.lastStev.time)
+            ? undefined
+            : 0
         );
         drawingState.floating = newStev;
       }
     }
   }
 
-  private findPointerTargetLine(y: number): { station: Station, track: Track | null, relY: number } | undefined {
-    const stationPointedOnTop = this.stationsInMileageOrder.find(s => 
-      Math.abs(this.context.getYByRelY(s.topRelY) - y) < Math.max(this.viewConfig.stationLineWidth * 0.5, this.viewConfig.minHitWidth));
+  private findPointerTargetLine(
+    y: number
+  ): { station: Station; track: Track | null; relY: number } | undefined {
+    const stationPointedOnTop = this.stationsInMileageOrder.find(
+      (s) =>
+        Math.abs(this.context.getYByRelY(s.topRelY) - y) <
+        Math.max(
+          this.viewConfig.stationLineWidth * 0.5,
+          this.viewConfig.minHitWidth
+        )
+    );
     if (stationPointedOnTop) {
-      return { station: stationPointedOnTop, track: null, relY: stationPointedOnTop.topRelY };
+      return {
+        station: stationPointedOnTop,
+        track: null,
+        relY: stationPointedOnTop.topRelY,
+      };
     }
 
-    const stationPointedOnBottom = this.stationsInMileageOrder.find(s =>
-      Math.abs(this.context.getYByRelY(s.bottomRelY) - y) < Math.max(this.viewConfig.stationLineWidth * 0.5, this.viewConfig.minHitWidth));
+    const stationPointedOnBottom = this.stationsInMileageOrder.find(
+      (s) =>
+        Math.abs(this.context.getYByRelY(s.bottomRelY) - y) <
+        Math.max(
+          this.viewConfig.stationLineWidth * 0.5,
+          this.viewConfig.minHitWidth
+        )
+    );
     if (stationPointedOnBottom) {
-      return { station: stationPointedOnBottom, track: null, relY: stationPointedOnBottom.bottomRelY };
+      return {
+        station: stationPointedOnBottom,
+        track: null,
+        relY: stationPointedOnBottom.bottomRelY,
+      };
     }
 
-    const station = this.stationsInMileageOrder.find(s => 
-      this.context.getYByRelY(s.topRelY) + this.viewConfig.trackLineSpan - Math.max(this.viewConfig.trackLineWidth * 0.5, this.viewConfig.minHitWidth) < y &&
-      this.context.getYByRelY(s.bottomRelY) - this.viewConfig.trackLineSpan + Math.max(this.viewConfig.trackLineWidth * 0.5, this.viewConfig.minHitWidth) > y
+    const station = this.stationsInMileageOrder.find(
+      (s) =>
+        this.context.getYByRelY(s.topRelY) +
+          this.viewConfig.trackLineSpan -
+          Math.max(
+            this.viewConfig.trackLineWidth * 0.5,
+            this.viewConfig.minHitWidth
+          ) <
+          y &&
+        this.context.getYByRelY(s.bottomRelY) -
+          this.viewConfig.trackLineSpan +
+          Math.max(
+            this.viewConfig.trackLineWidth * 0.5,
+            this.viewConfig.minHitWidth
+          ) >
+          y
     );
     if (station) {
-      const pointedTrack = station.tracks.find(t => Math.abs(this.context.getYByRelY(t.relY) - y) < Math.max(this.viewConfig.trackLineWidth * 0.5, this.viewConfig.minHitWidth));
+      const pointedTrack = station.tracks.find(
+        (t) =>
+          Math.abs(this.context.getYByRelY(t.relY) - y) <
+          Math.max(
+            this.viewConfig.trackLineWidth * 0.5,
+            this.viewConfig.minHitWidth
+          )
+      );
       if (pointedTrack) {
         return { station, track: pointedTrack, relY: pointedTrack.relY };
       }
@@ -166,13 +250,18 @@ export default class Stage extends Vue {
     if (drawingState) {
       if (konvaEvent.evt.button == 0 && this.viewState.pointerTargetLine) {
         if (drawingState.direction == 0) {
-          drawingState.direction = this.viewState.pointerTime >= drawingState.lastStev.time ? 1 : -1;
+          drawingState.direction =
+            this.viewState.pointerTime >= drawingState.lastStev.time ? 1 : -1;
         }
-        if (drawingState.floating){
-          const triple = drawingState.floating.track == drawingState.lastStev.track && (
-            drawingState.direction > 0 && drawingState.lastStev.track == drawingState.lastStev.prev?.track ||
-            drawingState.direction < 0 && drawingState.lastStev.track == drawingState.lastStev.next?.track
-          );
+        if (drawingState.floating) {
+          const triple =
+            drawingState.floating.track == drawingState.lastStev.track &&
+            ((drawingState.direction > 0 &&
+              drawingState.lastStev.track ==
+                drawingState.lastStev.prev?.track) ||
+              (drawingState.direction < 0 &&
+                drawingState.lastStev.track ==
+                  drawingState.lastStev.next?.track));
           if (triple) {
             drawingState.lastStev.time = this.viewState.pointerTime;
             drawingState.train.removeStopEvent(drawingState.floating);
@@ -189,7 +278,10 @@ export default class Stage extends Vue {
           }
           this.viewState.drawingState = null;
         } else {
-          const newLastStev = drawingState.direction > 0 ? drawingState.lastStev.prev : drawingState.lastStev.next;
+          const newLastStev =
+            drawingState.direction > 0
+              ? drawingState.lastStev.prev
+              : drawingState.lastStev.next;
           if (newLastStev) {
             drawingState.train.removeStopEvent(drawingState.lastStev);
             drawingState.lastStev = newLastStev;
@@ -205,32 +297,42 @@ export default class Stage extends Vue {
       this.setGlobalScale(1, konvaEvent.evt.clientX, konvaEvent.evt.clientY);
     }
 
-    if (konvaEvent.target == konvaEvent.currentTarget && 
-        !konvaEvent.evt.ctrlKey &&
-        !konvaEvent.evt.shiftKey && 
-        !this.stageDragState?.dragging && 
-        !this.viewState.trainPathDragState?.dragging && 
-        !this.viewState.drawingState) {
+    if (
+      konvaEvent.target == konvaEvent.currentTarget &&
+      !konvaEvent.evt.ctrlKey &&
+      !konvaEvent.evt.shiftKey &&
+      !this.stageDragState?.dragging &&
+      !this.viewState.trainPathDragState?.dragging &&
+      !this.viewState.drawingState
+    ) {
       this.viewState.trainSelections = {};
     }
 
-    if (this.viewState.trainInfoEditorTarget && !konvaEvent.target.attrs.ref?.startsWith("train-name-label")) {
+    if (
+      this.viewState.trainInfoEditorTarget &&
+      !konvaEvent.target.attrs.ref?.startsWith("train-name-label")
+    ) {
       this.$emit("trainInfoEditEnd");
     }
   }
 
   private onTouchEnd(konvaEvent: KonvaEventObject<TouchEvent>): void {
-    if (konvaEvent.target == konvaEvent.currentTarget && 
-      !this.stageDragState?.dragging) { 
+    if (
+      konvaEvent.target == konvaEvent.currentTarget &&
+      !this.stageDragState?.dragging
+    ) {
       this.viewState.trainSelections = {};
-    }    
+    }
     if (this.stageDragState) {
       this.stageDragState = null;
     }
   }
 
   private onStageDoubleClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
-    if (konvaEvent.target == konvaEvent.currentTarget && this.viewState.drawingState) {
+    if (
+      konvaEvent.target == konvaEvent.currentTarget &&
+      this.viewState.drawingState
+    ) {
       const drawingState = this.viewState.drawingState;
       if (drawingState.floating) {
         drawingState.train.removeStopEvent(drawingState.floating);
@@ -241,53 +343,88 @@ export default class Stage extends Vue {
         const stableEnd = drawingState.stableEnd;
         if (stableEnd) {
           const stableIndex = drawingState.train.stevs.indexOf(stableEnd);
-          const addedStevs = drawingState.direction > 0 ? 
-            drawingState.train.stevs.filter((e, i) => i > stableIndex) : drawingState.train.stevs.filter((e, i) => i < stableIndex);
+          const addedStevs =
+            drawingState.direction > 0
+              ? drawingState.train.stevs.filter((e, i) => i > stableIndex)
+              : drawingState.train.stevs.filter((e, i) => i < stableIndex);
           if (drawingState.direction > 0) {
             this.context.history.push({
               this: this,
-              undo: () => { drawingState.train.stevs.splice(stableIndex + 1); },
-              redo: () => { addedStevs.forEach(stev => drawingState.train.stevs.push(stev)); }
+              undo: () => {
+                drawingState.train.stevs.splice(stableIndex + 1);
+              },
+              redo: () => {
+                addedStevs.forEach((stev) =>
+                  drawingState.train.stevs.push(stev)
+                );
+              },
             });
           } else {
             this.context.history.push({
               this: this,
-              undo: () => { drawingState.train.stevs.splice(0, stableIndex); },
-              redo: () => { drawingState.train.stevs = addedStevs.concat(drawingState.train.stevs); }
+              undo: () => {
+                drawingState.train.stevs.splice(0, stableIndex);
+              },
+              redo: () => {
+                drawingState.train.stevs = addedStevs.concat(
+                  drawingState.train.stevs
+                );
+              },
             });
           }
         } else {
           this.context.history.push({
             this: this,
-            undo: () => { this.$delete(this.diagram.trains, drawingState.train.id); },
-            redo: () => { this.$set(this.diagram.trains, drawingState.train.id, drawingState.train) }
+            undo: () => {
+              this.$delete(this.diagram.trains, drawingState.train.id);
+            },
+            redo: () => {
+              this.$set(
+                this.diagram.trains,
+                drawingState.train.id,
+                drawingState.train
+              );
+            },
           });
         }
       }
       this.viewState.drawingState = null;
       this.viewState.trainSelections = {};
-    } else if (konvaEvent.target == konvaEvent.currentTarget && this.viewState.editMode) {
-      if (konvaEvent.evt.clientX >= this.diagram.config.leftPaneWidth * this.context.subScale) {
+    } else if (
+      konvaEvent.target == konvaEvent.currentTarget &&
+      this.viewState.editMode
+    ) {
+      if (
+        konvaEvent.evt.clientX >=
+        this.diagram.config.leftPaneWidth * this.context.subScale
+      ) {
         const targetLine = this.viewState.pointerTargetLine;
         if (targetLine && (targetLine.track || !targetLine.station.expanded)) {
           const track = targetLine.track ?? targetLine.station.tracks[0];
           const train = this.diagram.addNewTrain();
-          train.addNewStopEvent(new StopEvent(train, track, this.viewState.pointerTime));
-          this.viewState.trainSelections = { [train.id]: { train: train, stevRange: null } };
+          train.addNewStopEvent(
+            new StopEvent(train, track, this.viewState.pointerTime)
+          );
+          this.viewState.trainSelections = {
+            [train.id]: { train: train, stevRange: null },
+          };
           this.viewState.drawingState = {
             train: this.diagram.trains[train.id],
             lastStev: this.diagram.trains[train.id].stevs[0],
             direction: 0,
             stableEnd: null,
-            floating: null
+            floating: null,
           };
         }
       } else {
         const relY = this.context.getRelYByY(konvaEvent.evt.clientY);
-        const prevSta = this.stationsInMileageOrder.reverse().find(s => s.topRelY < relY);
-        const mileage = prevSta ?
-          (relY - prevSta.bottomRelY) / this.context.yPhysScale + prevSta.mileage :
-          relY / this.context.yPhysScale;
+        const prevSta = this.stationsInMileageOrder
+          .reverse()
+          .find((s) => s.topRelY < relY);
+        const mileage = prevSta
+          ? (relY - prevSta.bottomRelY) / this.context.yPhysScale +
+            prevSta.mileage
+          : relY / this.context.yPhysScale;
 
         const station = this.diagram.addNewStation();
         station.mileage = mileage;
@@ -295,14 +432,14 @@ export default class Stage extends Vue {
 
         this.context.history.push({
           this: this,
-          undo: () => { 
+          undo: () => {
             this.$delete(this.diagram.stations, station.id);
             this.context.updateY();
           },
-          redo: () => { 
+          redo: () => {
             this.$set(this.diagram.stations, station.id, station);
             this.context.updateY();
-          }
+          },
         });
 
         this.viewState.stationNameInputTarget = station;
@@ -328,19 +465,28 @@ export default class Stage extends Vue {
     }
   }
 
-  private onPanStart(event: { pointerType: string, center: { x: number, y: number } }): void {
+  private onPanStart(event: {
+    pointerType: string;
+    center: { x: number; y: number };
+  }): void {
     if (event.pointerType != "mouse") {
       this.startDrag(event.center.x, event.center.y);
     }
   }
 
-  private onPanMove(event: { pointerType: string, center: { x: number, y: number } }): void {
+  private onPanMove(event: {
+    pointerType: string;
+    center: { x: number; y: number };
+  }): void {
     if (event.pointerType != "mouse") {
       this.moveDrag(event.center.x, event.center.y);
     }
   }
 
-  private onPanEnd(event: { pointerType: string, center: { x: number, y: number } }): void {
+  private onPanEnd(event: {
+    pointerType: string;
+    center: { x: number; y: number };
+  }): void {
     if (event.pointerType != "mouse" && this.stageDragState) {
       this.moveDrag(event.center.x, event.center.y);
       // this.stageDragState = null;  // do in touchEnd
@@ -361,12 +507,17 @@ export default class Stage extends Vue {
 
   private moveDrag(x: number, y: number): void {
     if (this.stageDragState) {
-      if (Math.hypot(x - this.stageDragState.x0, y - this.stageDragState.y0) > 1) {
+      if (
+        Math.hypot(x - this.stageDragState.x0, y - this.stageDragState.y0) > 1
+      ) {
         this.stageDragState.dragging = true;
       }
       if (this.stageDragState.dragging) {
-        this.diagram.config.scrollTime = this.stageDragState.scrollTime0 - (x - this.stageDragState.x0) / this.context.xPhysScale;
-        this.diagram.config.scrollRelY = this.stageDragState.scrollRelY0 - (y - this.stageDragState.y0);
+        this.diagram.config.scrollTime =
+          this.stageDragState.scrollTime0 -
+          (x - this.stageDragState.x0) / this.context.xPhysScale;
+        this.diagram.config.scrollRelY =
+          this.stageDragState.scrollRelY0 - (y - this.stageDragState.y0);
         this.context.truncateScrollPosition();
       }
     }
@@ -374,8 +525,15 @@ export default class Stage extends Vue {
 
   private onStageMouseWheel(konvaEvent: KonvaEventObject<WheelEvent>): void {
     // const f = Math.pow(2, -konvaEvent.evt.deltaY * this.viewConfig.wheelScale * 0.001);
-    const f = Math.pow(2, -Math.sign(konvaEvent.evt.deltaY) * this.viewConfig.wheelScale);
-    this.setGlobalScale(this.viewState.gScale * f, konvaEvent.evt.clientX, konvaEvent.evt.clientY);
+    const f = Math.pow(
+      2,
+      -Math.sign(konvaEvent.evt.deltaY) * this.viewConfig.wheelScale
+    );
+    this.setGlobalScale(
+      this.viewState.gScale * f,
+      konvaEvent.evt.clientX,
+      konvaEvent.evt.clientY
+    );
     konvaEvent.evt.preventDefault();
   }
 
@@ -383,14 +541,24 @@ export default class Stage extends Vue {
     this.pinchState = { lastScale: event.scale };
   }
 
-  private onPinchMove(event: { center: { x: number, y: number }, scale: number }): void {
+  private onPinchMove(event: {
+    center: { x: number; y: number };
+    scale: number;
+  }): void {
     if (this.pinchState) {
-      this.setGlobalScale(this.viewState.gScale * event.scale / this.pinchState.lastScale, event.center.x, event.center.y);
+      this.setGlobalScale(
+        (this.viewState.gScale * event.scale) / this.pinchState.lastScale,
+        event.center.x,
+        event.center.y
+      );
       this.pinchState.lastScale = event.scale;
     }
   }
 
-  private onPinchEnd(event: { center: { x: number, y: number }, scale: number }): void {
+  private onPinchEnd(event: {
+    center: { x: number; y: number };
+    scale: number;
+  }): void {
     if (this.pinchState) {
       this.onPinchMove(event);
       this.pinchState = null;
@@ -399,13 +567,15 @@ export default class Stage extends Vue {
 
   private setGlobalScale(scale: number, cx: number, cy: number) {
     const pointedTime = this.context.getTimeByX(cx);
-    const pointedUnscaledRelY = this.context.getRelYByY(cy) / this.viewState.gScale;
+    const pointedUnscaledRelY =
+      this.context.getRelYByY(cy) / this.viewState.gScale;
 
     this.viewState.gScale = scale;
     this.context.updateY();
 
     this.diagram.config.scrollTime -= this.context.getTimeByX(cx) - pointedTime;
-    this.diagram.config.scrollRelY -= this.context.getRelYByY(cy) - pointedUnscaledRelY * this.viewState.gScale;
+    this.diagram.config.scrollRelY -=
+      this.context.getRelYByY(cy) - pointedUnscaledRelY * this.viewState.gScale;
     this.context.truncateScrollPosition();
   }
 
@@ -414,15 +584,19 @@ export default class Stage extends Vue {
       if (event.key == "Alt") {
         this.viewState.pointerPreciseState = {
           sx0: this.viewState.pointerScreenX,
-          t0: this.viewState.pointerTime
+          t0: this.viewState.pointerTime,
         };
       }
       if (event.key == "Control") {
         this.viewState.controlKeyPressed = true;
       }
-      if (event.key == "Delete" && this.viewState.editMode && !this.viewState.busy) {
+      if (
+        event.key == "Delete" &&
+        this.viewState.editMode &&
+        !this.viewState.busy
+      ) {
         const deletingTrains: Train[] = [];
-        const deletingStevs: { stev: StopEvent, index: number }[] = [];
+        const deletingStevs: { stev: StopEvent; index: number }[] = [];
         for (const sel of Object.values(this.viewState.trainSelections)) {
           if (!sel.stevRange) {
             deletingTrains.push(sel.train);
@@ -439,18 +613,26 @@ export default class Stage extends Vue {
             }
           }
         }
-        deletingTrains.forEach(train => this.$delete(this.diagram.trains, train.id));
-        deletingStevs.forEach(e => e.stev.train.removeStopEvent(e.stev));
+        deletingTrains.forEach((train) =>
+          this.$delete(this.diagram.trains, train.id)
+        );
+        deletingStevs.forEach((e) => e.stev.train.removeStopEvent(e.stev));
         this.context.history.push({
           this: this,
           undo: () => {
-            deletingStevs.forEach(e => e.stev.train.addNewStopEvent(e.stev, e.index));
-            deletingTrains.forEach(train => this.$set(this.diagram.trains, train.id, train));
+            deletingStevs.forEach((e) =>
+              e.stev.train.addNewStopEvent(e.stev, e.index)
+            );
+            deletingTrains.forEach((train) =>
+              this.$set(this.diagram.trains, train.id, train)
+            );
           },
           redo: () => {
-            deletingTrains.forEach(train => this.$delete(this.diagram.trains, train.id));
-            deletingStevs.forEach(e => e.stev.train.removeStopEvent(e.stev));
-          }
+            deletingTrains.forEach((train) =>
+              this.$delete(this.diagram.trains, train.id)
+            );
+            deletingStevs.forEach((e) => e.stev.train.removeStopEvent(e.stev));
+          },
         });
         this.viewState.trainSelections = {};
       }

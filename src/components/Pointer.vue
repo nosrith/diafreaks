@@ -13,16 +13,28 @@ import DiagramViewContext from "@/data/DiagramViewContext";
 @Component
 export default class TrainPathGroup extends Vue {
   @InjectReactive() private context!: DiagramViewContext;
-  private get viewConfig() { return this.context.config; }
-  private get viewState() { return this.context.state; }
+  private get viewConfig() {
+    return this.context.config;
+  }
+  private get viewState() {
+    return this.context.state;
+  }
 
   private get pointerEnabled(): unknown {
-    return this.viewState.pointerTargetLine && !this.viewState.pointerTargetTrainPath &&
-      !this.viewState.trainPathDragState && !this.viewState.drawingState;
+    return (
+      this.viewState.pointerTargetLine &&
+      !this.viewState.pointerTargetTrainPath &&
+      !this.viewState.trainPathDragState &&
+      !this.viewState.drawingState
+    );
   }
 
   private get rectConfig(): unknown {
-    const width =  this.context.subScale * (this.viewState.drawingState ? this.viewConfig.selectedTrainPathMarkerWidth : this.viewConfig.pointerWidth);
+    const width =
+      this.context.subScale *
+      (this.viewState.drawingState
+        ? this.viewConfig.selectedTrainPathMarkerWidth
+        : this.viewConfig.pointerWidth);
     return {
       x: this.context.getXByTime(this.viewState.pointerTime) - width * 0.5,
       y: this.viewState.pointerY - width * 0.5,
@@ -34,12 +46,16 @@ export default class TrainPathGroup extends Vue {
   }
 
   private get labelConfig(): unknown {
-    const time = this.viewState.pointerTime >= 0 ? 
-      this.viewState.pointerTime : 
-      this.viewState.pointerTime + Math.ceil(-this.viewState.pointerTime / 3600) * 3600;
+    const time =
+      this.viewState.pointerTime >= 0
+        ? this.viewState.pointerTime
+        : this.viewState.pointerTime +
+          Math.ceil(-this.viewState.pointerTime / 3600) * 3600;
     return {
       x: this.context.getXByTime(this.viewState.pointerTime),
-      y: this.viewState.pointerY - this.viewConfig.pointerLabelFontSize * this.context.subScale,
+      y:
+        this.viewState.pointerY -
+        this.viewConfig.pointerLabelFontSize * this.context.subScale,
       height: this.viewConfig.pointerLabelFontSize * this.context.subScale,
       text: getTimeText(time, this.viewState.pointerPreciseState != null),
       fontSize: this.viewConfig.pointerLabelFontSize * this.context.subScale,
@@ -48,7 +64,7 @@ export default class TrainPathGroup extends Vue {
       align: "left",
       verticalAlign: "bottom",
       listening: false,
-    }
+    };
   }
 }
 </script>

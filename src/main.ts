@@ -6,7 +6,7 @@ import VueKonva from "vue-konva";
 import App from "./App.vue";
 import messages from "./messages";
 
-Vue.config.productionTip = false
+Vue.config.productionTip = false;
 Vue.use(Buefy, {
   defaultNotificationDuration: 5000,
   defaultNotificationPosition: "is-bottom-right",
@@ -20,6 +20,6 @@ const i18n = new VueI18n({
 });
 
 new Vue({
-  render: h => h(App),
+  render: (h) => h(App),
   i18n,
 }).$mount("#app");

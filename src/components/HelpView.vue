@@ -3,10 +3,13 @@
     <b-carousel-item>
       <div class="help-item">
         <div class="help-image">
-          <img src="@/assets/help_add_new_station.png">
+          <img src="@/assets/help_add_new_station.png" />
         </div>
         <div class="help-desc content">
-          <h5 class="title is-5" v-html="$t('message.help.addNewStationTitle')"></h5>
+          <h5
+            class="title is-5"
+            v-html="$t('message.help.addNewStationTitle')"
+          ></h5>
           <p v-html="$t('message.help.addNewStationBody')"></p>
         </div>
       </div>
@@ -14,10 +17,13 @@
     <b-carousel-item>
       <div class="help-item">
         <div class="help-image">
-          <img src="@/assets/help_add_new_train.png">
+          <img src="@/assets/help_add_new_train.png" />
         </div>
         <div class="help-desc content">
-          <h5 class="title is-5" v-html="$t('message.help.addNewTrainTitle')"></h5>
+          <h5
+            class="title is-5"
+            v-html="$t('message.help.addNewTrainTitle')"
+          ></h5>
           <p v-html="$t('message.help.addNewTrainBody')"></p>
         </div>
       </div>
@@ -25,10 +31,13 @@
     <b-carousel-item>
       <div class="help-item">
         <div class="help-image">
-          <img src="@/assets/help_select_train.png">
+          <img src="@/assets/help_select_train.png" />
         </div>
         <div class="help-desc content">
-          <h5 class="title is-5" v-html="$t('message.help.selectTrainTitle')"></h5>
+          <h5
+            class="title is-5"
+            v-html="$t('message.help.selectTrainTitle')"
+          ></h5>
           <p v-html="$t('message.help.selectTrainBody')"></p>
         </div>
       </div>
@@ -36,10 +45,13 @@
     <b-carousel-item>
       <div class="help-item">
         <div class="help-image">
-          <img src="@/assets/help_edit_train.png">
+          <img src="@/assets/help_edit_train.png" />
         </div>
         <div class="help-desc content">
-          <h5 class="title is-5" v-html="$t('message.help.editTrainTitle')"></h5>
+          <h5
+            class="title is-5"
+            v-html="$t('message.help.editTrainTitle')"
+          ></h5>
           <p v-html="$t('message.help.editTrainBody')"></p>
         </div>
       </div>
@@ -47,7 +59,7 @@
     <b-carousel-item>
       <div class="help-item">
         <div class="help-image">
-          <img src="@/assets/help_edit_time.png">
+          <img src="@/assets/help_edit_time.png" />
         </div>
         <div class="help-desc content">
           <h5 class="title is-5" v-html="$t('message.help.editTimeTitle')"></h5>
@@ -57,7 +69,7 @@
     </b-carousel-item>
     <b-carousel-item>
       <div class="help-item">
-        <img src="@/assets/help_tips.png">
+        <img src="@/assets/help_tips.png" />
         <div class="help-desc content">
           <h5 class="title is-5" v-html="$t('message.help.tipsTitle')"></h5>
           <p v-html="$t('message.help.tipsBody')"></p>
@@ -79,8 +91,7 @@
 import { Component, Vue } from "vue-property-decorator";
 
 @Component
-export default class HelpPane extends Vue {
-}
+export default class HelpPane extends Vue {}
 </script>
 
 <style lang="scss" scoped>
@@ -103,10 +114,7 @@ export default class HelpPane extends Vue {
   left: 0;
   width: 100%;
   height: 100%;
-  box-shadow: 
-    inset 0 0 20px #fff,
-    inset 0 0 20px #fff,
-    inset 0 0 20px #fff,
+  box-shadow: inset 0 0 20px #fff, inset 0 0 20px #fff, inset 0 0 20px #fff,
     inset 0 0 20px #fff;
 }
 .help-item img {

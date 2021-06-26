@@ -1,29 +1,40 @@
 <template>
   <div class="diagram-view">
-    <stage class="diagram-view-stage" 
-      @stationNameInputStart="onStationNameInputStart" 
+    <stage
+      class="diagram-view-stage"
+      @stationNameInputStart="onStationNameInputStart"
       @trackNameInputStart="onTrackNameInputStart"
       @trainInfoEditStart="onTrainInfoEditStart"
-      @trainInfoEditEnd="onTrainInfoEditEnd"></stage>
+      @trainInfoEditEnd="onTrainInfoEditEnd"
+    ></stage>
     <div class="diagram-view-ui">
       <station-name-input ref="stationNameInput"></station-name-input>
       <track-name-input ref="trackNameInput"></track-name-input>
       <train-info-editor ref="trainInfoEditor"></train-info-editor>
       <station-expand-button
-        v-for="s in Object.values(diagram.stations)" :key="`station-expand-button-${s.id}`" 
-        :station="s" 
-        @trackNameInputStart="onTrackNameInputStart"></station-expand-button>
+        v-for="s in Object.values(diagram.stations)"
+        :key="`station-expand-button-${s.id}`"
+        :station="s"
+        @trackNameInputStart="onTrackNameInputStart"
+      ></station-expand-button>
       <station-remove-button
-        v-for="s in Object.values(diagram.stations)" :key="`station-remove-button-${s.id}`"
-        :station="s"></station-remove-button>
+        v-for="s in Object.values(diagram.stations)"
+        :key="`station-remove-button-${s.id}`"
+        :station="s"
+      ></station-remove-button>
       <station-add-track-button
-        v-for="s in Object.values(diagram.stations)" :key="`station-add-track-button-${s.id}`" 
-        :station="s" 
-        @trackNameInputStart="onTrackNameInputStart"></station-add-track-button>
+        v-for="s in Object.values(diagram.stations)"
+        :key="`station-add-track-button-${s.id}`"
+        :station="s"
+        @trackNameInputStart="onTrackNameInputStart"
+      ></station-add-track-button>
       <template v-for="s in Object.values(diagram.stations)">
         <station-remove-track-button
-          v-for="t in s.tracks" :key="`station-remove-track-button-${s.id}-${t.id}`"
-          :station="s" :track="t"></station-remove-track-button>
+          v-for="t in s.tracks"
+          :key="`station-remove-track-button-${s.id}-${t.id}`"
+          :station="s"
+          :track="t"
+        ></station-remove-track-button>
       </template>
     </div>
   </div>
@@ -43,26 +54,34 @@ import TrainInfoEditor from "./TrainInfoEditor.vue";
 
 @Component({
   components: {
-    Stage, 
-    StationAddTrackButton, 
-    StationExpandButton, 
-    StationNameInput, 
-    StationRemoveButton, 
-    StationRemoveTrackButton, 
+    Stage,
+    StationAddTrackButton,
+    StationExpandButton,
+    StationNameInput,
+    StationRemoveButton,
+    StationRemoveTrackButton,
     TrackNameInput,
-    TrainInfoEditor
+    TrainInfoEditor,
   },
 })
 export default class DiagramView extends Vue {
-  @Prop({ default: new DiagramViewContext() }) @ProvideReactive() private context!: DiagramViewContext;
-  private get diagram() { return this.context.diagram; }
-  private get viewConfig() { return this.context.config; }
-  private get viewState() { return this.context.state; }
+  @Prop({ default: new DiagramViewContext() })
+  @ProvideReactive()
+  private context!: DiagramViewContext;
+  private get diagram() {
+    return this.context.diagram;
+  }
+  private get viewConfig() {
+    return this.context.config;
+  }
+  private get viewState() {
+    return this.context.state;
+  }
 
-  $refs!: { 
-    stationNameInput: StationNameInput,  
-    trackNameInput: TrackNameInput,
-    trainInfoEditor: TrainInfoEditor,
+  $refs!: {
+    stationNameInput: StationNameInput;
+    trackNameInput: TrackNameInput;
+    trainInfoEditor: TrainInfoEditor;
   };
 
   private mounted(): void {
@@ -79,7 +98,9 @@ export default class DiagramView extends Vue {
   }
 
   private onTrainInfoEditStart(): void {
-    this.$nextTick(() => this.$refs.trainInfoEditor.$refs.trainNameInput.focus());
+    this.$nextTick(() =>
+      this.$refs.trainInfoEditor.$refs.trainNameInput.focus()
+    );
   }
 
   private onTrainInfoEditEnd(): void {

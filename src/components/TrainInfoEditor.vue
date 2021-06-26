@@ -1,16 +1,76 @@
 <template>
   <div class="train-info-editor-group">
-    <div ref="trainInfoEditorBox" class="train-info-editor-box box" :style="trainInfoEditorBoxStyle">
-      <input ref="trainNameInput" class="train-name-input" :value="targetTrain.name" :style="trainNameInputStyle" @keypress.enter="onComplete" @blur="onBlur">
-      <span ref="colorPickerTrigger" class="color-picker picker" :style="{ background: targetTrain.color || viewConfig.trainPathColor }" @click="onColorPickerTriggerClick"></span>
-      <span ref="lineWidthPickerTrigger" class="line-width-picker picker" @click="onLineWidthPickerTriggerClick"><span class="line-width-picker-preview" :style="{ background: targetTrain.color || viewConfig.trainPathColor, height: `${getDispLineWidthByValue(targetTrain.lineWidth || viewConfig.trainPathWidth)}px` }"></span></span>
+    <div
+      ref="trainInfoEditorBox"
+      class="train-info-editor-box box"
+      :style="trainInfoEditorBoxStyle"
+    >
+      <input
+        ref="trainNameInput"
+        class="train-name-input"
+        :value="targetTrain.name"
+        :style="trainNameInputStyle"
+        @keypress.enter="onComplete"
+        @blur="onBlur"
+      />
+      <span
+        ref="colorPickerTrigger"
+        class="color-picker picker"
+        :style="{ background: targetTrain.color || viewConfig.trainPathColor }"
+        @click="onColorPickerTriggerClick"
+      ></span>
+      <span
+        ref="lineWidthPickerTrigger"
+        class="line-width-picker picker"
+        @click="onLineWidthPickerTriggerClick"
+        ><span
+          class="line-width-picker-preview"
+          :style="{
+            background: targetTrain.color || viewConfig.trainPathColor,
+            height: `${getDispLineWidthByValue(
+              targetTrain.lineWidth || viewConfig.trainPathWidth
+            )}px`,
+          }"
+        ></span
+      ></span>
     </div>
     <div class="color-picker-box picker-box box" :style="colorPickerBoxStyle">
-      <div><span class="color-picker picker" style="background: #000" @click="onColorPickerClick('#000')"></span></div>
-      <div><span class="color-picker picker" v-for="(c, i) in colorPickerColors" :key="`train-path-color-picker-${i}`" :style="{ background: c }" @click="onColorPickerClick(c)"></span></div>
+      <div>
+        <span
+          class="color-picker picker"
+          style="background: #000"
+          @click="onColorPickerClick('#000')"
+        ></span>
+      </div>
+      <div>
+        <span
+          class="color-picker picker"
+          v-for="(c, i) in colorPickerColors"
+          :key="`train-path-color-picker-${i}`"
+          :style="{ background: c }"
+          @click="onColorPickerClick(c)"
+        ></span>
+      </div>
     </div>
-    <div class="line-width-picker-box picker-box box" :style="lineWidthPickerBoxStyle">
-      <div><span class="line-width-picker picker" v-for="(w, i) in lineWidthPickerValues" :key="`train-path-line-width-picker-${i}`" @click="onLineWidthPickerClick(w.value)"><span class="line-width-picker-preview" :style="{ background: targetTrain.color || viewConfig.trainPathColor, height: `${w.disp}px` }"></span></span></div>
+    <div
+      class="line-width-picker-box picker-box box"
+      :style="lineWidthPickerBoxStyle"
+    >
+      <div>
+        <span
+          class="line-width-picker picker"
+          v-for="(w, i) in lineWidthPickerValues"
+          :key="`train-path-line-width-picker-${i}`"
+          @click="onLineWidthPickerClick(w.value)"
+          ><span
+            class="line-width-picker-preview"
+            :style="{
+              background: targetTrain.color || viewConfig.trainPathColor,
+              height: `${w.disp}px`,
+            }"
+          ></span
+        ></span>
+      </div>
     </div>
   </div>
 </template>
@@ -23,15 +83,21 @@ import Train from "@/data/Train";
 @Component
 export default class TrackNameInput extends Vue {
   @InjectReactive() private context!: DiagramViewContext;
-  private get diagram() { return this.context.diagram; }
-  private get viewConfig() { return this.context.config; }
-  private get viewState() { return this.context.state; }
+  private get diagram() {
+    return this.context.diagram;
+  }
+  private get viewConfig() {
+    return this.context.config;
+  }
+  private get viewState() {
+    return this.context.state;
+  }
 
   $refs!: {
-    trainInfoEditorBox: HTMLElement,
-    trainNameInput: HTMLInputElement,
-    colorPickerTrigger: HTMLElement,
-    lineWidthPickerTrigger: HTMLElement,
+    trainInfoEditorBox: HTMLElement;
+    trainNameInput: HTMLInputElement;
+    colorPickerTrigger: HTMLElement;
+    lineWidthPickerTrigger: HTMLElement;
   };
 
   private pickerMode: "none" | "color" | "lineWidth" = "none";
@@ -42,69 +108,84 @@ export default class TrackNameInput extends Vue {
 
   private get trainInfoEditorBoxTop(): number {
     const state = this.viewState.trainInfoEditorTarget;
-    return state ?
-      state.y + (state.verticalAlign == "bottom" ? -this.$refs.trainInfoEditorBox.clientHeight ?? 0 : 0) :
-      this.viewState.viewHeight;
+    return state
+      ? state.y +
+          (state.verticalAlign == "bottom"
+            ? -this.$refs.trainInfoEditorBox.clientHeight ?? 0
+            : 0)
+      : this.viewState.viewHeight;
   }
 
   private get trainInfoEditorBoxStyle(): unknown {
     const state = this.viewState.trainInfoEditorTarget;
-    return state ?
-      {
-        left: `${state.x}px`,
-        top: `${this.trainInfoEditorBoxTop}px`,
-      } : {
-        top: `${this.viewState.viewHeight}px`
-      };
+    return state
+      ? {
+          left: `${state.x}px`,
+          top: `${this.trainInfoEditorBoxTop}px`,
+        }
+      : {
+          top: `${this.viewState.viewHeight}px`,
+        };
   }
 
   private get trainNameInputStyle(): unknown {
-    return this.viewState.trainInfoEditorTarget ?
-      {
-        lineHeight: `${this.viewConfig.stationLabelFontSize}px`,
-        fontSize: `${this.viewConfig.stationLabelFontSize}px`,
-      } : {};
+    return this.viewState.trainInfoEditorTarget
+      ? {
+          lineHeight: `${this.viewConfig.stationLabelFontSize}px`,
+          fontSize: `${this.viewConfig.stationLabelFontSize}px`,
+        }
+      : {};
   }
 
   private get colorPickerBoxStyle(): unknown {
     const state = this.viewState.trainInfoEditorTarget;
-    return state && this.pickerMode == "color" ?
-      {
-        left: `calc(${state.x + this.$refs.colorPickerTrigger.offsetLeft}px - 0.5rem)`,
-        top: `${this.trainInfoEditorBoxTop + this.$refs.trainInfoEditorBox.clientHeight}px`,
-      } : {
-        top: `${this.viewState.viewHeight}px`
-      };
+    return state && this.pickerMode == "color"
+      ? {
+          left: `calc(${
+            state.x + this.$refs.colorPickerTrigger.offsetLeft
+          }px - 0.5rem)`,
+          top: `${
+            this.trainInfoEditorBoxTop +
+            this.$refs.trainInfoEditorBox.clientHeight
+          }px`,
+        }
+      : {
+          top: `${this.viewState.viewHeight}px`,
+        };
   }
 
   private get colorPickerColors() {
-    return [
-      "#ce1a34",
-      "#dd7d15",
-      "#ceae0f",
-      "#298e30",
-      "#2d75bc",
-      "#790894",
-    ];
+    return ["#ce1a34", "#dd7d15", "#ceae0f", "#298e30", "#2d75bc", "#790894"];
   }
 
   private get lineWidthPickerBoxStyle(): unknown {
     const state = this.viewState.trainInfoEditorTarget;
-    return state && this.pickerMode == "lineWidth" ?
-      {
-        left: `calc(${state.x + this.$refs.lineWidthPickerTrigger.offsetLeft}px - 0.5rem)`,
-        top: `${this.trainInfoEditorBoxTop + this.$refs.trainInfoEditorBox.clientHeight}px`,
-      } : {
-        top: `${this.viewState.viewHeight}px`
-      };
+    return state && this.pickerMode == "lineWidth"
+      ? {
+          left: `calc(${
+            state.x + this.$refs.lineWidthPickerTrigger.offsetLeft
+          }px - 0.5rem)`,
+          top: `${
+            this.trainInfoEditorBoxTop +
+            this.$refs.trainInfoEditorBox.clientHeight
+          }px`,
+        }
+      : {
+          top: `${this.viewState.viewHeight}px`,
+        };
   }
 
   private getDispLineWidthByValue(value: number) {
-    return this.lineWidthPickerValues.find(e => e.value == value)?.disp ?? value;
+    return (
+      this.lineWidthPickerValues.find((e) => e.value == value)?.disp ?? value
+    );
   }
 
   private get lineWidthPickerValues() {
-    return [ { value: 1, disp: 0.75 }, { value: 2, disp: 2.25 } ];
+    return [
+      { value: 1, disp: 0.75 },
+      { value: 2, disp: 2.25 },
+    ];
   }
 
   onComplete(): void {
@@ -123,8 +204,12 @@ export default class TrackNameInput extends Vue {
         state.train.name = name;
         this.context.history.push({
           this: this,
-          undo: () => { targetTrain.name = name0; },
-          redo: () => { targetTrain.name = name; }
+          undo: () => {
+            targetTrain.name = name0;
+          },
+          redo: () => {
+            targetTrain.name = name;
+          },
         });
       }
     }
@@ -144,8 +229,12 @@ export default class TrackNameInput extends Vue {
     targetTrain.color = color;
     this.context.history.push({
       this: this,
-      undo: () => { targetTrain.color = color0; },
-      redo: () => { targetTrain.color = color; }
+      undo: () => {
+        targetTrain.color = color0;
+      },
+      redo: () => {
+        targetTrain.color = color;
+      },
     });
   }
 
@@ -155,8 +244,12 @@ export default class TrackNameInput extends Vue {
     targetTrain.lineWidth = lineWidth;
     this.context.history.push({
       this: this,
-      undo: () => { targetTrain.lineWidth = lineWidth0; },
-      redo: () => { targetTrain.lineWidth = lineWidth; }
+      undo: () => {
+        targetTrain.lineWidth = lineWidth0;
+      },
+      redo: () => {
+        targetTrain.lineWidth = lineWidth;
+      },
     });
   }
 }

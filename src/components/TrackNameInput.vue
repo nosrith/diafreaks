@@ -1,5 +1,11 @@
 <template>
-  <input :value="targetTrack.name" v-show="viewState.trackNameInputTarget" :style="style" @keypress.enter="onComplete" @blur="onComplete">
+  <input
+    :value="targetTrack.name"
+    v-show="viewState.trackNameInputTarget"
+    :style="style"
+    @keypress.enter="onComplete"
+    @blur="onComplete"
+  />
 </template>
 
 <script lang="ts">
@@ -10,9 +16,15 @@ import Track from "@/data/Track";
 @Component
 export default class TrackNameInput extends Vue {
   @InjectReactive() private context!: DiagramViewContext;
-  private get diagram() { return this.context.diagram; }
-  private get viewConfig() { return this.context.config; }
-  private get viewState() { return this.context.state; }
+  private get diagram() {
+    return this.context.diagram;
+  }
+  private get viewConfig() {
+    return this.context.config;
+  }
+  private get viewState() {
+    return this.context.state;
+  }
 
   $el!: HTMLInputElement;
 
@@ -21,17 +33,38 @@ export default class TrackNameInput extends Vue {
   }
 
   private get style(): unknown {
-    return this.viewState.trackNameInputTarget ?
-      {
-        left: `${(this.viewConfig.stationLabelLeftMargin + this.viewConfig.trackLabelLeftMargin) * this.context.subScale}px`,
-        top: `${this.context.getYByRelY(this.targetTrack.relY) - this.viewConfig.stationLabelFontSize * this.context.subScale - 4}px`,
-        width: `${(this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelLeftMargin - this.viewConfig.trackLabelLeftMargin - this.viewConfig.stationLabelRightMargin) * this.context.subScale}px`,
-        height: `${this.viewConfig.stationLabelFontSize * this.context.subScale + 4}px`,
-        paddingTop: "2px",
-        lineHeight: `${this.viewConfig.stationLabelFontSize * this.context.subScale}px`,
-        border: "none",
-        fontSize: `${this.viewConfig.stationLabelFontSize * this.context.subScale}px`,
-      } : {};
+    return this.viewState.trackNameInputTarget
+      ? {
+          left: `${
+            (this.viewConfig.stationLabelLeftMargin +
+              this.viewConfig.trackLabelLeftMargin) *
+            this.context.subScale
+          }px`,
+          top: `${
+            this.context.getYByRelY(this.targetTrack.relY) -
+            this.viewConfig.stationLabelFontSize * this.context.subScale -
+            4
+          }px`,
+          width: `${
+            (this.diagram.config.leftPaneWidth -
+              this.viewConfig.stationLabelLeftMargin -
+              this.viewConfig.trackLabelLeftMargin -
+              this.viewConfig.stationLabelRightMargin) *
+            this.context.subScale
+          }px`,
+          height: `${
+            this.viewConfig.stationLabelFontSize * this.context.subScale + 4
+          }px`,
+          paddingTop: "2px",
+          lineHeight: `${
+            this.viewConfig.stationLabelFontSize * this.context.subScale
+          }px`,
+          border: "none",
+          fontSize: `${
+            this.viewConfig.stationLabelFontSize * this.context.subScale
+          }px`,
+        }
+      : {};
   }
 
   private onComplete(): void {
@@ -42,8 +75,12 @@ export default class TrackNameInput extends Vue {
       targetTrack.name = name1;
       this.context.history.push({
         this: this,
-        undo: () => { targetTrack.name = name0; },
-        redo: () => { targetTrack.name = name1; }
+        undo: () => {
+          targetTrack.name = name0;
+        },
+        redo: () => {
+          targetTrack.name = name1;
+        },
       });
     }
     this.viewState.trackNameInputTarget = null;
