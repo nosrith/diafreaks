@@ -54,6 +54,7 @@ export default class DiagramViewContext {
   setDiagram(diagram: Diagram): void {
     const state0 = this.state;
     this.state = new ViewState();
+    this.state.editMode = state0.editMode;
     this.state.viewWidth = state0.viewWidth;
     this.state.viewHeight = state0.viewHeight;
 
