@@ -22,14 +22,14 @@ export default class StationNameInput extends Vue {
 
   private get style(): unknown {
     return {
-      left: `${this.viewConfig.stationLabelLeftMargin}px`,
-      top: `${this.context.getYByRelY(this.targetStation.topRelY) - this.viewConfig.stationLabelFontSize - 4}px`,
-      width: `${this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelLeftMargin - this.viewConfig.stationLabelRightMargin}px`,
-      height: `${this.viewConfig.stationLabelFontSize + 4}px`,
+      left: `${this.viewConfig.stationLabelLeftMargin * this.context.subScale}px`,
+      top: `${this.context.getYByRelY(this.targetStation.topRelY) - this.viewConfig.stationLabelFontSize * this.context.subScale - 4}px`,
+      width: `${(this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelLeftMargin - this.viewConfig.stationLabelRightMargin) * this.context.subScale}px`,
+      height: `${this.viewConfig.stationLabelFontSize * this.context.subScale + 4}px`,
       paddingTop: "2px",
-      lineHeight: `${this.viewConfig.stationLabelFontSize}px`,
+      lineHeight: `${this.viewConfig.stationLabelFontSize * this.context.subScale}px`,
       border: "none",
-      fontSize: `${this.viewConfig.stationLabelFontSize}px`,
+      fontSize: `${this.viewConfig.stationLabelFontSize * this.context.subScale}px`,
     };
   }
 

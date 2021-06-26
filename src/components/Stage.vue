@@ -41,7 +41,7 @@ export default class Stage extends Vue {
 
   $el!: HTMLElement;
 
-  private stageDragState: { scrollX0: number, scrollY0: number, x0: number, y0: number, dragging: boolean } | null = null;
+  private stageDragState: { scrollTime0: number, scrollRelY0: number, x0: number, y0: number, dragging: boolean } | null = null;
   private pinchState: { lastScale: number } | null = null;
 
   private get stageConfig(): unknown {
@@ -89,7 +89,7 @@ export default class Stage extends Vue {
       this.viewState.pointerTime = dUnit * this.diagram.config.minimumTimeUnit + this.viewState.pointerPreciseState.t0;
     } else if (!this.viewState.trainPathDragState?.dragging) {
       this.viewState.pointerTime = Math.round(this.context.getTimeByX(event.clientX) / 60) * 60;
-      if (event.clientX >= this.diagram.config.leftPaneWidth) {
+      if (event.clientX >= this.diagram.config.leftPaneWidth * this.context.subScale) {
         const pointerTargetLine = this.findPointerTargetLine(event.clientY);
         if (pointerTargetLine) {
           this.viewState.pointerTargetLine = pointerTargetLine ?? null;
@@ -119,7 +119,7 @@ export default class Stage extends Vue {
         drawingState.floating = null;
       }
 
-      const pointerTargetLine = event.clientX >= this.diagram.config.leftPaneWidth ?
+      const pointerTargetLine = event.clientX >= this.diagram.config.leftPaneWidth * this.context.subScale ?
         this.findPointerTargetLine(event.clientY) : undefined;
       if (pointerTargetLine) {
         const targetTrack = pointerTargetLine.track ?? pointerTargetLine.station.tracks[0];
@@ -201,6 +201,10 @@ export default class Stage extends Vue {
       }
     }
 
+    if (konvaEvent.evt.button == 1) {
+      this.setGlobalScale(1, konvaEvent.evt.clientX, konvaEvent.evt.clientY);
+    }
+
     if (konvaEvent.target == konvaEvent.currentTarget && 
         !konvaEvent.evt.ctrlKey &&
         !konvaEvent.evt.shiftKey && 
@@ -263,7 +267,7 @@ export default class Stage extends Vue {
       this.viewState.drawingState = null;
       this.viewState.trainSelections = {};
     } else if (konvaEvent.target == konvaEvent.currentTarget && this.viewState.editMode) {
-      if (konvaEvent.evt.clientX >= this.diagram.config.leftPaneWidth) {
+      if (konvaEvent.evt.clientX >= this.diagram.config.leftPaneWidth * this.context.subScale) {
         const targetLine = this.viewState.pointerTargetLine;
         if (targetLine && (targetLine.track || !targetLine.station.expanded)) {
           const track = targetLine.track ?? targetLine.station.tracks[0];
@@ -282,8 +286,8 @@ export default class Stage extends Vue {
         const relY = this.context.getRelYByY(konvaEvent.evt.clientY);
         const prevSta = this.stationsInMileageOrder.reverse().find(s => s.topRelY < relY);
         const mileage = prevSta ?
-          (relY - prevSta.bottomRelY) / this.diagram.config.yPhysScale + prevSta.mileage :
-          relY / this.diagram.config.yPhysScale;
+          (relY - prevSta.bottomRelY) / this.context.yPhysScale + prevSta.mileage :
+          relY / this.context.yPhysScale;
 
         const station = this.diagram.addNewStation();
         station.mileage = mileage;
@@ -346,8 +350,8 @@ export default class Stage extends Vue {
   private startDrag(x: number, y: number): void {
     if (!this.viewState.pointerPreciseState) {
       this.stageDragState = {
-        scrollX0: this.diagram.config.scrollX,
-        scrollY0: this.diagram.config.scrollY,
+        scrollTime0: this.diagram.config.scrollTime,
+        scrollRelY0: this.diagram.config.scrollRelY,
         x0: x,
         y0: y,
         dragging: false,
@@ -361,13 +365,9 @@ export default class Stage extends Vue {
         this.stageDragState.dragging = true;
       }
       if (this.stageDragState.dragging) {
-        this.diagram.config.scrollX = 
-          Math.max(this.diagram.config.minPlotTime * this.diagram.config.xPhysScale - this.viewConfig.plotPanePadding, 
-            Math.min(this.diagram.config.maxPlotTime * this.diagram.config.xPhysScale - (this.viewState.viewWidth - this.diagram.config.leftPaneWidth - this.viewConfig.plotPanePadding),
-              this.stageDragState.scrollX0 - (x - this.stageDragState.x0)));
-        this.diagram.config.scrollY = 
-          Math.max(0, Math.min(this.context.maxRelY - (this.viewState.viewHeight - this.viewConfig.plotPanePadding - this.viewConfig.topPaneHeight - this.viewConfig.trackLineSpan), 
-            this.stageDragState.scrollY0 - (y - this.stageDragState.y0)));
+        this.diagram.config.scrollTime = this.stageDragState.scrollTime0 - (x - this.stageDragState.x0) / this.context.xPhysScale;
+        this.diagram.config.scrollRelY = this.stageDragState.scrollRelY0 - (y - this.stageDragState.y0);
+        this.context.truncateScrollPosition();
       }
     }
   }
@@ -375,12 +375,7 @@ export default class Stage extends Vue {
   private onStageMouseWheel(konvaEvent: KonvaEventObject<WheelEvent>): void {
     // const f = Math.pow(2, -konvaEvent.evt.deltaY * this.viewConfig.wheelScale * 0.001);
     const f = Math.pow(2, -Math.sign(konvaEvent.evt.deltaY) * this.viewConfig.wheelScale);
-    this.diagram.config.scrollX += (f - 1) * (konvaEvent.evt.clientX - this.diagram.config.leftPaneWidth + this.diagram.config.scrollX);
-    this.diagram.config.scrollY = 
-      Math.max(0, Math.min(this.context.maxRelY + this.viewConfig.topPaneHeight - this.viewState.viewHeight,
-      this.diagram.config.scrollY + (f - 1) * (konvaEvent.evt.clientY - this.viewConfig.topPaneHeight + this.diagram.config.scrollY)));
-    this.diagram.config.gScale *= f;
-    this.context.updateY();
+    this.setGlobalScale(this.viewState.gScale * f, konvaEvent.evt.clientX, konvaEvent.evt.clientY);
     konvaEvent.evt.preventDefault();
   }
 
@@ -390,13 +385,8 @@ export default class Stage extends Vue {
 
   private onPinchMove(event: { center: { x: number, y: number }, scale: number }): void {
     if (this.pinchState) {
-      this.diagram.config.scrollX += (event.scale / this.pinchState.lastScale - 1) * (event.center.x - this.diagram.config.leftPaneWidth + this.diagram.config.scrollX);
-      this.diagram.config.scrollY = 
-        Math.max(0, Math.min(this.context.maxRelY + this.viewConfig.topPaneHeight - this.viewState.viewHeight,
-        this.diagram.config.scrollY + (event.scale / this.pinchState.lastScale - 1) * (event.center.y - this.viewConfig.topPaneHeight + this.diagram.config.scrollY)));
-      this.diagram.config.gScale *= event.scale / this.pinchState.lastScale;
+      this.setGlobalScale(this.viewState.gScale * event.scale / this.pinchState.lastScale, event.center.x, event.center.y);
       this.pinchState.lastScale = event.scale;
-      this.context.updateY();
     }
   }
 
@@ -405,6 +395,18 @@ export default class Stage extends Vue {
       this.onPinchMove(event);
       this.pinchState = null;
     }
+  }
+
+  private setGlobalScale(scale: number, cx: number, cy: number) {
+    const pointedTime = this.context.getTimeByX(cx);
+    const pointedUnscaledRelY = this.context.getRelYByY(cy) / this.viewState.gScale;
+
+    this.viewState.gScale = scale;
+    this.context.updateY();
+
+    this.diagram.config.scrollTime -= this.context.getTimeByX(cx) - pointedTime;
+    this.diagram.config.scrollRelY -= this.context.getRelYByY(cy) - pointedUnscaledRelY * this.viewState.gScale;
+    this.context.truncateScrollPosition();
   }
 
   private onKeyDown(event: KeyboardEvent): void {

@@ -21,14 +21,14 @@ export default class StationExpandButton extends Vue {
 
   private get style(): unknown {
     return {
-      left: `${this.viewConfig.stationLabelLeftMargin}px`,
+      left: `${this.viewConfig.stationLabelLeftMargin * this.context.subScale}px`,
       top: `${this.context.getYByRelY(this.station.bottomRelY)}px`,
       height: `${this.viewConfig.trackLineSpan}px`,
     };
   }
 
   private get isBottomLineIntersectingPlotPane(): boolean {
-    return this.context.getYByRelY(this.station.bottomRelY) >= this.viewConfig.topPaneHeight && 
+    return this.context.getYByRelY(this.station.bottomRelY) >= this.viewConfig.topPaneHeight * this.context.subScale && 
       this.context.getYByRelY(this.station.bottomRelY) < this.viewState.viewHeight;
   }
 

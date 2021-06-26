@@ -29,10 +29,10 @@ export default class BackLayer extends Vue {
   private get layerConfig(): unknown {
     return {
       clip: {
-        x: this.diagram.config.leftPaneWidth,
-        y: this.viewConfig.topPaneHeight,
-        width: this.viewState.viewWidth - this.diagram.config.leftPaneWidth,
-        height: this.viewState.viewHeight - this.viewConfig.topPaneHeight,
+        x: this.diagram.config.leftPaneWidth * this.context.subScale,
+        y: this.viewConfig.topPaneHeight * this.context.subScale,
+        width: this.viewState.viewWidth - this.diagram.config.leftPaneWidth * this.context.subScale,
+        height: this.viewState.viewHeight - this.viewConfig.topPaneHeight * this.context.subScale,
       }
     };
   }

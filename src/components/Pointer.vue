@@ -22,7 +22,7 @@ export default class TrainPathGroup extends Vue {
   }
 
   private get rectConfig(): unknown {
-    const width = this.viewState.drawingState ? this.viewConfig.selectedTrainPathMarkerWidth : this.viewConfig.pointerWidth;
+    const width =  this.context.subScale * (this.viewState.drawingState ? this.viewConfig.selectedTrainPathMarkerWidth : this.viewConfig.pointerWidth);
     return {
       x: this.context.getXByTime(this.viewState.pointerTime) - width * 0.5,
       y: this.viewState.pointerY - width * 0.5,
@@ -39,10 +39,10 @@ export default class TrainPathGroup extends Vue {
       this.viewState.pointerTime + Math.ceil(-this.viewState.pointerTime / 3600) * 3600;
     return {
       x: this.context.getXByTime(this.viewState.pointerTime),
-      y: this.viewState.pointerY - this.viewConfig.pointerLabelFontSize,
-      height: this.viewConfig.pointerLabelFontSize,
+      y: this.viewState.pointerY - this.viewConfig.pointerLabelFontSize * this.context.subScale,
+      height: this.viewConfig.pointerLabelFontSize * this.context.subScale,
       text: getTimeText(time, this.viewState.pointerPreciseState != null),
-      fontSize: this.viewConfig.pointerLabelFontSize,
+      fontSize: this.viewConfig.pointerLabelFontSize * this.context.subScale,
       fontFamily: this.viewConfig.fontFamily,
       fill: this.viewConfig.pointerColor,
       align: "left",

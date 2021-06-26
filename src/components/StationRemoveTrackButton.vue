@@ -22,14 +22,14 @@ export default class StationRemoveTrackButton extends Vue {
 
   private get style(): unknown {
     return {
-      left: `${this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelRightMargin}px`,
+      left: `${(this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelRightMargin) * this.context.subScale}px`,
       top: `${this.context.getYByRelY(this.track.relY) - this.viewConfig.trackLineSpan}px`,
       height: `${this.viewConfig.trackLineSpan}px`,
     };
   }
 
   private get isLineIntersectingPlotPane(): boolean {
-    return this.context.getYByRelY(this.track.relY) >= this.viewConfig.topPaneHeight && 
+    return this.context.getYByRelY(this.track.relY) >= this.viewConfig.topPaneHeight * this.context.subScale && 
       this.context.getYByRelY(this.track.relY) < this.viewState.viewHeight;
   }
 

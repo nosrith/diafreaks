@@ -26,7 +26,7 @@ export default class TrackGroup extends Vue {
   private get lineConfig(): unknown {
     return {
       points: [
-        this.viewConfig.stationLabelLeftMargin + this.viewConfig.trackLabelLeftMargin, 
+        (this.viewConfig.stationLabelLeftMargin + this.viewConfig.trackLabelLeftMargin) * this.context.subScale, 
         this.context.getYByRelY(this.track.relY), 
         this.viewState.viewWidth, 
         this.context.getYByRelY(this.track.relY)
@@ -40,12 +40,12 @@ export default class TrackGroup extends Vue {
   private get labelConfig(): unknown {
     return {
       id: `track-label-${this.station.id}-${this.track.id}`,
-      x: this.viewConfig.stationLabelLeftMargin + this.viewConfig.trackLabelLeftMargin,
-      y: this.context.getYByRelY(this.track.relY) - this.viewConfig.trackLabelFontSize,
-      width: this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelLeftMargin - this.viewConfig.trackLabelLeftMargin - this.viewConfig.stationLabelRightMargin,
-      height: this.viewConfig.trackLabelFontSize,
+      x: (this.viewConfig.stationLabelLeftMargin + this.viewConfig.trackLabelLeftMargin) * this.context.subScale,
+      y: this.context.getYByRelY(this.track.relY) - this.viewConfig.trackLabelFontSize * this.context.subScale,
+      width: (this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelLeftMargin - this.viewConfig.trackLabelLeftMargin - this.viewConfig.stationLabelRightMargin) * this.context.subScale,
+      height: this.viewConfig.trackLabelFontSize * this.context.subScale,
       text: this.track.name,
-      fontSize: this.viewConfig.trackLabelFontSize,
+      fontSize: this.viewConfig.trackLabelFontSize * this.context.subScale,
       fontFamily: this.viewConfig.fontFamily,
       fill: this.viewConfig.trackLabelColor,
       align: "left",
@@ -54,7 +54,7 @@ export default class TrackGroup extends Vue {
   }
 
   private get isLineIntersectingPlotPane(): boolean {
-    return this.context.getYByRelY(this.track.relY) >= this.viewConfig.topPaneHeight && 
+    return this.context.getYByRelY(this.track.relY) >= this.viewConfig.topPaneHeight * this.context.subScale && 
       this.context.getYByRelY(this.track.relY) < this.viewState.viewHeight;
   }
 

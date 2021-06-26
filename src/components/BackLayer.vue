@@ -26,7 +26,7 @@ export default class BackLayer extends Vue {
 
   private get timeGridLines(): unknown {
     const lines = [];
-    const scrollLeftTime = this.diagram.config.scrollX / this.diagram.config.xPhysScale;
+    const scrollLeftTime = this.diagram.config.scrollTime;
     let t = Math.ceil(scrollLeftTime / this.viewConfig.minorMinutelyGridLineSpan) * this.viewConfig.minorMinutelyGridLineSpan;
     let x = this.context.getXByTime(t);
     while (x < this.viewState.viewWidth) {
@@ -35,7 +35,7 @@ export default class BackLayer extends Vue {
         lineConfig: {
           points: [
             x,
-            this.viewConfig.topPaneHeight,
+            this.viewConfig.topPaneHeight * this.context.subScale,
             x,
             this.viewState.viewHeight
           ],
@@ -50,12 +50,12 @@ export default class BackLayer extends Vue {
           listening: false,
         },
         labelConfig: t % 3600 != 0 ? null : {
-          x: x - this.viewConfig.hourlyLabelFontSize,
-          y: this.viewConfig.topPaneHeight - this.viewConfig.hourlyLabelBottomMargin - this.viewConfig.hourlyLabelFontSize,
-          width: this.viewConfig.hourlyLabelFontSize * 2,
-          height: this.viewConfig.hourlyLabelFontSize,
+          x: x - this.viewConfig.hourlyLabelFontSize * this.context.subScale,
+          y: (this.viewConfig.topPaneHeight - this.viewConfig.hourlyLabelBottomMargin - this.viewConfig.hourlyLabelFontSize) * this.context.subScale,
+          width: this.viewConfig.hourlyLabelFontSize * this.context.subScale * 2,
+          height: this.viewConfig.hourlyLabelFontSize * this.context.subScale,
           text: `${ t / 3600 % 24 }`,
-          fontSize: this.viewConfig.hourlyLabelFontSize,
+          fontSize: this.viewConfig.hourlyLabelFontSize * this.context.subScale,
           fontFamily: this.viewConfig.fontFamily,
           fill: this.viewConfig.hourlyLabelColor,
           align: "center",

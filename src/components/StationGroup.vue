@@ -64,10 +64,10 @@ export default class StationGroup extends Vue {
   private get labelRectConfig(): unknown {
     return {
       id: `station-label-${this.station.id}`,
-      x: this.viewConfig.stationLabelLeftMargin,
-      y: this.context.getYByRelY(this.station.topRelY) - this.viewConfig.stationLabelFontSize,
-      width: this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelLeftMargin - this.viewConfig.stationLabelRightMargin,
-      height: this.viewConfig.stationLabelFontSize,
+      x: this.viewConfig.stationLabelLeftMargin * this.context.subScale,
+      y: this.context.getYByRelY(this.station.topRelY) - this.viewConfig.stationLabelFontSize * this.context.subScale,
+      width: (this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelLeftMargin - this.viewConfig.stationLabelRightMargin) * this.context.subScale,
+      height: this.viewConfig.stationLabelFontSize * this.context.subScale,
     };
   }
 
@@ -78,13 +78,16 @@ export default class StationGroup extends Vue {
     return Array.from(stationName).map((c, index) => {
       return {
         key: `station-label-${this.station.id}-${index}`,
-        x: stationName.length > 1 ? 
-            this.viewConfig.stationLabelLeftMargin + index * charSpan :
-            this.viewConfig.stationLabelLeftMargin + widthForChars * 0.5,
-        y: this.context.getYByRelY(this.station.topRelY) - this.viewConfig.stationLabelFontSize,
-        height: this.viewConfig.stationLabelFontSize,
+        x: 
+          this.context.subScale * (
+            stationName.length > 1 ? 
+              this.viewConfig.stationLabelLeftMargin + index * charSpan :
+              this.viewConfig.stationLabelLeftMargin + widthForChars * 0.5
+          ),
+        y: this.context.getYByRelY(this.station.topRelY) - this.viewConfig.stationLabelFontSize * this.context.subScale,
+        height: this.viewConfig.stationLabelFontSize * this.context.subScale,
         text: c,
-        fontSize: this.viewConfig.stationLabelFontSize,
+        fontSize: this.viewConfig.stationLabelFontSize * this.context.subScale,
         fontFamily: this.viewConfig.fontFamily,
         fill: this.viewConfig.stationLabelColor,
         align: "left",
@@ -94,12 +97,12 @@ export default class StationGroup extends Vue {
   }
 
   private get isTopLineIntersectingPlotPane(): boolean {
-    return this.context.getYByRelY(this.station.topRelY) >= this.viewConfig.topPaneHeight && 
+    return this.context.getYByRelY(this.station.topRelY) >= this.viewConfig.topPaneHeight * this.context.subScale && 
       this.context.getYByRelY(this.station.topRelY) < this.viewState.viewHeight;
   }
 
   private get isBottomLineIntersectingPlotPane(): boolean {
-    return this.context.getYByRelY(this.station.bottomRelY) >= this.viewConfig.topPaneHeight && 
+    return this.context.getYByRelY(this.station.bottomRelY) >= this.viewConfig.topPaneHeight * this.context.subScale && 
       this.context.getYByRelY(this.station.bottomRelY) < this.viewState.viewHeight;
   }
 
@@ -128,7 +131,7 @@ export default class StationGroup extends Vue {
         this.dragState.dragging = true;
       }
       if (this.dragState.dragging) {
-        this.station.mileage = this.dragState.mileage0 + (event.screenY - this.dragState.sy0) / this.diagram.config.yPhysScale;
+        this.station.mileage = this.dragState.mileage0 + (event.screenY - this.dragState.sy0) / this.context.yPhysScale;
         this.context.updateY();
       }
     }

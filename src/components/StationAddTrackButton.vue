@@ -17,14 +17,14 @@ export default class StationAddTrackButton extends Vue {
 
   private get style(): unknown {
     return {
-      left: `${this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelRightMargin}px`,
+      left: `${(this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelRightMargin) * this.context.subScale}px`,
       top: `${this.context.getYByRelY(this.station.bottomRelY) - this.viewConfig.trackLineSpan}px`,
       height: `${this.viewConfig.trackLineSpan}px`,
     };
   }
 
   private get isBottomLineIntersectingPlotPane(): boolean {
-    return this.context.getYByRelY(this.station.bottomRelY) >= this.viewConfig.topPaneHeight && 
+    return this.context.getYByRelY(this.station.bottomRelY) >= this.viewConfig.topPaneHeight * this.context.subScale && 
       this.context.getYByRelY(this.station.bottomRelY) < this.viewState.viewHeight;
   }
 

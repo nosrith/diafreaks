@@ -57,7 +57,7 @@ export default class TrainPathGroup extends Vue {
         ),
       text: this.trainNameLabelText, 
       ...this.trainNameLabelRect,
-      fontSize: this.viewConfig.trainNameLabelFontSize,
+      fontSize: this.viewConfig.trainNameLabelFontSize * this.context.subScale,
       fontFamily: this.viewConfig.fontFamily,
       fill: this.train.color || this.viewConfig.trainPathColor,
     };
@@ -69,7 +69,9 @@ export default class TrainPathGroup extends Vue {
 
   get trainNameLabelRect(): { x: number, y: number, width: number, height: number, rotation: number } {
     const text = this.trainNameLabelText;
-    const textWidth = getTextWidth(text, this.viewConfig.fontFamily, this.viewConfig.trainNameLabelFontSize);
+    const physFontSize = this.viewConfig.trainNameLabelFontSize * this.context.subScale;
+    const physLineHeight = this.viewConfig.trainNameLabelLineHeight * this.context.subScale;
+    const textWidth = getTextWidth(text, this.viewConfig.fontFamily, physFontSize);
 
     const nodes = 
       this.viewState.trainPathDragState?.targets[this.train.id] && this.viewState.controlKeyPressed ?
@@ -92,16 +94,16 @@ export default class TrainPathGroup extends Vue {
       const segDXToD = Math.sqrt(1 / (1 + segDYToDX * segDYToDX));
       const segDYToD = segDXToD != 0 ? segDXToD * segDYToDX : 1;
       const x = segDYToDX >= 0 ?
-        segDYToD * this.viewConfig.trainNameLabelFontSize + firstNodeRunning.x : 
-        -segDYToD * (this.viewConfig.trainNameLabelLineHeight - this.viewConfig.trainNameLabelFontSize) + firstNodeRunning.x;
+        segDYToD * physFontSize + firstNodeRunning.x : 
+        -segDYToD * (physLineHeight - physFontSize) + firstNodeRunning.x;
       const y = segDYToDX >= 0 ?
-        -segDXToD * this.viewConfig.trainNameLabelFontSize + firstNodeRunning.y : 
-        segDXToD * (this.viewConfig.trainNameLabelLineHeight - this.viewConfig.trainNameLabelFontSize) + firstNodeRunning.y;
+        -segDXToD * physFontSize + firstNodeRunning.y : 
+        segDXToD * (physLineHeight - physFontSize) + firstNodeRunning.y;
       const rotation = Math.atan(segDYToDX) / Math.PI * 180;
       return { 
         x, y, rotation,
         width: textWidth,
-        height: this.viewConfig.trainNameLabelFontSize,
+        height: physFontSize,
       };
     } else {
       return { 
@@ -109,7 +111,7 @@ export default class TrainPathGroup extends Vue {
         y: firstNodeRunning.y, 
         rotation: 0,
         width: textWidth,
-        height: this.viewConfig.trainNameLabelFontSize,
+        height: physFontSize,
       };
     }
   }
@@ -422,7 +424,7 @@ export default class TrainPathGroup extends Vue {
       }
       if (this.viewState.trainPathDragState.dragging) {
         if (!this.viewState.pointerPreciseState) {
-          this.viewState.pointerTime = this.dragState.t0 + Math.floor((event.screenX - this.dragState.sx0) / this.diagram.config.xPhysScale / 60) * 60;
+          this.viewState.pointerTime = this.dragState.t0 + Math.floor((event.screenX - this.dragState.sx0) / this.context.xPhysScale / 60) * 60;
         }
         this.viewState.trainPathDragState.timeShift = 
           !this.viewState.controlKeyPressed ?

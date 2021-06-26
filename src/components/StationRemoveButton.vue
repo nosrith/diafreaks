@@ -19,14 +19,14 @@ export default class StationRemoveButton extends Vue {
 
   private get style(): unknown {
     return {
-      left: `${this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelRightMargin}px`,
+      left: `${(this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelRightMargin) * this.context.subScale}px`,
       top: `${this.context.getYByRelY(this.station.topRelY) - this.viewConfig.trackLineSpan}px`,
       height: `${this.viewConfig.trackLineSpan}px`,
     };
   }
 
   private get isTopLineIntersectingPlotPane(): boolean {
-    return this.context.getYByRelY(this.station.topRelY) >= this.viewConfig.topPaneHeight && 
+    return this.context.getYByRelY(this.station.topRelY) >= this.viewConfig.topPaneHeight * this.context.subScale && 
       this.context.getYByRelY(this.station.topRelY) < this.viewState.viewHeight;
   }
 

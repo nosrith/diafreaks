@@ -20,11 +20,12 @@ export default class TrainPathMarker extends Vue {
   @Prop() trainPathNode!: TrainPathNode;
 
   get rectConfig(): unknown {
+    const width = this.viewConfig.selectedTrainPathMarkerWidth * this.context.subScale;
     return {
-      x: this.context.getXByTime(this.trainPathNode.time) - this.viewConfig.selectedTrainPathMarkerWidth * 0.5,
-      y: this.context.getYByRelY(this.trainPathNode.relY) - this.viewConfig.selectedTrainPathMarkerWidth * 0.5,
-      width: this.viewConfig.selectedTrainPathMarkerWidth,
-      height: this.viewConfig.selectedTrainPathMarkerWidth,
+      x: this.context.getXByTime(this.trainPathNode.time) - width * 0.5,
+      y: this.context.getYByRelY(this.trainPathNode.relY) - width * 0.5,
+      width: width,
+      height: width,
       fill: this.trainPathNode.stev.train.color || this.viewConfig.trainPathColor,
     };
   }
@@ -36,12 +37,12 @@ export default class TrainPathMarker extends Vue {
   get labelConfig(): unknown {
     const labelPosition = this.getLabelPosition();
     return {
-      x: this.context.getXByTime(this.trainPathNode.time) + labelPosition.x - this.viewConfig.markerLabelFontSize * 8,
-      y: this.context.getYByRelY(this.trainPathNode.relY) + labelPosition.y - this.viewConfig.markerLabelLineHeight,
-      width: this.viewConfig.markerLabelFontSize * 8,
-      height: this.viewConfig.markerLabelLineHeight,
+      x: this.context.getXByTime(this.trainPathNode.time) + labelPosition.x - this.viewConfig.markerLabelFontSize * this.context.subScale * 8,
+      y: this.context.getYByRelY(this.trainPathNode.relY) + labelPosition.y - this.viewConfig.markerLabelLineHeight * this.context.subScale,
+      width: this.viewConfig.markerLabelFontSize * this.context.subScale * 8,
+      height: this.viewConfig.markerLabelLineHeight * this.context.subScale,
       text: getTimeText(this.trainPathNode.time, this.viewState.pointerPreciseState != null),
-      fontSize: this.viewConfig.pointerLabelFontSize,
+      fontSize: this.viewConfig.pointerLabelFontSize * this.context.subScale,
       fontFamily: this.viewConfig.fontFamily,
       fill: this.trainPathNode.stev.train.color || this.viewConfig.trainPathColor,
       align: "right",
@@ -59,7 +60,7 @@ export default class TrainPathMarker extends Vue {
       const prevRelY = prevStev.station.mileage < thisStev.station.mileage ? prevStev.station.bottomRelY : prevStev.station.topRelY;
       const x = thisRelY == prevRelY ? 0:
         -this.viewConfig.markerLabelLineHeight *
-        ((thisStev.time - prevStev.time) * this.diagram.config.xPhysScale) /
+        ((thisStev.time - prevStev.time) * this.context.xPhysScale) /
         Math.abs(thisRelY - prevRelY);
       return {
         x: Math.max(x, -this.viewConfig.markerLabelMaxDistance),

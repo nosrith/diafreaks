@@ -8,6 +8,7 @@ export default class ViewState {
     editMode = true;
     viewWidth = 0;
     viewHeight = 0;
+    gScale = 1;
     trainSelections: { [trainId: number]: TrainSelection } = {};
     pointerScreenX = 0;
     pointerTime = 0;
