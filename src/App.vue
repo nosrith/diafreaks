@@ -121,8 +121,7 @@ export default class App extends Vue {
     this.context.state.editMode = this.enableSwitchEditMode;
     fetch("sample-diagram.json").then(async (result) => {
       const json = await result.json();
-      this.context.diagram = Diagram.fromJSON(json);
-      this.context.updateY();
+      this.context.setDiagram(Diagram.fromJSON(json));
       this.diagramFileName = "sample-diagram.json";
     });
   }
@@ -157,13 +156,15 @@ export default class App extends Vue {
       this.context.history.push({
         this: this,
         undo: () => {
-          this.context.diagram = diagram;
+          this.context.setDiagram(diagram);
         },
         redo: () => {
-          this.context.diagram = Diagram.fromJSON({ stations: {}, trains: {} });
+          this.context.setDiagram(
+            Diagram.fromJSON({ stations: {}, trains: {} })
+          );
         },
       });
-      this.context.diagram = Diagram.fromJSON({ stations: {}, trains: {} });
+      this.context.setDiagram(Diagram.fromJSON({ stations: {}, trains: {} }));
     }
   }
 
@@ -180,8 +181,7 @@ export default class App extends Vue {
           if (typeof reader.result == "string") {
             try {
               const data = JSON.parse(reader.result);
-              this.context.diagram = Diagram.fromJSON(data);
-              this.context.updateY();
+              this.context.setDiagram(Diagram.fromJSON(data));
               this.diagramFileName = file.name;
               this.context.history.clear();
             } catch (e) {

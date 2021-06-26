@@ -51,6 +51,16 @@ export default class DiagramViewContext {
     );
   }
 
+  setDiagram(diagram: Diagram): void {
+    const state0 = this.state;
+    this.state = new ViewState();
+    this.state.viewWidth = state0.viewWidth;
+    this.state.viewHeight = state0.viewHeight;
+
+    this.diagram = diagram;
+    this.updateY();
+  }
+
   updateY(): void {
     if (Object.keys(this.diagram.stations).length == 0) {
       this.maxRelY = 0;
