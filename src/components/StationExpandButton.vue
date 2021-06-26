@@ -23,7 +23,7 @@ export default class StationExpandButton extends Vue {
     return {
       left: `${this.viewConfig.stationLabelLeftMargin}px`,
       top: `${this.context.getYByRelY(this.station.bottomRelY)}px`,
-      height: `${this.diagram.config.trackLineSpan}px`,
+      height: `${this.viewConfig.trackLineSpan}px`,
     };
   }
 
@@ -35,7 +35,7 @@ export default class StationExpandButton extends Vue {
   private onClick(): void {
     if (!this.viewState.inputEnabled) {
       this.station.expanded = !this.station.expanded;
-      this.diagram.updateY();
+      this.context.updateY();
     }
   }
 }

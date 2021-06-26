@@ -9,7 +9,6 @@ export default class Diagram {
         public stations: { [id: number]: Station },
         public trains: { [id: number]: Train },
     ) {}
-    maxRelY = 0;
     
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
     static fromJSON(o: any): Diagram {
@@ -21,8 +20,6 @@ export default class Diagram {
         const stations: { [id: number]: Station } = Object.fromEntries(Object.values(o.stations).map((s: any) => [ s.id, Station.fromJSON(s) ]));
         const trains: { [id: number]: Train } = Object.fromEntries(Object.values(o.trains).map((t: any) => [ t.id, Train.fromJSON(t, stations) ]));
         const diagram = new Diagram(config, stations, trains);
-
-        diagram.updateY();
 
         return diagram;
     }
@@ -51,40 +48,6 @@ export default class Diagram {
     removeTrain(train: Train): void {
         Vue.delete(this.trains, train.id);
     }
-
-    updateY(): void {
-        if (Object.keys(this.stations).length == 0) {
-            this.maxRelY = 0;
-            return;
-        }
-
-        const stations = this.getStationsInMileageOrder();
-    
-        const initialMileage = stations[0].mileage;
-        for (const s of stations) {
-          s.mileage = s.mileage - initialMileage;
-        }
-    
-        let y = 0;
-        let lastMileage = 0;
-        for (const s of stations) {
-          y += (s.mileage - lastMileage) * this.config.yScale;
-          s.topRelY = y;
-          if (s.expanded) {
-            s.tracks.forEach((t, i) => {
-              t.relY = y + (i + 1) * this.config.trackLineSpan;
-            });
-            s.bottomRelY = y + (s.tracks.length + 1) * this.config.trackLineSpan;
-            y += (s.tracks.length + 1) * this.config.trackLineSpan;
-          } else {
-            Object.values(s.tracks).forEach(t => t.relY = y);
-            s.bottomRelY = y;
-          }
-          lastMileage = s.mileage;
-        }
-    
-        this.maxRelY = stations[stations.length - 1].bottomRelY;
-      }
     
     toJSON(): unknown {
         return {

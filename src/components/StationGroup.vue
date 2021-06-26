@@ -129,7 +129,7 @@ export default class StationGroup extends Vue {
       }
       if (this.dragState.dragging) {
         this.station.mileage = this.dragState.mileage0 + (event.screenY - this.dragState.sy0) / this.diagram.config.yScale;
-        this.diagram.updateY();
+        this.context.updateY();
       }
     }
   }

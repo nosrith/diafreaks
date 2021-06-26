@@ -3,7 +3,6 @@ export default class DiagramConfig {
     minPlotTime = 0;
     maxPlotTime = 30 * 3600;
     leftPaneWidth = 160;
-    trackLineSpan = 12;
     scrollX = 6 * 3600 * 0.08;
     scrollY = 0;
     xScale = 0.1;

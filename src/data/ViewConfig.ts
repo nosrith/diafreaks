@@ -22,6 +22,7 @@ export default class ViewConfig {
     trackLabelLeftMargin = 10;
     trackLabelFontSize = 11;
     trackLabelColor = "rgb(128, 192, 128)";
+    trackLineSpan = 12;
     trackLineWidth = 0.75;
     trackLineColor = "rgb(128, 192, 128)";
     trainPathWidth = 1;

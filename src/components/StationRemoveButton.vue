@@ -20,8 +20,8 @@ export default class StationRemoveButton extends Vue {
   private get style(): unknown {
     return {
       left: `${this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelRightMargin}px`,
-      top: `${this.context.getYByRelY(this.station.topRelY) - this.diagram.config.trackLineSpan}px`,
-      height: `${this.diagram.config.trackLineSpan}px`,
+      top: `${this.context.getYByRelY(this.station.topRelY) - this.viewConfig.trackLineSpan}px`,
+      height: `${this.viewConfig.trackLineSpan}px`,
     };
   }
 
@@ -49,7 +49,7 @@ export default class StationRemoveButton extends Vue {
       removingStevs.forEach(e => e.stev.train.removeStopEvent(e.stev));
       removingTrains.forEach(train => this.diagram.removeTrain(train)); 
       this.$delete(this.diagram.stations, this.station.id);
-      this.diagram.updateY();
+      this.context.updateY();
 
       this.context.history.push({
         this: this,
@@ -57,13 +57,13 @@ export default class StationRemoveButton extends Vue {
           this.$set(this.diagram.stations, this.station.id, this.station);
           removingTrains.forEach(train => this.diagram.addNewTrain(train)); 
           removingStevs.forEach(e => e.stev.train.addNewStopEvent(e.stev, e.index));
-          this.diagram.updateY();
+          this.context.updateY();
         },
         redo: () => { 
           removingStevs.forEach(e => e.stev.train.removeStopEvent(e.stev));
           removingTrains.forEach(train => this.diagram.removeTrain(train)); 
           this.$delete(this.diagram.stations, this.station.id); 
-          this.diagram.updateY();
+          this.context.updateY();
         }
       });
     }

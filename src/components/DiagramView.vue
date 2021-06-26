@@ -95,7 +95,7 @@ export default class DiagramView extends Vue {
             Math.min(this.diagram.config.maxPlotTime * this.diagram.config.xScale - (this.viewState.viewWidth - this.diagram.config.leftPaneWidth - this.viewConfig.plotPanePadding),
               this.diagram.config.scrollX));
         this.diagram.config.scrollY = 
-          Math.max(0, Math.min(this.context.getYByRelY(this.diagram.maxRelY), 
+          Math.max(0, Math.min(this.context.getYByRelY(this.context.maxRelY), 
             this.diagram.config.scrollY));
     }
   }

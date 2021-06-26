@@ -150,8 +150,8 @@ export default class Stage extends Vue {
     }
 
     const station = this.stationsInMileageOrder.find(s => 
-      this.context.getYByRelY(s.topRelY) + this.diagram.config.trackLineSpan - Math.max(this.viewConfig.trackLineWidth * 0.5, this.viewConfig.minHitWidth) < y &&
-      this.context.getYByRelY(s.bottomRelY) - this.diagram.config.trackLineSpan + Math.max(this.viewConfig.trackLineWidth * 0.5, this.viewConfig.minHitWidth) > y
+      this.context.getYByRelY(s.topRelY) + this.viewConfig.trackLineSpan - Math.max(this.viewConfig.trackLineWidth * 0.5, this.viewConfig.minHitWidth) < y &&
+      this.context.getYByRelY(s.bottomRelY) - this.viewConfig.trackLineSpan + Math.max(this.viewConfig.trackLineWidth * 0.5, this.viewConfig.minHitWidth) > y
     );
     if (station) {
       const pointedTrack = station.tracks.find(t => Math.abs(this.context.getYByRelY(t.relY) - y) < Math.max(this.viewConfig.trackLineWidth * 0.5, this.viewConfig.minHitWidth));
@@ -287,17 +287,17 @@ export default class Stage extends Vue {
 
         const station = this.diagram.addNewStation();
         station.mileage = mileage;
-        this.diagram.updateY();
+        this.context.updateY();
 
         this.context.history.push({
           this: this,
           undo: () => { 
             this.$delete(this.diagram.stations, station.id);
-            this.diagram.updateY();
+            this.context.updateY();
           },
           redo: () => { 
             this.$set(this.diagram.stations, station.id, station);
-            this.diagram.updateY();
+            this.context.updateY();
           }
         });
 
@@ -366,7 +366,7 @@ export default class Stage extends Vue {
             Math.min(this.diagram.config.maxPlotTime * this.diagram.config.xScale - (this.viewState.viewWidth - this.diagram.config.leftPaneWidth - this.viewConfig.plotPanePadding),
               this.stageDragState.scrollX0 - (x - this.stageDragState.x0)));
         this.diagram.config.scrollY = 
-          Math.max(0, Math.min(this.diagram.maxRelY - (this.viewState.viewHeight - this.viewConfig.plotPanePadding - this.viewConfig.topPaneHeight - this.diagram.config.trackLineSpan), 
+          Math.max(0, Math.min(this.context.maxRelY - (this.viewState.viewHeight - this.viewConfig.plotPanePadding - this.viewConfig.topPaneHeight - this.viewConfig.trackLineSpan), 
             this.stageDragState.scrollY0 - (y - this.stageDragState.y0)));
       }
     }
@@ -377,11 +377,11 @@ export default class Stage extends Vue {
     const f = Math.pow(2, -Math.sign(konvaEvent.evt.deltaY) * this.viewConfig.wheelScale);
     this.diagram.config.scrollX += (f - 1) * (konvaEvent.evt.clientX - this.diagram.config.leftPaneWidth + this.diagram.config.scrollX);
     this.diagram.config.scrollY = 
-      Math.max(0, Math.min(this.diagram.maxRelY + this.viewConfig.topPaneHeight - this.viewState.viewHeight,
+      Math.max(0, Math.min(this.context.maxRelY + this.viewConfig.topPaneHeight - this.viewState.viewHeight,
       this.diagram.config.scrollY + (f - 1) * (konvaEvent.evt.clientY - this.viewConfig.topPaneHeight + this.diagram.config.scrollY)));
     this.diagram.config.xScale *= f;
     this.diagram.config.yScale *= f;
-    this.diagram.updateY();
+    this.context.updateY();
     konvaEvent.evt.preventDefault();
   }
 
@@ -393,12 +393,12 @@ export default class Stage extends Vue {
     if (this.pinchState) {
       this.diagram.config.scrollX += (event.scale / this.pinchState.lastScale - 1) * (event.center.x - this.diagram.config.leftPaneWidth + this.diagram.config.scrollX);
       this.diagram.config.scrollY = 
-        Math.max(0, Math.min(this.diagram.maxRelY + this.viewConfig.topPaneHeight - this.viewState.viewHeight,
+        Math.max(0, Math.min(this.context.maxRelY + this.viewConfig.topPaneHeight - this.viewState.viewHeight,
         this.diagram.config.scrollY + (event.scale / this.pinchState.lastScale - 1) * (event.center.y - this.viewConfig.topPaneHeight + this.diagram.config.scrollY)));
       this.diagram.config.xScale *= event.scale / this.pinchState.lastScale;
       this.diagram.config.yScale *= event.scale / this.pinchState.lastScale;
       this.pinchState.lastScale = event.scale;
-      this.diagram.updateY();
+      this.context.updateY();
     }
   }
 

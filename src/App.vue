@@ -76,6 +76,7 @@ export default class App extends Vue {
     fetch("sample-diagram.json").then(async result => {
       const json = await result.json();
       this.context.diagram = Diagram.fromJSON(json);
+      this.context.updateY();
       this.diagramFileName = "sample-diagram.json";
     });
   }
@@ -126,6 +127,7 @@ export default class App extends Vue {
             try {
               const data = JSON.parse(reader.result);
               this.context.diagram = Diagram.fromJSON(data);
+              this.context.updateY();
               this.diagramFileName = file.name;
               this.context.history.clear();
             } catch (e) {

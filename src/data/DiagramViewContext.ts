@@ -9,6 +9,8 @@ export default class DiagramViewContext {
     diagram: Diagram = Diagram.fromJSON({ stations: [], trains: [] });
     history = new HistoryManager(100);
 
+    maxRelY = 0;
+
     getYByRelY(relY: number): number {
         return relY + this.config.plotPanePadding + this.config.topPaneHeight - this.diagram.config.scrollY;
     }    
@@ -20,5 +22,40 @@ export default class DiagramViewContext {
     }
     getTimeByX(x: number): number {
         return (x - this.diagram.config.leftPaneWidth + this.diagram.config.scrollX) / this.diagram.config.xScale;
+    }
+
+
+    updateY(): void {
+        if (Object.keys(this.diagram.stations).length == 0) {
+            this.maxRelY = 0;
+            return;
+        }
+
+        const stations = this.diagram.getStationsInMileageOrder();
+    
+        const initialMileage = stations[0].mileage;
+        for (const s of stations) {
+          s.mileage = s.mileage - initialMileage;
+        }
+    
+        let y = 0;
+        let lastMileage = 0;
+        for (const s of stations) {
+          y += (s.mileage - lastMileage) * this.diagram.config.yScale;
+          s.topRelY = y;
+          if (s.expanded) {
+            s.tracks.forEach((t, i) => {
+              t.relY = y + (i + 1) * this.config.trackLineSpan;
+            });
+            s.bottomRelY = y + (s.tracks.length + 1) * this.config.trackLineSpan;
+            y += (s.tracks.length + 1) * this.config.trackLineSpan;
+          } else {
+            Object.values(s.tracks).forEach(t => t.relY = y);
+            s.bottomRelY = y;
+          }
+          lastMileage = s.mileage;
+        }
+    
+        this.maxRelY = stations[stations.length - 1].bottomRelY;
     }
 }

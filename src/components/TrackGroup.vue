@@ -92,7 +92,7 @@ export default class TrackGroup extends Vue {
         } else {
           this.station.tracks.splice(newIndex, 0, this.track);
         }
-        this.diagram.updateY();
+        this.context.updateY();
       }
     }
   }

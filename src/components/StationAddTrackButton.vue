@@ -18,8 +18,8 @@ export default class StationAddTrackButton extends Vue {
   private get style(): unknown {
     return {
       left: `${this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelRightMargin}px`,
-      top: `${this.context.getYByRelY(this.station.bottomRelY) - this.diagram.config.trackLineSpan}px`,
-      height: `${this.diagram.config.trackLineSpan}px`,
+      top: `${this.context.getYByRelY(this.station.bottomRelY) - this.viewConfig.trackLineSpan}px`,
+      height: `${this.viewConfig.trackLineSpan}px`,
     };
   }
 
@@ -31,17 +31,17 @@ export default class StationAddTrackButton extends Vue {
   private onClick(): void {
     if (!this.viewState.inputEnabled) {
       const newTrack = this.station.addNewTrack();
-      this.diagram.updateY();
+      this.context.updateY();
 
       this.context.history.push({
         this: this,
         undo: () => { 
           this.station.removeTrack(newTrack); 
-          this.diagram.updateY();
+          this.context.updateY();
         },
         redo: () => { 
           this.station.addNewTrack(newTrack); 
-          this.diagram.updateY();
+          this.context.updateY();
         }
       });
 
