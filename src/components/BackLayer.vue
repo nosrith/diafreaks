@@ -26,7 +26,7 @@ export default class BackLayer extends Vue {
 
   private get timeGridLines(): unknown {
     const lines = [];
-    const scrollLeftTime = this.diagram.config.scrollX / this.diagram.config.xScale;
+    const scrollLeftTime = this.diagram.config.scrollX / this.diagram.config.xPhysScale;
     let t = Math.ceil(scrollLeftTime / this.viewConfig.minorMinutelyGridLineSpan) * this.viewConfig.minorMinutelyGridLineSpan;
     let x = this.context.getXByTime(t);
     while (x < this.viewState.viewWidth) {

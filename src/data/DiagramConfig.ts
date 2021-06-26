@@ -5,6 +5,7 @@ export default class DiagramConfig {
     leftPaneWidth = 160;
     scrollX = 6 * 3600 * 0.08;
     scrollY = 0;
+    gScale = 1;
     xScale = 0.1;
     yScale = 12;
 
@@ -19,4 +20,7 @@ export default class DiagramConfig {
         ));
         return dc;
     }
+
+    get xPhysScale() { return this.gScale * this.xScale; }
+    get yPhysScale() { return this.gScale * this.yScale; }
 }

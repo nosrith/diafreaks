@@ -282,8 +282,8 @@ export default class Stage extends Vue {
         const relY = this.context.getRelYByY(konvaEvent.evt.clientY);
         const prevSta = this.stationsInMileageOrder.reverse().find(s => s.topRelY < relY);
         const mileage = prevSta ?
-          (relY - prevSta.bottomRelY) / this.diagram.config.yScale + prevSta.mileage :
-          relY / this.diagram.config.yScale;
+          (relY - prevSta.bottomRelY) / this.diagram.config.yPhysScale + prevSta.mileage :
+          relY / this.diagram.config.yPhysScale;
 
         const station = this.diagram.addNewStation();
         station.mileage = mileage;
@@ -362,8 +362,8 @@ export default class Stage extends Vue {
       }
       if (this.stageDragState.dragging) {
         this.diagram.config.scrollX = 
-          Math.max(this.diagram.config.minPlotTime * this.diagram.config.xScale - this.viewConfig.plotPanePadding, 
-            Math.min(this.diagram.config.maxPlotTime * this.diagram.config.xScale - (this.viewState.viewWidth - this.diagram.config.leftPaneWidth - this.viewConfig.plotPanePadding),
+          Math.max(this.diagram.config.minPlotTime * this.diagram.config.xPhysScale - this.viewConfig.plotPanePadding, 
+            Math.min(this.diagram.config.maxPlotTime * this.diagram.config.xPhysScale - (this.viewState.viewWidth - this.diagram.config.leftPaneWidth - this.viewConfig.plotPanePadding),
               this.stageDragState.scrollX0 - (x - this.stageDragState.x0)));
         this.diagram.config.scrollY = 
           Math.max(0, Math.min(this.context.maxRelY - (this.viewState.viewHeight - this.viewConfig.plotPanePadding - this.viewConfig.topPaneHeight - this.viewConfig.trackLineSpan), 
@@ -379,8 +379,7 @@ export default class Stage extends Vue {
     this.diagram.config.scrollY = 
       Math.max(0, Math.min(this.context.maxRelY + this.viewConfig.topPaneHeight - this.viewState.viewHeight,
       this.diagram.config.scrollY + (f - 1) * (konvaEvent.evt.clientY - this.viewConfig.topPaneHeight + this.diagram.config.scrollY)));
-    this.diagram.config.xScale *= f;
-    this.diagram.config.yScale *= f;
+    this.diagram.config.gScale *= f;
     this.context.updateY();
     konvaEvent.evt.preventDefault();
   }
@@ -395,8 +394,7 @@ export default class Stage extends Vue {
       this.diagram.config.scrollY = 
         Math.max(0, Math.min(this.context.maxRelY + this.viewConfig.topPaneHeight - this.viewState.viewHeight,
         this.diagram.config.scrollY + (event.scale / this.pinchState.lastScale - 1) * (event.center.y - this.viewConfig.topPaneHeight + this.diagram.config.scrollY)));
-      this.diagram.config.xScale *= event.scale / this.pinchState.lastScale;
-      this.diagram.config.yScale *= event.scale / this.pinchState.lastScale;
+      this.diagram.config.gScale *= event.scale / this.pinchState.lastScale;
       this.pinchState.lastScale = event.scale;
       this.context.updateY();
     }

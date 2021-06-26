@@ -18,12 +18,11 @@ export default class DiagramViewContext {
         return y - this.config.plotPanePadding - this.config.topPaneHeight + this.diagram.config.scrollY;
     }
     getXByTime(time: number): number {
-        return time * this.diagram.config.xScale + this.diagram.config.leftPaneWidth - this.diagram.config.scrollX;
+        return time * this.diagram.config.xPhysScale + this.diagram.config.leftPaneWidth - this.diagram.config.scrollX;
     }
     getTimeByX(x: number): number {
-        return (x - this.diagram.config.leftPaneWidth + this.diagram.config.scrollX) / this.diagram.config.xScale;
+        return (x - this.diagram.config.leftPaneWidth + this.diagram.config.scrollX) / this.diagram.config.xPhysScale;
     }
-
 
     updateY(): void {
         if (Object.keys(this.diagram.stations).length == 0) {
@@ -41,7 +40,7 @@ export default class DiagramViewContext {
         let y = 0;
         let lastMileage = 0;
         for (const s of stations) {
-          y += (s.mileage - lastMileage) * this.diagram.config.yScale;
+          y += (s.mileage - lastMileage) * this.diagram.config.yPhysScale;
           s.topRelY = y;
           if (s.expanded) {
             s.tracks.forEach((t, i) => {

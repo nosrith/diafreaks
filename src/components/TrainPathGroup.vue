@@ -422,7 +422,7 @@ export default class TrainPathGroup extends Vue {
       }
       if (this.viewState.trainPathDragState.dragging) {
         if (!this.viewState.pointerPreciseState) {
-          this.viewState.pointerTime = this.dragState.t0 + Math.floor((event.screenX - this.dragState.sx0) / this.diagram.config.xScale / 60) * 60;
+          this.viewState.pointerTime = this.dragState.t0 + Math.floor((event.screenX - this.dragState.sx0) / this.diagram.config.xPhysScale / 60) * 60;
         }
         this.viewState.trainPathDragState.timeShift = 
           !this.viewState.controlKeyPressed ?
