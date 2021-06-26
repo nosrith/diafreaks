@@ -5,7 +5,7 @@ import TrainPathNode from "./TrainPathNode";
 export default class Train {
     constructor(
         public readonly id: number, 
-        public name: string | null = null,
+        public name: string = "",
         public color: string | null = null,
         public lineWidth: number | null = null,
     ) {}
@@ -64,7 +64,7 @@ export default class Train {
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
     static fromJSON(o: any, stations: { [id: number]: Station }): Train {
         /* eslint-disable @typescript-eslint/no-explicit-any */
-        const name = o.name ?? o.n;
+        const name = o.name ?? o.n ?? "";
         const color = o.color ?? o.c;
         const lineWidth = o.lineWidth ?? o.w;
         const stops = o.stops ?? o.s;
@@ -94,7 +94,7 @@ export default class Train {
         }
         return {
             id: this.id,
-            n: this.name ?? undefined,
+            n: this.name || undefined,
             c: this.color ?? undefined,
             w: this.lineWidth ?? undefined,
             s: stops

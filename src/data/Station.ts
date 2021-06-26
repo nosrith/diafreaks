@@ -3,7 +3,7 @@ import Track from "./Track";
 export default class Station {
     constructor(
         public readonly id: number, 
-        public name: string | null = null, 
+        public name: string = "", 
         public mileage = 0,
         public expanded = false,
         public topRelY = 0,
@@ -28,11 +28,11 @@ export default class Station {
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
     static fromJSON(o: any): Station {
         /* eslint-disable @typescript-eslint/no-explicit-any */
-        const name = o.name ?? o.n;
-        const mileage = o.mileage ?? o.m;
+        const name = o.name ?? o.n ?? "";
+        const mileage = o.mileage ?? o.m ?? 0;
         const expanded = !!(o.expanded ?? o.e);
         const tracks = o.tracks ?? o.t;
-        if (!(o && typeof o == "object" && o.id != null && mileage != null && Array.isArray(tracks))) {
+        if (!(o && typeof o == "object" && o.id != null && Array.isArray(tracks))) {
             throw "Invalid JSON @ Station"
         }
         const station = new Station(o.id, name, mileage, expanded);
@@ -43,7 +43,7 @@ export default class Station {
     toJSON(): unknown {
         return {
             id: this.id,
-            n: this.name ?? undefined,
+            n: this.name || undefined,
             m: this.mileage,
             t: this.tracks,
             e: this.expanded ? 1 : undefined,

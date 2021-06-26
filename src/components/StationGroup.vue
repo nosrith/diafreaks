@@ -73,7 +73,7 @@ export default class StationGroup extends Vue {
 
   private get labelCharacters(): unknown {
     const widthForChars = this.diagram.config.leftPaneWidth - this.viewConfig.stationLabelLeftMargin - this.viewConfig.stationLabelRightMargin - this.viewConfig.stationLabelFontSize;
-    const stationName = this.station.name || "";
+    const stationName = this.station.name;
     const charSpan = stationName.length > 1 ? widthForChars / (stationName.length - 1) : 0;
     return Array.from(stationName).map((c, index) => {
       return {
