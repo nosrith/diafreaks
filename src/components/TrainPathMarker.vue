@@ -64,13 +64,13 @@ export default class TrainPathMarker extends Vue {
         Math.abs(thisRelY - prevRelY);
       return {
         x: Math.max(x, -this.viewConfig.markerLabelMaxDistance),
-        y: prevStev.station.mileage < thisStev.station.mileage ? 0 : this.viewConfig.markerLabelLineHeight
+        y: prevStev.station.mileage < thisStev.station.mileage ? 0 : this.viewConfig.markerLabelLineHeight * this.context.subScale
       };
     }
 
     return {
       x: 0,
-      y: nextStev && nextStev.station.mileage < thisStev.station.mileage || prevStev && prevStev.station.mileage > thisStev.station.mileage ? 0 : this.viewConfig.markerLabelLineHeight,
+      y: nextStev && nextStev.station.mileage < thisStev.station.mileage || prevStev && prevStev.station.mileage > thisStev.station.mileage ? 0 : this.viewConfig.markerLabelLineHeight * this.context.subScale,
     };
   }
 
