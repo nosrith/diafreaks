@@ -45,7 +45,15 @@ export default class TrainPathMarker extends Vue {
   }
 
   get labelEnabled(): boolean {
-    return this.trainPathNode.phase == "track";
+    const n = this.trainPathNode;
+    return (
+      n.phase != "track" ||
+      !(
+        n.stev.station.expanded &&
+        ((n.stev.prev && n.stev.prev.station != n.stev.station) ||
+          (n.stev.next && n.stev.next.station != n.stev.station))
+      )
+    );
   }
 
   get labelConfig(): unknown {
@@ -82,7 +90,7 @@ export default class TrainPathMarker extends Vue {
     if (
       prevStev &&
       prevStev.track != thisStev.track &&
-      (!nextStev || nextStev.track == thisStev.track)
+      (this.trainPathNode.phase == "arr" || !nextStev || nextStev.track == thisStev.track)
     ) {
       const thisRelY =
         prevStev.station.mileage < thisStev.station.mileage
