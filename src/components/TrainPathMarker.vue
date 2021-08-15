@@ -71,7 +71,7 @@ export default class TrainPathMarker extends Vue {
       height: this.viewConfig.markerLabelLineHeight * this.context.subScale,
       text: getTimeText(
         this.trainPathNode.time,
-        this.viewState.pointerPreciseState != null
+        this.viewState.pointerPreciseState != null && this.viewState.trainPathDragState != null
       ),
       fontSize: this.viewConfig.pointerLabelFontSize * this.context.subScale,
       fontFamily: this.viewConfig.fontFamily,

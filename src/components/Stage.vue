@@ -581,7 +581,7 @@ export default class Stage extends Vue {
 
   private onKeyDown(event: KeyboardEvent): void {
     if (!event.repeat) {
-      if (event.key == "Alt") {
+      if (event.key == "Shift" || event.key == "Alt") {
         this.viewState.pointerPreciseState = {
           sx0: this.viewState.pointerScreenX,
           t0: this.viewState.pointerTime,
@@ -640,7 +640,7 @@ export default class Stage extends Vue {
   }
 
   private onKeyUp(event: KeyboardEvent): void {
-    if (event.key == "Alt") {
+    if (event.key == "Shift" || event.key == "Alt") {
       this.viewState.pointerPreciseState = null;
     }
     if (event.key == "Control") {

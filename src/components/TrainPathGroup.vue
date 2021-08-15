@@ -525,6 +525,12 @@ export default class TrainPathGroup extends Vue {
       targets: this.viewState.trainSelections,
       timeShift: 0,
     };
+    if (this.viewState.pointerPreciseState) {
+      this.viewState.pointerPreciseState = {
+        sx0: this.viewState.pointerScreenX,
+        t0: firstNode.time,
+      }
+    }
     window.addEventListener("mousemove", this.onWindowMouseMove);
     window.addEventListener("mouseup", this.onWindowMouseUp);
   }
