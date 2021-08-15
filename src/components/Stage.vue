@@ -330,6 +330,7 @@ export default class Stage extends Vue {
 
   private onStageDoubleClick(konvaEvent: KonvaEventObject<MouseEvent>): void {
     if (
+      konvaEvent.evt.button == 0 &&
       konvaEvent.target == konvaEvent.currentTarget &&
       this.viewState.drawingState
     ) {
@@ -391,6 +392,7 @@ export default class Stage extends Vue {
       this.viewState.drawingState = null;
       this.viewState.trainSelections = {};
     } else if (
+      konvaEvent.evt.button == 0 &&
       konvaEvent.target == konvaEvent.currentTarget &&
       this.viewState.editMode
     ) {
