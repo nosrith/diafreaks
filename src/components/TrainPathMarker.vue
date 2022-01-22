@@ -147,6 +147,58 @@ export default class TrainPathMarker extends Vue {
           this.viewState.trainSelections[n.stev.train.id].stevRange = null;
         }
       } else {
+        const drawingState = this.viewState.drawingState;
+        if (drawingState.train.stevs.length <= 1) {
+          this.$delete(this.diagram.trains, drawingState.train.id);
+        } else {
+          const stableEnd = drawingState.stableEnd;
+          if (stableEnd) {
+            const stableIndex = drawingState.train.stevs.indexOf(stableEnd);
+            const addedStevs =
+              drawingState.direction > 0
+                ? drawingState.train.stevs.filter((e, i) => i > stableIndex)
+                : drawingState.train.stevs.filter((e, i) => i < stableIndex);
+            if (drawingState.direction > 0) {
+              this.context.history.push({
+                this: this,
+                undo: () => {
+                  drawingState.train.stevs.splice(stableIndex + 1);
+                },
+                redo: () => {
+                  addedStevs.forEach((stev) =>
+                    drawingState.train.stevs.push(stev)
+                  );
+                },
+              });
+            } else {
+              this.context.history.push({
+                this: this,
+                undo: () => {
+                  drawingState.train.stevs.splice(0, stableIndex);
+                },
+                redo: () => {
+                  drawingState.train.stevs = addedStevs.concat(
+                    drawingState.train.stevs
+                  );
+                },
+              });
+            }
+          } else {
+            this.context.history.push({
+              this: this,
+              undo: () => {
+                this.$delete(this.diagram.trains, drawingState.train.id);
+              },
+              redo: () => {
+                this.$set(
+                  this.diagram.trains,
+                  drawingState.train.id,
+                  drawingState.train
+                );
+              },
+            });
+          }
+        }
         this.viewState.drawingState = null;
         this.viewState.trainSelections = {};
       }
