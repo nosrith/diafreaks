@@ -97,17 +97,18 @@ export default class Train {
 
   toJSON(): unknown {
     const stops: { s: number; t: number; a: number; d: number }[] = [];
+    let curStop = null;
     for (const stev of this.stevs) {
-      const lastStop = stops[stops.length - 1];
-      if (lastStop && lastStop.t == stev.track.id && lastStop.a == lastStop.d) {
-        lastStop.d = stev.time;
+      if (curStop && curStop.s == stev.station.id && curStop.t == stev.track.id) {
+        curStop.d = stev.time;
       } else {
-        stops.push({
+        curStop = {
           s: stev.station.id,
           t: stev.track.id,
           a: stev.time,
           d: stev.time,
-        });
+        };
+        stops.push(curStop);
       }
     }
     return {
